@@ -77,6 +77,7 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | MAIN | Declares the beginning of the main. Used only for code generation. Not used by the vm |
 | LCTX | Creates a new context of local variables  |
 | LDEF | Pops the top value of the stack and copies it to the local definitions |
+| LSET | Assigns the top value of the stack to a local variable  |
 | LCL | Pushes the local value on top of the stack |
 | LCLR | Clears the local definitions |
 | CALL name | Call a SUB routine. |
