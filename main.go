@@ -58,9 +58,11 @@ func startREPL(fc *ForthCompiler) {
 var (
 	fgen    bool
 	colored bool
+	fname   string
 )
 
 func initFlags() {
+	flag.StringVar(&fname, "file", "", "compile file and execute")
 	flag.BoolVar(&fgen, "s", true, "Use subs")
 	flag.BoolVar(&colored, "c", true, "Use colors")
 
@@ -77,5 +79,23 @@ func main() {
 
 	// fc.Parse("\\ comment here \n: add2 2 + ;")
 	fc.ParseFile("core.fs")
+
+	if len(fname) > 0 {
+		fvm := NewForthVM()
+		fc.ParseFile(fname)
+		bc := fc.CompileMain()
+		fc.output.Reset()
+
+		if fc.fgen {
+			fc.printSubs()
+		}
+
+		fc.printResult(bc)
+
+		fvm.Run(fc.output.String())
+		fmt.Println("")
+		return
+	}
+
 	startREPL(fc)
 }

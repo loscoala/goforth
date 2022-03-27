@@ -17,8 +17,16 @@ Simply execute `goforth`
 You can also execute forth-scripts:
 
 ```sh
-goforth forthscript.fs
+goforth --file=forthscript.fs
 ```
+
+In the Shebang you can alternatively write the following:
+
+```md
+#!goforth --file
+# code goes here...
+```
+
 The compiler loads `core.fs` automatically.
 
 ## Dependencies

@@ -73,6 +73,15 @@ func (fc *ForthCompiler) Compile(str string) *Stack {
 	return result
 }
 
+func (fc *ForthCompiler) CompileMain() *Stack {
+	result := new(Stack)
+
+	fc.compileWord("main", result)
+	result.Push("STP")
+
+	return result
+}
+
 func parseAuto(data string) string {
 	result := make([]rune, 0, len(data)+1)
 	state := 0
