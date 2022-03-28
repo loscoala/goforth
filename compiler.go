@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strings"
 )
@@ -154,7 +155,7 @@ func (fc *ForthCompiler) ParseFile(filename string) {
 	data, err := os.ReadFile(filename)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	fc.Parse(string(data))
@@ -213,7 +214,7 @@ func (fc *ForthCompiler) compileWordWithLocals(wordDef *Stack, result *Stack) {
 			assignMode = true
 		} else if assignMode {
 			if !fc.locals.Contains(word2) {
-				panic("NameError: Unable to assign word \"" + word2 + "\": not in local context")
+				log.Fatal("NameError: Unable to assign word \"" + word2 + "\": not in local context")
 			}
 			result.Push("LSET " + word2)
 			assignMode = false
@@ -337,6 +338,6 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 			result.Push("#" + fc.whiles.ExPop() + " NOP")
 		}
 	} else {
-		panic("Word \"" + word + "\" unknown")
+		log.Fatal("Word \"" + word + "\" unknown")
 	}
 }

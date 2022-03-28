@@ -459,8 +459,7 @@ func parseCode(code string) []Cell {
 			case "L":
 				value, err := strconv.ParseInt(scmd[1], 10, 64)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(2)
+					log.Fatal(err)
 				}
 				cells = append(cells, Cell{cmd: L, arg: value})
 			case "STR":
@@ -488,8 +487,7 @@ func parseCode(code string) []Cell {
 			case "CALL":
 				cells = append(cells, Cell{cmd: CALL, argStr: scmd[1]})
 			default:
-				fmt.Println("ERROR: Unknown command [" + cmd + "]")
-				os.Exit(2)
+				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
 		}
 	}
@@ -632,8 +630,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 			returnStack = append(returnStack, progPtr)
 			progPtr = labels[command.argStr]
 		default:
-			fmt.Printf("ERROR: Unknown command %v", command)
-			os.Exit(2)
+			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
 	}
 

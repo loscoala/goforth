@@ -1,5 +1,9 @@
 package main
 
+import (
+	"log"
+)
+
 type Stack struct {
 	data []string
 }
@@ -30,7 +34,7 @@ func (s *Stack) Pop() (string, bool) {
 func (s *Stack) ExPop() string {
 	value, ok := s.Pop()
 	if !ok {
-		panic("Error: Pop() from empty Stack")
+		log.Fatal("Error: Pop() from empty Stack")
 	}
 	return value
 }
@@ -141,7 +145,7 @@ func (ss *SliceStack) Pop() (*Stack, bool) {
 func (ss *SliceStack) ExPop() *Stack {
 	value, ok := ss.Pop()
 	if !ok {
-		panic("Error: Pop() from empty SliceStack")
+		log.Fatal("Error: Pop() from empty SliceStack")
 	}
 	return value
 }
