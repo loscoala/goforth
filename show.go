@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 )
 
 const (
@@ -58,19 +61,6 @@ func printWordColored(fc *ForthCompiler, word string, s *Stack) {
 	fmt.Printf("%s\n", getWordColored(fc, ";"))
 }
 
-func (fc *ForthCompiler) printResult(s *Stack) {
-	for iter := s.Iter(); iter.Next(); {
-		if colored {
-			fmt.Printf("%s%s%s;", WARNING, iter.Get(), ENDC)
-		} else {
-			fmt.Printf("%s;", iter.Get())
-		}
-		fc.output.WriteString(iter.Get() + ";")
-	}
-
-	fmt.Println("")
-}
-
 func printWord(word string, s *Stack) {
 	fmt.Printf(": %s ", word)
 
@@ -81,7 +71,7 @@ func printWord(word string, s *Stack) {
 	fmt.Println(";")
 }
 
-func printDefinition(fc *ForthCompiler, word string) {
+func (fc *ForthCompiler) printDefinition(word string) {
 	s := fc.defs[word]
 
 	if colored {
@@ -91,7 +81,7 @@ func printDefinition(fc *ForthCompiler, word string) {
 	}
 }
 
-func printAllDefinitions(fc *ForthCompiler) {
+func (fc *ForthCompiler) printAllDefinitions() {
 	if colored {
 		for k, s := range fc.defs {
 			printWordColored(fc, k, s)
@@ -104,18 +94,66 @@ func printAllDefinitions(fc *ForthCompiler) {
 	fmt.Println("")
 }
 
-func (fc *ForthCompiler) printSubs() {
-	if len(fc.funcs) > 0 {
-		for _, v := range fc.funcs {
-			fc.printResult(v)
+func (fc *ForthCompiler) printByteCode() {
+	if colored {
+		for _, cmd := range strings.Split(fc.output.String(), ";") {
+			if cmd == "" {
+				continue
+			}
+			fmt.Printf("%s%s%s;", WARNING, cmd, ENDC)
 		}
-		fc.funcs = make(map[string]*Stack)
+		fmt.Println("")
+	} else {
+		fmt.Println(fc.output.String())
+	}
+}
+
+func (fc *ForthCompiler) StartREPL() {
+	scanner := bufio.NewScanner(os.Stdin)
+	fvm := NewForthVM()
+
+	for {
+		fmt.Print("forth> ")
+		scanner.Scan()
+		text := scanner.Text()
+
+		if text == "exit" {
+			break
+		}
+
+		if text[0] == ':' {
+			// just parse
+			fc.Parse(text)
+			continue
+		}
+
+		if text[0] == '%' && len(text) > 1 {
+			// show just one definition
+			fc.printDefinition(text[2:])
+			continue
+		} else if text[0] == '%' && len(text) == 1 {
+			// show all definitions
+			fc.printAllDefinitions()
+			continue
+		} else if text[0] == '#' && len(text) > 1 {
+			// open a file an parse its contents
+			fc.ParseFile(text[2:])
+			continue
+		}
+
+		fc.Parse(": main " + text + " ;")
+		fc.Compile()
+
+		fc.printByteCode()
+
+		fvm.Run(fc.output.String())
 		fmt.Println("")
 	}
-	if colored {
-		fmt.Printf("%sMAIN%s;", WARNING, ENDC)
-	} else {
-		fmt.Printf("MAIN;")
-	}
-	fc.output.WriteString("MAIN;")
+}
+
+func (fc *ForthCompiler) RunFile(str string) {
+	fc.ParseFile(str)
+	fc.Compile()
+	fvm := NewForthVM()
+	fvm.Run(fc.output.String())
 }

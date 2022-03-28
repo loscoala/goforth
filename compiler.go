@@ -22,13 +22,11 @@ type ForthCompiler struct {
 	locals SliceStack
 	data   map[string]string
 	defs   map[string]*Stack
-	fgen   bool
 	output strings.Builder
 }
 
 func NewForthCompiler() *ForthCompiler {
 	ft := new(ForthCompiler)
-	ft.funcs = make(map[string]*Stack)
 	ft.data = map[string]string{
 		"!":     "STR",
 		"@":     "LV",
@@ -63,23 +61,25 @@ func NewForthCompiler() *ForthCompiler {
 	return ft
 }
 
-func (fc *ForthCompiler) Compile(str string) *Stack {
+func (fc *ForthCompiler) Compile() {
 	result := new(Stack)
-
-	fc.Parse(str)
-	fc.compileWord("main", result)
-	result.Push("STP")
-
-	return result
-}
-
-func (fc *ForthCompiler) CompileMain() *Stack {
-	result := new(Stack)
+	fc.funcs = make(map[string]*Stack)
+	fc.output.Reset()
 
 	fc.compileWord("main", result)
 	result.Push("STP")
 
-	return result
+	for _, v := range fc.funcs {
+		for iter := v.Iter(); iter.Next(); {
+			fc.output.WriteString(iter.Get() + ";")
+		}
+	}
+
+	fc.output.WriteString("MAIN;")
+
+	for iter := result.Iter(); iter.Next(); {
+		fc.output.WriteString(iter.Get() + ";")
+	}
 }
 
 func parseAuto(data string) string {
@@ -243,7 +243,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 	} else if value, ok := fc.data[word]; ok {
 		result.Push(value)
 	} else if wordDef, ok := fc.defs[word]; ok {
-		if fc.fgen && word != "main" && wordDef.Len() > 4 {
+		if word != "main" && wordDef.Len() > 4 {
 			if _, ok := fc.funcs[word]; !ok {
 				funcDef := new(Stack)
 				funcDef.Push("SUB " + word)
