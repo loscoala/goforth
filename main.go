@@ -11,7 +11,7 @@ var (
 
 func initFlags() {
 	flag.StringVar(&fname, "file", "", "compile file and execute")
-	flag.BoolVar(&colored, "c", true, "Use colors")
+	flag.BoolVar(&colored, "color", true, "Use colors")
 
 	flag.Parse()
 }
