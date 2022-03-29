@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -85,9 +87,10 @@ func (fc *ForthCompiler) Compile() {
 
 func parseAuto(data string) string {
 	result := make([]rune, 0, len(data)+1)
+	tmpStr := make([]rune, 0, 100)
 	state := 0
 
-	for _, i := range data {
+	for index, i := range data {
 		switch state {
 		case 0:
 			switch i {
@@ -120,7 +123,13 @@ func parseAuto(data string) string {
 			case '\t':
 				result = append(result, ' ')
 			default:
-				result = append(result, i)
+				if (i == '.' && data[index+1] == '"') ||
+					(i == '!' && data[index+1] == '"') {
+					tmpStr = append(tmpStr, i)
+					state = 7
+				} else {
+					result = append(result, i)
+				}
 			}
 		case 2:
 			if i == '\n' {
@@ -145,10 +154,82 @@ func parseAuto(data string) string {
 			} // else {
 			// TODO:
 			// }
+		case 7:
+			// consume "
+			tmpStr = append(tmpStr, i)
+			state = 8
+		case 8:
+			// inside string
+			tmpStr = append(tmpStr, i)
+
+			if i == '"' {
+				result = append(result, handleForthString(string(tmpStr))...)
+				tmpStr = tmpStr[:0]
+				state = 1
+			}
 		}
 	}
 
 	return string(result)
+}
+
+func compile_s(str string) []rune {
+	result := make([]rune, 0, 100)
+
+	for _, i := range str {
+		for _, j := range fmt.Sprintf("%d emit ", int(i)) {
+			result = append(result, j)
+		}
+	}
+
+	return result
+}
+
+func reverse(s string) string {
+	r := []rune(s)
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return string(r)
+}
+
+func compile_m(str string, base int) []rune {
+	result := make([]rune, 0, 100)
+
+	result = append(result, '0')
+	result = append(result, ' ')
+
+	for _, i := range reverse(str) {
+		for _, j := range fmt.Sprintf("%d ", int(i)) {
+			result = append(result, j)
+		}
+	}
+
+	for _, i := range fmt.Sprintf("%d !s ", base) {
+		result = append(result, i)
+	}
+
+	return result
+}
+
+func handleForthString(str string) []rune {
+	fstring := strings.Split(str, " ")
+
+	switch fstring[0] {
+	case ".\"":
+		return compile_s(str[3 : len(str)-1])
+	case "!\"":
+		base, err := strconv.Atoi(fstring[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		pos := 4 + len(fstring[1])
+		return compile_m(str[pos:len(str)-1], base)
+	default:
+		log.Fatalf("Unknown type of string found %s\n", fstring[0])
+	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) ParseFile(filename string) {

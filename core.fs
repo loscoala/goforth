@@ -74,6 +74,21 @@
 
 : .s dup 1+ swap @ begin dup 0> while swap dup .c 1+ swap 1- repeat 2drop ;
 
+: print begin dup 0> while emit repeat drop ;
+
+: !s 0 0 { n y x }
+  x to y
+  begin
+    dup 0>
+  while
+    n 1+ to n
+    y 1+ to y
+    y !
+  repeat
+  n x !
+  drop
+;
+
 : .s2 { pos }
   pos @
   pos 1+ to pos
