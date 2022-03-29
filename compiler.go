@@ -122,14 +122,22 @@ func parseAuto(data string) string {
 				result = append(result, ' ')
 			case '\t':
 				result = append(result, ' ')
-			default:
-				if (i == '.' && data[index+1] == '"') ||
-					(i == '!' && data[index+1] == '"') {
+			case '.':
+				if data[index+1] == '"' {
 					tmpStr = append(tmpStr, i)
 					state = 7
 				} else {
 					result = append(result, i)
 				}
+			case '!':
+				if data[index+1] == '"' {
+					tmpStr = append(tmpStr, i)
+					state = 7
+				} else {
+					result = append(result, i)
+				}
+			default:
+				result = append(result, i)
 			}
 		case 2:
 			if i == '\n' {
