@@ -62,21 +62,29 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | TDP | Duplicates the top pair on the stack. |
 | DRP | Drops the top element on the stack. |
 | SWP | Swaps the top pair on the stack.  |
-| ADI | Simple addition of the top pair. |
 | #id NOP | Does nothing. Used for labeling. | 
 | JMP #id | Unconditional jump to label with id |
 | JIN #id | Conditional jump to label with id if the top value on the stack is zero. |
-| SBI | Simple sustraction of the top pair. |
+| ADI | Simple addition of the top pair. |
+| SBI | Simple subtraction of the top pair. |
 | DVI | Simple division of the top pair. |
-| LSI | 1 on the stack if the top element is less than the second element. 0 otherwise.|
+| LSI | 1 on the stack if the top element is less than the second element. 0 otherwise. |
 | GRI | 1 on the stack if the top element id greater than the second element. 0 otherwise. |
 | MLI | Multiplies the first two elements on the stack. |
+| ADF | Simple float addition of the top pair. |
+| SBF | Simple float subtraction of the top pair. |
+| MLF | Multiplies the first two float elements on the stack. |
+| DVF | Simple float division of the top pair. |
+| PRF | Prints a float value from the stack as a number. |
+| LSF | 1 on the stack if the top float element is less than the second element. 0 otherwise. |
+| GRF | 1 on the stack if the top float element is greater than the second element. 0 otherwise. |
 | OR | 1 if one of the first two elements on the stack unequal to 0 else 0. |
 | AND | 1 if the first two elements on the stack unequal to 0 else 0. |
 | NOT | 1 if the first element on the stack is 0 else 0.  |
 | EQI | 1 if the first two element on the stack are equal else 0. |
 | LV value | Push the value on top of the stack.  |
-| L number | Loads a value of the stack. |
+| L number | Loads a value on the stack. |
+| LF float | Loads a float on the stack. |
 | STR | Stores the second element from the stack into the memory address which is the first element from the stack. |
 | SYS | Make a syscall. The top element from the stack is used to make different syscalls. |
 | STP | Quits the execution. |
