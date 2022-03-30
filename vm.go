@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 type Local struct {
@@ -44,6 +45,16 @@ func (fvm *ForthVM) pop() int64 {
 	v := fvm.stack[fvm.n]
 	fvm.n -= 1
 	return v
+}
+
+func (fvm *ForthVM) fpop() float64 {
+	value := fvm.pop()
+	return *(*float64)(unsafe.Pointer(&value))
+}
+
+func (fvm *ForthVM) fpush(f float64) {
+	val := *(*int64)(unsafe.Pointer(&f))
+	fvm.push(val)
 }
 
 func (fvm *ForthVM) lctx() {
@@ -141,9 +152,66 @@ func (fvm *ForthVM) mli() {
 	fvm.push(fvm.pop() * fvm.pop())
 }
 
+// f+
+func (fvm *ForthVM) adf() {
+	fvm.fpush(fvm.fpop() + fvm.fpop())
+}
+
+// f-
+func (fvm *ForthVM) sbf() {
+	a := fvm.fpop()
+	b := fvm.fpop()
+	fvm.fpush(b - a)
+}
+
+// f/
+func (fvm *ForthVM) dvf() {
+	a := fvm.fpop()
+	b := fvm.fpop()
+	fvm.fpush(b / a)
+}
+
+// f*
+func (fvm *ForthVM) mlf() {
+	fvm.fpush(fvm.fpop() * fvm.fpop())
+}
+
 func (fvm *ForthVM) pri() {
 	// fmt.Fprintf(w, "%d", pop())
 	fmt.Printf("%d", fvm.pop())
+}
+
+// f.
+func (fvm *ForthVM) prf() {
+	fmt.Printf("%f", fvm.fpop())
+}
+
+// f<
+func (fvm *ForthVM) lsf() {
+	var v int64 = 0
+
+	a := fvm.fpop()
+	b := fvm.fpop()
+
+	if a > b {
+		v = 1
+	}
+
+	fvm.push(v)
+}
+
+// f>
+func (fvm *ForthVM) grf() {
+	var v int64 = 0
+
+	a := fvm.fpop()
+	b := fvm.fpop()
+
+	if a < b {
+		v = 1
+	}
+
+	fvm.push(v)
 }
 
 func (fvm *ForthVM) pra() {
@@ -358,6 +426,13 @@ const (
 	LSI
 	GRI
 	MLI
+	ADF
+	SBF
+	MLF
+	DVF
+	PRF
+	LSF
+	GRF
 	OR
 	AND
 	NOT
@@ -446,6 +521,20 @@ func parseCode(code string) []Cell {
 				cells = append(cells, Cell{cmd: GRI})
 			case "MLI":
 				cells = append(cells, Cell{cmd: MLI})
+			case "ADF":
+				cells = append(cells, Cell{cmd: ADF})
+			case "SBF":
+				cells = append(cells, Cell{cmd: SBF})
+			case "MLF":
+				cells = append(cells, Cell{cmd: MLF})
+			case "DVF":
+				cells = append(cells, Cell{cmd: DVF})
+			case "PRF":
+				cells = append(cells, Cell{cmd: PRF})
+			case "LSF":
+				cells = append(cells, Cell{cmd: LSF})
+			case "GRF":
+				cells = append(cells, Cell{cmd: GRF})
 			case "OR":
 				cells = append(cells, Cell{cmd: OR})
 			case "AND":
@@ -588,6 +677,20 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.gri()
 		case MLI:
 			fvm.mli()
+		case ADF:
+			fvm.adf()
+		case SBF:
+			fvm.sbf()
+		case MLF:
+			fvm.mlf()
+		case DVF:
+			fvm.dvf()
+		case PRF:
+			fvm.prf()
+		case LSF:
+			fvm.lsf()
+		case GRF:
+			fvm.grf()
 		case OR:
 			fvm.or()
 		case AND:
