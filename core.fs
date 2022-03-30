@@ -22,7 +22,9 @@
 : 2* 2 * ;
 : <> = not ;
 : >= < not ;
+: f>= f< not ;
 : <= > not ;
+: f<= f> not ;
 : 0<> 0= not ;
 : 0<= 0 <= ;
 : 0>= 0 >= ;
@@ -51,9 +53,9 @@
 : z@ dup @ float+ @ ;
 : z. swap ." (" f. ." , " f. ." i)" ;
 : zdup over over ;
-: zdrop drop drop ;
-: zover { i2 r2 i1 r1 } r1 i1 r2 i2 r1 i1 ;
-: zswap { i2 r2 i1 r1 } r2 i2 r1 i1 ;
+: zdrop 2drop ;
+: zover 2over ;
+: zswap 2swap ;
 : re drop ;
 : im nip ;
 : z= rot = -rot = and ;
