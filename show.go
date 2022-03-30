@@ -139,6 +139,12 @@ func (fc *ForthCompiler) StartREPL() {
 			// open a file an parse its contents
 			fc.ParseFile(text[2:])
 			continue
+		} else if text[0] == '$' && len(text) == 1 {
+			for i := 0; i <= fvm.n; i++ {
+				fmt.Printf("%d ", fvm.stack[i])
+			}
+			fmt.Println("")
+			continue
 		}
 
 		fc.Parse(": main " + text + " ;")
