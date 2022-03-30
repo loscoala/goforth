@@ -324,6 +324,19 @@ func (fc *ForthCompiler) compileWordWithLocals(wordDef *Stack, result *Stack) {
 	}
 }
 
+func isFloat(s string) bool {
+	pos := strings.IndexByte(s, '.')
+
+	if pos == -1 {
+		return false
+	}
+
+	first := s[:pos]
+	last := s[pos+1:]
+
+	return (len(first) != 0 || len(last) != 0) && isNumeric(first) && isNumeric(last)
+}
+
 func isNumeric(s string) bool {
 	for _, v := range s {
 		if v < '0' || v > '9' {
@@ -337,6 +350,8 @@ func isNumeric(s string) bool {
 func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 	if isNumeric(word) {
 		result.Push("L " + word)
+	} else if isFloat(word) {
+		result.Push("LF " + word)
 	} else if value, ok := fc.data[word]; ok {
 		result.Push(value)
 	} else if wordDef, ok := fc.defs[word]; ok {

@@ -439,6 +439,7 @@ const (
 	EQI
 	LV
 	L
+	LF
 	STR
 	SYS
 	STP
@@ -456,6 +457,7 @@ const (
 type Cell struct {
 	cmd    int
 	arg    int64
+	argf   float64
 	argStr string
 }
 
@@ -551,6 +553,12 @@ func parseCode(code string) []Cell {
 					log.Fatal(err)
 				}
 				cells = append(cells, Cell{cmd: L, arg: value})
+			case "LF":
+				value, err := strconv.ParseFloat(scmd[1], 64)
+				if err != nil {
+					log.Fatal(err)
+				}
+				cells = append(cells, Cell{cmd: LF, argf: value})
 			case "STR":
 				cells = append(cells, Cell{cmd: STR})
 			case "SYS":
@@ -703,6 +711,8 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.lv()
 		case L:
 			fvm.push(command.arg)
+		case LF:
+			fvm.fpush(command.argf)
 		case STR:
 			fvm.str()
 		case SYS:
