@@ -6,6 +6,7 @@
 : 2nip 2swap 2drop ;
 : tuck swap over ;
 : negate 0 swap - ;
+: fnegate 0. swap f- ;
 : vswap
   { v1 v2 }
   v1 @ v2 @ v1 ! v2 !
@@ -39,10 +40,25 @@
 
 : cell 1 ;
 : cell+ 1+ ;
+: float 1 ;
+: float+ 1+ ;
 : th + ;
 : ?+ dup ? cell+ ;
 : +! dup @ rot + swap ! ;
 : -! dup @ rot - swap ! ;
+
+: z! swap dup ! float+ ! ;
+: z@ dup @ float+ @ ;
+: z. swap ." (" f. ." , " f. ." i)" ;
+: zdup over over ;
+: zdrop drop drop ;
+: zover { i2 r2 i1 r1 } r1 i1 r2 i2 r1 i1 ;
+: zswap { i2 r2 i1 r1 } r2 i2 r1 i1 ;
+: re drop ;
+: im nip ;
+: z= rot = -rot = and ;
+: z+ rot f+ -rot f+ swap ;
+: zabs dup f* swap dup f* f+ fsqrt ;
 
 : 2! tuck ! cell+ ! ;
 : 2@ dup cell+ @ swap @ ;
