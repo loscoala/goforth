@@ -82,7 +82,7 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | AND | 1 if the first two elements on the stack unequal to 0 else 0. |
 | NOT | 1 if the first element on the stack is 0 else 0.  |
 | EQI | 1 if the first two element on the stack are equal else 0. |
-| LV value | Push the value on top of the stack.  |
+| LV | Loads a value from the given address.  |
 | L number | Loads a value on the stack. |
 | LF float | Loads a float on the stack. |
 | STR | Stores the second element from the stack into the memory address which is the first element from the stack. |

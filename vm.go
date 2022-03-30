@@ -417,10 +417,10 @@ const (
 	TDP
 	DRP
 	SWP
-	ADI
 	NOP
 	JMP
 	JIN
+	ADI
 	SBI
 	DVI
 	LSI
