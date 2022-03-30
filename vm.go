@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -354,6 +355,10 @@ func (fvm *ForthVM) sys() {
 		n := fvm.pop()
 		fvm.push(n % mod)
 	case 2:
+		// fsqrt
+		value := fvm.fpop()
+		fvm.fpush(math.Sqrt(value))
+	case 3:
 		// dest-addr readfile
 		content, err := os.ReadFile("file.txt")
 
@@ -369,7 +374,7 @@ func (fvm *ForthVM) sys() {
 		for i := int64(0); i < content_len; i++ {
 			fvm.mem[dest+1+i] = int64(content[i])
 		}
-	case 3:
+	case 4:
 		// read memory from image
 		// name-addr readimage
 		content, err := os.ReadFile("file.image")
@@ -384,7 +389,7 @@ func (fvm *ForthVM) sys() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	case 4:
+	case 5:
 		// write memory to image
 		// name-addr writeimage
 		buf := new(bytes.Buffer)

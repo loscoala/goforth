@@ -27,6 +27,7 @@
 : 0>= 0 >= ;
 : slow_mod begin 2dup >= while dup -rot - swap repeat drop ;
 : mod 1 sys ;
+: fsqrt 2 sys ;
 : factor mod 0= ;
 : even 2 factor ;
 
