@@ -62,10 +62,7 @@
 : z+ rot f+ -rot f+ swap ;
 : zabs dup f* swap dup f* f+ fsqrt ;
 : z* { d c b a }
-  a c f* { ac }
-  b d f* { bd }
-  a b f+ c d f+ f* { abcd }
-  ac bd f- abcd ac f- bd f-
+  a c f* b d f* f- a d f* c b f* f+
 ;
 
 : 2! tuck ! cell+ ! ;
