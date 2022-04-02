@@ -72,7 +72,29 @@ func printWord(word string, s *Stack) {
 }
 
 func (fc *ForthCompiler) printDefinition(word string) {
-	s := fc.defs[word]
+	s, ok := fc.defs[word]
+
+	if !ok {
+		// primitive
+		p, ok2 := fc.data[word]
+
+		if !ok2 {
+			if colored {
+				fmt.Printf("Unknown word %s%s%s\n", FAIL, word, ENDC)
+			} else {
+				fmt.Printf("Unknown word \"%s\"\n", word)
+			}
+		} else {
+			if colored {
+				fmt.Printf("%s %s %s %s\n", getWordColored(fc, ":"), getWordColored(fc, word),
+					getWordColored(fc, p), getWordColored(fc, ";"))
+			} else {
+				fmt.Printf(": %s %s ;\n", word, p)
+			}
+		}
+
+		return
+	}
 
 	if colored {
 		printWordColored(fc, word, s)
