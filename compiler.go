@@ -411,16 +411,26 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JIN #" + lbl)
 		fc.whiles.Push(lbl)
-	} else if word == "loop" || word == "+loop" {
-		if word == "loop" {
-			result.Push("L 1")
+	} else if word == "loop" || word == "+loop" || word == "-loop" {
+		if word == "-loop" {
+			result.Push("LCL i")
+			result.Push("SWP")
+			result.Push("SBI")
+		} else {
+			if word == "loop" {
+				result.Push("L 1")
+			}
+			result.Push("LCL i")
+			result.Push("ADI")
 		}
-		result.Push("LCL i")
-		result.Push("ADI")
 		result.Push("LSET i")
 		result.Push("LCL end")
 		result.Push("LCL i")
-		result.Push("GRI")
+		if word == "-loop" {
+			result.Push("LSI")
+		} else {
+			result.Push("GRI")
+		}
 		result.Push("NOT")
 		result.Push("JIN #" + fc.labels.ExPop())
 		if fc.leaves.Len() > 0 {
