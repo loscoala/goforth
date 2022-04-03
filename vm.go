@@ -359,6 +359,14 @@ func (fvm *ForthVM) sys() {
 		value := fvm.fpop()
 		fvm.fpush(math.Sqrt(value))
 	case 3:
+		// i->f
+		value := fvm.pop()
+		fvm.fpush(float64(value))
+	case 4:
+		// f->i
+		value := fvm.fpop()
+		fvm.push(int64(value))
+	case 5:
 		// dest-addr readfile
 		content, err := os.ReadFile("file.txt")
 
@@ -374,7 +382,7 @@ func (fvm *ForthVM) sys() {
 		for i := int64(0); i < content_len; i++ {
 			fvm.mem[dest+1+i] = int64(content[i])
 		}
-	case 4:
+	case 6:
 		// read memory from image
 		// name-addr readimage
 		content, err := os.ReadFile("file.image")
@@ -389,7 +397,7 @@ func (fvm *ForthVM) sys() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	case 5:
+	case 7:
 		// write memory to image
 		// name-addr writeimage
 		buf := new(bytes.Buffer)
@@ -638,7 +646,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	returnStack := make([]int, 0, 100)
 
 	// fmt.Printf("progPtr: %d\n", progPtr)
-	numCmds := 0
+	numCmds := int64(0)
 	start := time.Now()
 
 	for ; !done; progPtr++ {
@@ -753,5 +761,5 @@ func (fvm *ForthVM) Run(codeStr string) {
 	}
 
 	elapsed := time.Since(start)
-	fmt.Printf("\n\nexecution time: %s\nNumber of Cmds: %d\nSpeed: %f cmd/ns", elapsed, numCmds, float32(numCmds)/float32(elapsed.Nanoseconds()))
+	fmt.Printf("\n\nexecution time: %s\nNumber of Cmds: %d\nSpeed: %f cmd/ns", elapsed, numCmds, float64(numCmds)/float64(elapsed.Nanoseconds()))
 }
