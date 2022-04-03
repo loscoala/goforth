@@ -42,7 +42,7 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		color = OKCYAN
 	} else if isBaseSytax(word) {
 		color = OKGREEN
-	} else if isNumeric(word) {
+	} else if isFloat(word) || isNumeric(word) {
 		color = OKBLUE
 	} else {
 		color = WARNING
