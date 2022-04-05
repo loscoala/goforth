@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -130,6 +131,16 @@ func (fc *ForthCompiler) printByteCode() {
 	}
 }
 
+func isWhiteSpace(s string) bool {
+	for _, v := range s {
+		if !unicode.IsSpace(v) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (fc *ForthCompiler) StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	fvm := NewForthVM()
@@ -139,7 +150,7 @@ func (fc *ForthCompiler) StartREPL() {
 		scanner.Scan()
 		text := scanner.Text()
 
-		if text == "" {
+		if isWhiteSpace(text) {
 			continue
 		}
 
