@@ -139,6 +139,10 @@ func (fc *ForthCompiler) StartREPL() {
 		scanner.Scan()
 		text := scanner.Text()
 
+		if text == "" {
+			continue
+		}
+
 		if text == "exit" {
 			break
 		}
