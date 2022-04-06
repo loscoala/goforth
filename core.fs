@@ -1,5 +1,28 @@
 
 : ? @ . ;
+: ?? 0 1000 mem ;
+: .?
+  dup 31 >
+  over
+  127 <
+  and
+  if
+    lb emit rb
+  else
+    drop
+  then
+;
+: mem
+  0 do
+    dup i +
+    dup @ 0<> if
+      dup . colon ? ( @ dup . .? ) space
+    else
+      drop
+    then
+  loop
+  drop
+;
 : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;
