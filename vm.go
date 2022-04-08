@@ -468,10 +468,11 @@ const (
 )
 
 type Cell struct {
-	cmd    int
-	arg    int64
-	argf   float64
-	argStr string
+	cmd        int
+	arg        int64
+	argf       float64
+	argStr     string
+	localIndex int
 }
 
 func (c Cell) String() string {
@@ -479,9 +480,10 @@ func (c Cell) String() string {
 }
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
-func parseCode(code string) []Cell {
+func parseCode(code string) ([]Cell, int) {
 	cmds := strings.Split(code, ";")
 	cells := make([]Cell, 0, len(cmds)+1)
+	locals := new(Stack)
 
 	for _, cmd := range cmds {
 		if cmd == "" {
@@ -587,11 +589,14 @@ func parseCode(code string) []Cell {
 			case "LCTX":
 				cells = append(cells, Cell{cmd: LCTX})
 			case "LSET":
-				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1]})
+				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
 			case "LDEF":
-				cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1]})
+				if !locals.Contains(scmd[1]) {
+					locals.Push(scmd[1])
+				}
+				cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
 			case "LCL":
-				cells = append(cells, Cell{cmd: LCL, argStr: scmd[1]})
+				cells = append(cells, Cell{cmd: LCL, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
 			case "LCLR":
 				cells = append(cells, Cell{cmd: LCLR})
 			case "CALL":
@@ -602,19 +607,16 @@ func parseCode(code string) []Cell {
 		}
 	}
 
-	return cells
+	return cells, locals.Len()
 }
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
 func (fvm *ForthVM) Run(codeStr string) {
 	labels := make(map[string]int)
-	code := parseCode(codeStr)
+	code, num_locals := parseCode(codeStr)
 	progPtr := 0
-	locals := new(Stack)
 
 	for pos, cell := range code {
-		// fmt.Printf("%v\n", cell)
-
 		switch cell.cmd {
 		case NOP:
 			labels[cell.argStr] = pos
@@ -622,30 +624,18 @@ func (fvm *ForthVM) Run(codeStr string) {
 			progPtr = pos + 1
 		case SUB:
 			labels[cell.argStr] = pos
-		case LDEF:
-			if !locals.Contains(cell.argStr) {
-				locals.Push(cell.argStr)
-			}
 		}
 	}
 
-	// init locals
-
-	// TODO: lege in jeden LDEF als cell.arg den Index aus locals hinein, so spart man sich GetIndex
-	// TODO: Shebang fuer Skripte
 	// TODO: verbose Flag um ByteCode auszublenden
-	// TODO: Stack und Memory anzeigen
 
 	fvm.ln = -1
-	fvm.l_len = locals.Len()
+	fvm.l_len = num_locals
 	fvm.lstack = make([]Local, fvm.l_len*100)
-
-	// end init locals
 
 	done := false
 	returnStack := make([]int, 0, 100)
 
-	// fmt.Printf("progPtr: %d\n", progPtr)
 	numCmds := int64(0)
 	start := time.Now()
 
@@ -744,11 +734,11 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case LCTX:
 			fvm.lctx()
 		case LSET:
-			fvm.lset(locals.GetIndex(command.argStr))
+			fvm.lset(command.localIndex)
 		case LDEF:
-			fvm.ldef(locals.GetIndex(command.argStr))
+			fvm.ldef(command.localIndex)
 		case LCL:
-			fvm.lcl(locals.GetIndex(command.argStr))
+			fvm.lcl(command.localIndex)
 		case LCLR:
 			fvm.lclr()
 		case CALL:
