@@ -480,14 +480,16 @@ func (c Cell) String() string {
 }
 
 type Code struct {
-	cells     []Cell
-	numLocals int
-	posMain   int
+	cells     []Cell         // actual code
+	labels    map[string]int // labels indices of NOP and SUB
+	numLocals int            // number of locals
+	posMain   int            // position of MAIN
 }
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
 func parseCode(codeStr string) *Code {
 	code := new(Code)
+	code.labels = make(map[string]int)
 
 	cmds := strings.Split(codeStr, ";")
 	cells := make([]Cell, 0, len(cmds)+1)
@@ -503,6 +505,7 @@ func parseCode(codeStr string) *Code {
 
 		if len(scmd) == 2 && scmd[0][0] == '#' {
 			// NOP
+			code.labels[scmd[0]] = pos
 			cells = append(cells, Cell{cmd: NOP, argStr: scmd[0]})
 		} else {
 			switch scmd[0] {
@@ -589,6 +592,7 @@ func parseCode(codeStr string) *Code {
 			case "STP":
 				cells = append(cells, Cell{cmd: STP})
 			case "SUB":
+				code.labels[scmd[1]] = pos
 				cells = append(cells, Cell{cmd: SUB, argStr: scmd[1]})
 			case "END":
 				cells = append(cells, Cell{cmd: END})
@@ -624,19 +628,7 @@ func parseCode(codeStr string) *Code {
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
 func (fvm *ForthVM) Run(codeStr string) {
-	labels := make(map[string]int)
 	codeData := parseCode(codeStr)
-
-	for pos, cell := range codeData.cells {
-		switch cell.cmd {
-		case NOP:
-			labels[cell.argStr] = pos
-		case SUB:
-			labels[cell.argStr] = pos
-		}
-	}
-
-	// TODO: verbose Flag um ByteCode auszublenden
 
 	fvm.ln = -1
 	fvm.l_len = codeData.numLocals
@@ -682,10 +674,10 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case NOP:
 			// pass
 		case JMP:
-			progPtr = labels[command.argStr] - 1
+			progPtr = codeData.labels[command.argStr] - 1
 		case JIN:
 			if fvm.jin() {
-				progPtr = labels[command.argStr] - 1
+				progPtr = codeData.labels[command.argStr] - 1
 			}
 		case SBI:
 			fvm.sbi()
@@ -753,7 +745,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case CALL:
 			// push callstack
 			returnStack = append(returnStack, progPtr)
-			progPtr = labels[command.argStr]
+			progPtr = codeData.labels[command.argStr]
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
