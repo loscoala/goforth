@@ -479,13 +479,21 @@ func (c Cell) String() string {
 	return fmt.Sprintf("{cmd:%d, arg:%d, argStr:%s}", c.cmd, c.arg, c.argStr)
 }
 
+type Code struct {
+	cells     []Cell
+	numLocals int
+	posMain   int
+}
+
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
-func parseCode(code string) ([]Cell, int) {
-	cmds := strings.Split(code, ";")
+func parseCode(codeStr string) *Code {
+	code := new(Code)
+
+	cmds := strings.Split(codeStr, ";")
 	cells := make([]Cell, 0, len(cmds)+1)
 	locals := new(Stack)
 
-	for _, cmd := range cmds {
+	for pos, cmd := range cmds {
 		if cmd == "" {
 			//fmt.Println("EMPTY")
 			continue
@@ -585,6 +593,7 @@ func parseCode(code string) ([]Cell, int) {
 			case "END":
 				cells = append(cells, Cell{cmd: END})
 			case "MAIN":
+				code.posMain = pos
 				cells = append(cells, Cell{cmd: MAIN})
 			case "LCTX":
 				cells = append(cells, Cell{cmd: LCTX})
@@ -607,21 +616,21 @@ func parseCode(code string) ([]Cell, int) {
 		}
 	}
 
-	return cells, locals.Len()
+	code.cells = cells
+	code.numLocals = locals.Len()
+
+	return code
 }
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
 func (fvm *ForthVM) Run(codeStr string) {
 	labels := make(map[string]int)
-	code, num_locals := parseCode(codeStr)
-	progPtr := 0
+	codeData := parseCode(codeStr)
 
-	for pos, cell := range code {
+	for pos, cell := range codeData.cells {
 		switch cell.cmd {
 		case NOP:
 			labels[cell.argStr] = pos
-		case MAIN:
-			progPtr = pos + 1
 		case SUB:
 			labels[cell.argStr] = pos
 		}
@@ -630,7 +639,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	// TODO: verbose Flag um ByteCode auszublenden
 
 	fvm.ln = -1
-	fvm.l_len = num_locals
+	fvm.l_len = codeData.numLocals
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
 	done := false
@@ -639,9 +648,9 @@ func (fvm *ForthVM) Run(codeStr string) {
 	numCmds := int64(0)
 	start := time.Now()
 
-	for ; !done; progPtr++ {
+	for progPtr := codeData.posMain + 1; !done; progPtr++ {
 		numCmds++
-		command := code[progPtr]
+		command := codeData.cells[progPtr]
 
 		switch command.cmd {
 		case RDI:
