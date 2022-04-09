@@ -347,9 +347,9 @@ func (fvm *ForthVM) swp() {
 }
 
 func (fvm *ForthVM) sys() {
-	value := fvm.pop()
+	syscall := fvm.pop()
 
-	switch value {
+	switch syscall {
 	case 1:
 		mod := fvm.pop()
 		n := fvm.pop()
