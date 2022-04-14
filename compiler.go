@@ -143,6 +143,13 @@ func parseAuto(data string) string {
 				} else {
 					result = append(result, i)
 				}
+			case 's':
+				if data[index+1] == '"' {
+					tmpStr = append(tmpStr, i)
+					state = 7
+				} else {
+					result = append(result, i)
+				}
 			default:
 				result = append(result, i)
 			}
@@ -210,9 +217,7 @@ func reverse(s string) string {
 
 func compile_m(str string, base int) []rune {
 	result := make([]rune, 0, 100)
-
-	result = append(result, '0')
-	result = append(result, ' ')
+	result = append(result, []rune("0 ")...)
 
 	for _, i := range reverse(str) {
 		for _, j := range fmt.Sprintf("%d ", int(i)) {
@@ -221,6 +226,23 @@ func compile_m(str string, base int) []rune {
 	}
 
 	for _, i := range fmt.Sprintf("%d !s ", base) {
+		result = append(result, i)
+	}
+
+	return result
+}
+
+func compile_m2(str string) []rune {
+	result := make([]rune, 0, 100)
+	result = append(result, []rune("{ n } 0 ")...)
+
+	for _, i := range reverse(str) {
+		for _, j := range fmt.Sprintf("%d ", int(i)) {
+			result = append(result, j)
+		}
+	}
+
+	for _, i := range "n !s " {
 		result = append(result, i)
 	}
 
@@ -240,6 +262,8 @@ func handleForthString(str string) []rune {
 		}
 		pos := 4 + len(fstring[1])
 		return compile_m(str[pos:len(str)-1], base)
+	case "s\"":
+		return compile_m2(str[3 : len(str)-1])
 	default:
 		log.Fatalf("Unknown type of string found %s\n", fstring[0])
 	}
