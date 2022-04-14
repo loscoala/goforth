@@ -281,7 +281,7 @@ func (fc *ForthCompiler) Parse(str string) {
 	}
 }
 
-func (fc *ForthCompiler) compileWordWithLocals(wordDef *Stack, result *Stack) {
+func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) {
 	localMode := false
 	localCounter := 0
 	var localDefs *Stack
@@ -314,6 +314,8 @@ func (fc *ForthCompiler) compileWordWithLocals(wordDef *Stack, result *Stack) {
 			}
 			result.Push("LSET " + word2)
 			assignMode = false
+		} else if word2 == word {
+			result.Push("CALL " + word)
 		} else {
 			fc.compileWord(word2, result)
 		}
@@ -359,14 +361,14 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 			if _, ok := fc.funcs[word]; !ok {
 				funcDef := new(Stack)
 				funcDef.Push("SUB " + word)
-				fc.compileWordWithLocals(wordDef, funcDef)
+				fc.compileWordWithLocals(word, wordDef, funcDef)
 				funcDef.Push("END")
 				fc.funcs[word] = funcDef
 			}
 
 			result.Push("CALL " + word)
 		} else {
-			fc.compileWordWithLocals(wordDef, result)
+			fc.compileWordWithLocals(word, wordDef, result)
 		}
 	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
 		result.Push("LCL " + word)
