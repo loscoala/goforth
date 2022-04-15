@@ -199,9 +199,7 @@ func compile_s(str string) []rune {
 	result := make([]rune, 0, 100)
 
 	for _, i := range str {
-		for _, j := range fmt.Sprintf("%d emit ", int(i)) {
-			result = append(result, j)
-		}
+		result = append(result, []rune(fmt.Sprintf("%d emit ", int(i)))...)
 	}
 
 	return result
@@ -220,14 +218,10 @@ func compile_m(str string, base int) []rune {
 	result = append(result, []rune("0 ")...)
 
 	for _, i := range reverse(str) {
-		for _, j := range fmt.Sprintf("%d ", int(i)) {
-			result = append(result, j)
-		}
+		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
 
-	for _, i := range fmt.Sprintf("%d !s ", base) {
-		result = append(result, i)
-	}
+	result = append(result, []rune(fmt.Sprintf("%d !s ", base))...)
 
 	return result
 }
@@ -237,14 +231,10 @@ func compile_m2(str string) []rune {
 	result = append(result, []rune("{ n } 0 ")...)
 
 	for _, i := range reverse(str) {
-		for _, j := range fmt.Sprintf("%d ", int(i)) {
-			result = append(result, j)
-		}
+		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
 
-	for _, i := range "n !s end " {
-		result = append(result, i)
-	}
+	result = append(result, []rune("n !s end ")...)
 
 	return result
 }
