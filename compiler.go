@@ -242,7 +242,7 @@ func compile_m2(str string) []rune {
 		}
 	}
 
-	for _, i := range "n !s " {
+	for _, i := range "n !s end " {
 		result = append(result, i)
 	}
 
@@ -340,6 +340,10 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			assignMode = false
 		} else if word2 == word {
 			result.Push("CALL " + word)
+		} else if word2 == "end" {
+			localCounter--
+			fc.locals.ExPop()
+			result.Push("LCLR")
 		} else {
 			fc.compileWord(word2, result)
 		}

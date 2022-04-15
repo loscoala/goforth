@@ -21,7 +21,7 @@ const (
 )
 
 var baseSyntax = []string{
-	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "if", "then", "else", "{", "}", "until", "again", "leave", "to",
+	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "if", "then", "else", "{", "}", "until", "again", "leave", "to", "end",
 }
 
 func isBaseSytax(word string) bool {
@@ -80,10 +80,18 @@ func (fc *ForthCompiler) printDefinition(word string) {
 		p, ok2 := fc.data[word]
 
 		if !ok2 {
-			if colored {
-				fmt.Printf("Unknown word %s%s%s\n", FAIL, word, ENDC)
+			if isBaseSytax(word) {
+				if colored {
+					fmt.Printf("Word %s is a compiler builtin.\n", getWordColored(fc, word))
+				} else {
+					fmt.Printf("Word \"%s\" is a compiler builtin.\n", word)
+				}
 			} else {
-				fmt.Printf("Unknown word \"%s\"\n", word)
+				if colored {
+					fmt.Printf("Unknown word %s%s%s\n", FAIL, word, ENDC)
+				} else {
+					fmt.Printf("Unknown word \"%s\"\n", word)
+				}
 			}
 		} else {
 			if colored {
