@@ -346,6 +346,22 @@ func (fvm *ForthVM) swp() {
 	fvm.stack[fvm.n-1] = a
 }
 
+func (fvm *ForthVM) getString() string {
+	value := fvm.pop()
+	length := fvm.mem[value]
+	var builder strings.Builder
+
+	for i := int64(0); i < length; i++ {
+		err := builder.WriteByte(byte(fvm.mem[value+1+i]))
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return builder.String()
+}
+
 func (fvm *ForthVM) sys() {
 	syscall := fvm.pop()
 
@@ -367,8 +383,9 @@ func (fvm *ForthVM) sys() {
 		value := fvm.fpop()
 		fvm.push(int64(value))
 	case 5:
-		// dest-addr readfile
-		content, err := os.ReadFile("file.txt")
+		// name-addr dest-addr readfile
+		name := fvm.getString()
+		content, err := os.ReadFile(name)
 
 		if err != nil {
 			log.Fatal(err)
@@ -385,7 +402,8 @@ func (fvm *ForthVM) sys() {
 	case 6:
 		// read memory from image
 		// name-addr readimage
-		content, err := os.ReadFile("file.image")
+		name := fvm.getString()
+		content, err := os.ReadFile(name)
 
 		if err != nil {
 			log.Fatal(err)
@@ -407,7 +425,8 @@ func (fvm *ForthVM) sys() {
 			log.Fatal(err)
 		}
 
-		err = os.WriteFile("file.image", buf.Bytes(), 0666)
+		name := fvm.getString()
+		err = os.WriteFile(name, buf.Bytes(), 0666)
 
 		if err != nil {
 			log.Fatal(err)
