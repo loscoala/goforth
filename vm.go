@@ -383,7 +383,7 @@ func (fvm *ForthVM) sys() {
 		value := fvm.fpop()
 		fvm.push(int64(value))
 	case 5:
-		// name-addr dest-addr readfile
+		// dest-addr name-addr readfile
 		name := fvm.getString()
 		content, err := os.ReadFile(name)
 
@@ -416,7 +416,7 @@ func (fvm *ForthVM) sys() {
 			log.Fatal(err)
 		}
 	case 7:
-		// write memory to image
+		// write memory into image
 		// name-addr writeimage
 		buf := new(bytes.Buffer)
 		err := binary.Write(buf, binary.LittleEndian, fvm.mem)

@@ -36,6 +36,9 @@
 ;
 : i->f 3 sys ;
 : f->i 4 sys ;
+: readfile ( dest-addr name-addr -- ) 5 sys ;
+: readimage ( name-addr -- ) 6 sys ;
+: writeimage ( name-addr -- ) 7 sys ;
 
 : 0< 0 < ;
 : 0= 0 = ;
