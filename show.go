@@ -127,7 +127,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 
 func (fc *ForthCompiler) printByteCode() {
 	if colored {
-		for _, cmd := range strings.Split(fc.output.String(), ";") {
+		for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 			if cmd == "" {
 				continue
 			}
@@ -135,7 +135,7 @@ func (fc *ForthCompiler) printByteCode() {
 		}
 		fmt.Println("")
 	} else {
-		fmt.Println(fc.output.String())
+		fmt.Println(fc.ByteCode())
 	}
 }
 
@@ -197,7 +197,7 @@ func (fc *ForthCompiler) StartREPL() {
 
 		fc.printByteCode()
 
-		fvm.Run(fc.output.String())
+		fvm.Run(fc.ByteCode())
 		fmt.Println("")
 	}
 }
@@ -206,5 +206,5 @@ func (fc *ForthCompiler) RunFile(str string) {
 	fc.ParseFile(str)
 	fc.Compile()
 	fvm := NewForthVM()
-	fvm.Run(fc.output.String())
+	fvm.Run(fc.ByteCode())
 }

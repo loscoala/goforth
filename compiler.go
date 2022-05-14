@@ -10,8 +10,11 @@ import (
 
 /* --------- For later use --------------
 type Compiler interface {
-	Compile(s string) *Stack
+	Compile()
 	Parse(s string)
+	ParseFile(filename string)
+	StartREPL()
+	RunFile(filename string)
 }
 */
 
@@ -69,6 +72,10 @@ func NewForthCompiler() *ForthCompiler {
 	}
 	ft.defs = make(map[string]*Stack)
 	return ft
+}
+
+func (fc *ForthCompiler) ByteCode() string {
+	return fc.output.String()
 }
 
 func (fc *ForthCompiler) Compile() {
