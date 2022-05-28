@@ -21,7 +21,7 @@ const (
 )
 
 var baseSyntax = []string{
-	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "if", "then", "else", "{", "}", "until", "again", "leave", "to", "end",
+	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "-loop", "if", "then", "else", "{", "}", "until", "again", "leave", "to", "end",
 }
 
 func isBaseSytax(word string) bool {
