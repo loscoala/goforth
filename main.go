@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"os"
+	"path"
 )
 
 var (
@@ -24,7 +26,7 @@ func main() {
 	fc := NewForthCompiler()
 
 	// fc.Parse("\\ comment here \n: add2 2 + ;")
-	fc.ParseFile("core.fs")
+	fc.ParseFile(path.Dir(os.Args[0]) + "/core.fs")
 
 	if len(fname) == 0 {
 		fc.StartREPL()
