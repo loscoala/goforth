@@ -29,20 +29,53 @@ In the Shebang you can alternatively write the following:
 
 The compiler loads `core.fs` automatically.
 
-## Dependencies
+## Build and Dependencies
 
-- All you need is a golang compiler 1.17.x. No other dependencies.
+- All you need is a golang compiler 1.17. No other dependencies.
+
+- Simply build the project with
+
+```sh
+go build
+```
+
+## Howto start
+
+Start goforth an in the REPL you can look what the dictionary contains by typing:
+
+| command | description |
+|---|---|
+| % | Shows the complete dictionary |
+| % name | Shows the definition of *name* in the dictionary |
+| # filename | Loads a file |
+
+## Examples
+
+Start the interpreter:
+
+```sh
+./goforth
+```
+Then inside the REPL type the following:
+
+```forth
+# examples/mandelbrot.fs \ loads the file mandelbrot.fs and parses it
+mb-init \ compile and run mb-init
+mb \ compile and run mb
+```
+
+As a result you see a zoom in the mandelbrot fractal.
 
 ## Description of the files
 
 | filename | description |
 |---|---|
-| main.go | The REPL and main function |
+| main.go | The main function |
 | compiler.go | The forth compiler |
 | vm.go | A stack machine with additional functionality for forth |
 | stack.go | A stack of strings implementation |
 | label.go | A label generator for the bytecode |
-| show.go | TODO |
+| show.go | Visual representation and the REPL  |
 
 ## VM commands
 
