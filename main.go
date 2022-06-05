@@ -26,7 +26,7 @@ func main() {
 	fc := NewForthCompiler()
 
 	// fc.Parse("\\ comment here \n: add2 2 + ;")
-	fc.ParseFile(path.Dir(os.Args[0]) + "/core.fs")
+	fc.ParseFile(path.Join(path.Dir(os.Args[0]), "core.fs"))
 
 	if len(fname) == 0 {
 		fc.StartREPL()
