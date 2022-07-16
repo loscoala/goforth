@@ -29,13 +29,23 @@ In the Shebang you can alternatively write the following:
 
 The compiler loads `core.fs` automatically.
 
+## Installation
+
+If you do want to get the latest version of `goforth`, change to any directory that is both outside of your `GOPATH` and outside of a module (a temp directory is fine), and run:
+
+```sh
+go install github.com/loscoala/goforth@latest
+```
+
 ## Build and Dependencies
 
-- All you need is a golang compiler 1.17. No other dependencies.
+- All you need is a golang compiler 1.18. No other dependencies.
 
 - Simply build the project with
 
 ```sh
+git clone https://github.com/loscoala/goforth.git
+cd goforth
 go build
 ```
 
