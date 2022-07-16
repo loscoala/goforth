@@ -51,7 +51,7 @@ go build
 
 ## Howto start
 
-Start goforth an in the REPL you can look what the dictionary contains by typing:
+Start `./goforth` and in the REPL you can look what the dictionary contains by typing:
 
 | command | description |
 |---|---|
@@ -70,12 +70,42 @@ Start the interpreter:
 Then inside the REPL type the following:
 
 ```forth
-# examples/mandelbrot.fs \ loads the file mandelbrot.fs and parses it
-mb-init \ compile and run mb-init
-mb \ compile and run mb
+# examples/mandelbrot.fs   \ loads the file mandelbrot.fs and parses it
+mb-init                    \ compile and run mb-init
+mb                         \ compile and run mb
 ```
 
 As a result you see a zoom in the mandelbrot fractal.
+
+You can also define new words:
+
+```forth
+: myadd 2 + ;
+```
+
+Or words with a local context:
+
+```forth
+: fakulty
+  1 { x }
+  1+ 1 ?do
+    x i * to x
+  loop
+  x
+;
+```
+
+then run it:
+
+```forth
+5 fakulty .
+```
+
+which prints:
+
+```forth
+120
+```
 
 ## Description of the files
 
