@@ -4,11 +4,22 @@ This is a compiler and interpreter for a forth-like language.
 
 In general, Forth is, among other things, a programming language whose ideals are freedom and simplicity. Freedom requires knowledge and responsibility, and simplicity is yet more demanding. But "simple" can also mean rudimentary. This Forth attempts to be simple as possible and also fast as possible.
 
-In this forth you can define local variables with curley brackets like in other forths and produce callable subroutines. The compiler produces human readable bytecode and is amazingly fast..
+In this forth you can define local variables with curley brackets like in other forths and produce callable subroutines. The compiler produces human readable bytecode and is amazingly fast...
 
 ## Overview
 
 `goforth` is the interactive compiler which produces a sequence of commands for a virtual stack machine also known as "Forth machine". The code is then interpreted and executed.
+
+## Why goforth?
+
+This implementation uses static memory at the runtime of the ForthVM. No allocations.
+
+Memory needed:
+1000x int64 <- for the memory
+100x int64  <- locals
+100x int64  <- return stack
+
+Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`.
 
 ## Usage
 
