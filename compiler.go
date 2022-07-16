@@ -278,11 +278,12 @@ func (fc *ForthCompiler) ParseFile(filename string) {
 	fc.Parse(string(data))
 }
 
-// {"main": ["1", "1", "+", ".", "quit"], "add": ["+"]}
 func (fc *ForthCompiler) Parse(str string) {
-	var inside bool
-	var first bool
-	var word string
+	var (
+		inside bool
+		first  bool
+		word   string
+	)
 
 	for _, i := range strings.Split(parseAuto(str), " ") {
 		if i == ":" {
@@ -303,10 +304,12 @@ func (fc *ForthCompiler) Parse(str string) {
 }
 
 func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) {
-	localMode := false
-	localCounter := 0
-	var localDefs *Stack
-	assignMode := false
+	var (
+		localMode    bool
+		localCounter int
+		localDefs    *Stack
+		assignMode   bool
+	)
 
 	for iter := wordDef.Iter(); iter.Next(); {
 		word2 := iter.Get()
