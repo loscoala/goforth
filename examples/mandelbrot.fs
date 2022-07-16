@@ -3,8 +3,8 @@
 \ : bounded? zdup zabs 2.0 f<= ;
 : bounded? zdup dup f* swap dup f* f+ 4.0 f<= ;
 
-: X-POS 0.43 ;
-: Y-POS 0.33 fnegate ;
+: X-POS 3.0 ;
+: Y-POS 1.0 fnegate ;
 \ : Y-POS 0.2166393884377127 fnegate ;
 
 : mb-kernel
@@ -29,7 +29,7 @@
 : F-X-SIZE 128. ;
 : F-Y-SIZE 64. ;
 
-: scale-factor 0.9 ;
+: scale-factor 2.3 ;
 : scale-y i->f F-Y-SIZE f/ scale-factor f* Y-POS f+ ;
 : scale-x i->f F-X-SIZE f/ F-X-SIZE F-Y-SIZE f/ f- scale-factor f* X-POS f+ ;
 
