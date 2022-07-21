@@ -242,7 +242,7 @@ func compile_m2(str string) []rune {
 		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
 
-	result = append(result, []rune("n !s endctx ")...)
+	result = append(result, []rune("n !s done ")...)
 
 	return result
 }
@@ -341,7 +341,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			assignMode = false
 		} else if word2 == word {
 			result.Push("CALL " + word)
-		} else if word2 == "endctx" {
+		} else if word2 == "done" {
 			localCounter--
 			fc.locals.ExPop()
 			result.Push("LCLR")
