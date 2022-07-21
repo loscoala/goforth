@@ -182,3 +182,5 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | LCL | Pushes the local value on top of the stack |
 | LCLR | Clears the local definitions |
 | CALL name | Call a SUB routine. |
+| REF name | Pushes the address of a SUB on top of the stack |
+| EXC | Pops the top value from the stack and calls a SUB routine. |

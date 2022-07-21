@@ -484,6 +484,8 @@ const (
 	LCL
 	LCLR
 	CALL
+	REF
+	EXC
 )
 
 type Cell struct {
@@ -633,6 +635,10 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: LCLR})
 			case "CALL":
 				cells = append(cells, Cell{cmd: CALL, argStr: scmd[1]})
+			case "REF":
+				cells = append(cells, Cell{cmd: REF, argStr: scmd[1]})
+			case "EXC":
+				cells = append(cells, Cell{cmd: EXC})
 			default:
 				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
@@ -765,6 +771,11 @@ func (fvm *ForthVM) Run(codeStr string) {
 			// push callstack
 			returnStack = append(returnStack, progPtr)
 			progPtr = codeData.labels[command.argStr]
+		case REF:
+			fvm.push(int64(codeData.labels[command.argStr]))
+		case EXC:
+			returnStack = append(returnStack, progPtr)
+			progPtr = int(fvm.pop())
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}

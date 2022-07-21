@@ -23,6 +23,7 @@
   loop
   drop
 ;
+: map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;

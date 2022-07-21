@@ -69,6 +69,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2swap": "TWP",
 		"sys":   "SYS",
 		"rot":   "ROT",
+		"exec":  "EXC",
 	}
 	ft.defs = make(map[string]*Stack)
 	return ft
@@ -241,7 +242,7 @@ func compile_m2(str string) []rune {
 		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
 
-	result = append(result, []rune("n !s end ")...)
+	result = append(result, []rune("n !s endctx ")...)
 
 	return result
 }
@@ -340,7 +341,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			assignMode = false
 		} else if word2 == word {
 			result.Push("CALL " + word)
-		} else if word2 == "end" {
+		} else if word2 == "endctx" {
 			localCounter--
 			fc.locals.ExPop()
 			result.Push("LCLR")
@@ -400,6 +401,20 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		}
 	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
 		result.Push("LCL " + word)
+	} else if word[0] == '&' {
+		realWord := word[1:]
+		if wordDef, ok := fc.defs[realWord]; ok {
+			if _, ok := fc.funcs[realWord]; !ok {
+				funcDef := new(Stack)
+				funcDef.Push("SUB " + realWord)
+				fc.compileWordWithLocals(realWord, wordDef, funcDef)
+				funcDef.Push("END")
+				fc.funcs[realWord] = funcDef
+			}
+		} else {
+			log.Fatal("NameError: Unable to reference word \"" + realWord + "\": Unknown word.")
+		}
+		result.Push("REF " + realWord)
 	} else if word == "if" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JIN #" + lbl)
