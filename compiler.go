@@ -20,6 +20,7 @@ type Compiler interface {
 
 type ForthCompiler struct {
 	label  Label
+	blocks Label
 	labels Stack
 	leaves Stack
 	whiles Stack
@@ -321,6 +322,26 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			localDefs = new(Stack)
 			result.Push("LCTX")
 			continue
+		}
+
+		if word2 == "[" {
+			blockName := fc.blocks.CreateNewWord()
+			fc.defs[blockName] = new(Stack)
+			for iter.Next() {
+				word2 = iter.Get()
+				if word2 == "]" {
+					iter.Next()
+					word2 = iter.Get()
+					break
+				}
+				fc.defs[blockName].Push(word2)
+			}
+			funcDef := new(Stack)
+			funcDef.Push("SUB " + blockName)
+			fc.compileWordWithLocals(blockName, fc.defs[blockName], funcDef)
+			funcDef.Push("END")
+			fc.funcs[blockName] = funcDef
+			result.Push("REF " + blockName)
 		}
 
 		if localMode {

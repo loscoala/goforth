@@ -13,3 +13,9 @@ func (l *Label) CreateNewLabel() string {
 	l.label++
 	return lbl
 }
+
+func (l *Label) CreateNewWord() string {
+	lbl := fmt.Sprintf("b%d", l.label)
+	l.label++
+	return lbl
+}
