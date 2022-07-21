@@ -148,6 +148,8 @@
   loop
 ;
 
+: .s3 [ dup emit ] map ;
+
 : +s dup ++ dup @ + ! ;
 : -s -- ;
 
