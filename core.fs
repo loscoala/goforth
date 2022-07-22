@@ -24,6 +24,7 @@
   drop
 ;
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
+: each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
 : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;
@@ -148,7 +149,7 @@
   loop
 ;
 
-: .s3 [ dup emit ] map ;
+: .s3 [ emit ] each ;
 
 : +s dup ++ dup @ + ! ;
 : -s -- ;
