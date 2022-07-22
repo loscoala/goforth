@@ -311,6 +311,8 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		localCounter int
 		localDefs    *Stack
 		assignMode   bool
+		blockMode    bool
+		blockName    string
 	)
 
 	for iter := wordDef.Iter(); iter.Next(); {
@@ -325,23 +327,10 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		}
 
 		if word2 == "[" {
-			blockName := fc.blocks.CreateNewWord()
+			blockMode = true
+			blockName = fc.blocks.CreateNewWord()
 			fc.defs[blockName] = new(Stack)
-			for iter.Next() {
-				word2 = iter.Get()
-				if word2 == "]" {
-					iter.Next()
-					word2 = iter.Get()
-					break
-				}
-				fc.defs[blockName].Push(word2)
-			}
-			funcDef := new(Stack)
-			funcDef.Push("SUB " + blockName)
-			fc.compileWordWithLocals(blockName, fc.defs[blockName], funcDef)
-			funcDef.Push("END")
-			fc.funcs[blockName] = funcDef
-			result.Push("REF " + blockName)
+			continue
 		}
 
 		if localMode {
@@ -351,6 +340,18 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			} else {
 				localDefs.Push(word2)
 				result.Push("LDEF " + word2)
+			}
+		} else if blockMode {
+			if word2 == "]" {
+				blockMode = false
+				blockDef := new(Stack)
+				blockDef.Push("SUB " + blockName)
+				fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
+				blockDef.Push("END")
+				fc.funcs[blockName] = blockDef
+				result.Push("REF " + blockName)
+			} else {
+				fc.defs[blockName].Push(word2)
 			}
 		} else if word2 == "to" {
 			assignMode = true
