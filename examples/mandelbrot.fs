@@ -30,8 +30,8 @@
 : F-Y-SIZE 64. ;
 
 : scale-factor 2.3 ;
-: scale-y i->f F-Y-SIZE f/ scale-factor f* Y-POS f+ ;
-: scale-x i->f F-X-SIZE f/ F-X-SIZE F-Y-SIZE f/ f- scale-factor f* X-POS f+ ;
+: scale-y i>f F-Y-SIZE f/ scale-factor f* Y-POS f+ ;
+: scale-x i>f F-X-SIZE f/ F-X-SIZE F-Y-SIZE f/ f- scale-factor f* X-POS f+ ;
 
 : mb-init !" 0  ====+++++++++********#########%%%%%%%%@@@@@@@@@@@@" ;
 : mb-draw 20 / 1+ @ emit ;
