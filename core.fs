@@ -26,6 +26,8 @@
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
 : bi ( n a b -- na nb ) { b a } dup a exec swap b exec ;
+: if* ( n a b -- ) { b a } if a exec else b exec then ;
+: if+ rot if drop exec else nip exec then ;
 : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;
