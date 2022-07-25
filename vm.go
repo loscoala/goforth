@@ -290,6 +290,11 @@ func (fvm *ForthVM) dup() {
 	fvm.push(fvm.stack[fvm.n])
 }
 
+func (fvm *ForthVM) pick() {
+	value := int(fvm.pop())
+	fvm.push(fvm.stack[fvm.n-value])
+}
+
 func (fvm *ForthVM) ovr() {
 	fvm.push(fvm.stack[fvm.n-1])
 }
@@ -327,6 +332,15 @@ func (fvm *ForthVM) rot() {
 	fvm.push(b)
 	fvm.push(a)
 	fvm.push(c)
+}
+
+func (fvm *ForthVM) nrot() {
+	a := fvm.pop()
+	b := fvm.pop()
+	c := fvm.pop()
+	fvm.push(a)
+	fvm.push(c)
+	fvm.push(b)
 }
 
 func (fvm *ForthVM) tdp() {
@@ -486,6 +500,8 @@ const (
 	CALL
 	REF
 	EXC
+	PCK
+	NRT
 )
 
 type Cell struct {
@@ -639,6 +655,10 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: REF, argStr: scmd[1]})
 			case "EXC":
 				cells = append(cells, Cell{cmd: EXC})
+			case "PCK":
+				cells = append(cells, Cell{cmd: PCK})
+			case "NRT":
+				cells = append(cells, Cell{cmd: NRT})
 			default:
 				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
@@ -776,6 +796,10 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case EXC:
 			returnStack = append(returnStack, progPtr)
 			progPtr = int(fvm.pop())
+		case PCK:
+			fvm.pick()
+		case NRT:
+			fvm.nrot()
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}

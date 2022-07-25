@@ -71,6 +71,8 @@ func NewForthCompiler() *ForthCompiler {
 		"sys":   "SYS",
 		"rot":   "ROT",
 		"exec":  "EXC",
+		"pick":  "PCK",
+		"-rot":  "NRT",
 	}
 	ft.defs = make(map[string]*Stack)
 	return ft
