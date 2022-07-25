@@ -58,6 +58,8 @@
 : times swap begin dup 0> while swap dup exec swap 1- repeat 2drop ;
 \ : times { _times2_a } 0 ?do _times2_a exec loop ;
 
+: when swap if exec else drop then ;
+
 \ : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;
