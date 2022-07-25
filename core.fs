@@ -51,7 +51,7 @@
 
 
 \ : if* ( n a b -- ) { _if*_b _if*_a } if _if*_a exec else _if*_b exec then ;
-: if* rot if drop exec else nip exec then ;
+: if* rot if drop else nip then exec ;
 \ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
 \ : ifb2 { _ifb2_b _ifb2_a } [ 0<> _ifb2_a * ] [ 0= _ifb2_b * ] bi + exec ;
 
