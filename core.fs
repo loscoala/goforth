@@ -196,13 +196,7 @@
   then
 ;
 
-: fak
-  1 { x }
-  1+ 1 ?do
-    x i * to x
-  loop
-  x
-;
+: fak ( n -- n! ) 1+ 1 swap 1 ?do i * loop ;
 
 : raise
   1 { s x n }
