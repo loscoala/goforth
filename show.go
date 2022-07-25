@@ -132,6 +132,9 @@ func (fc *ForthCompiler) printByteCode() {
 				continue
 			}
 			fmt.Printf("%s%s%s;", WARNING, cmd, ENDC)
+			if cmd == "END" {
+				fmt.Println("")
+			}
 		}
 		fmt.Println("")
 	} else {
