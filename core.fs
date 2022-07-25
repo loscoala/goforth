@@ -25,9 +25,16 @@
 ;
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
-: bi ( n a b -- na nb ) { b a } dup a exec swap b exec ;
-: if* ( n a b -- ) { b a } if a exec else b exec then ;
-: if+ rot if drop exec else nip exec then ;
+: bi ( n a b -- na nb ) { _bi_b _bi_a } dup _bi_a exec swap _bi_b exec ;
+
+\ : if* ( n a b -- ) { _if*_b _if*_a } if _if*_a exec else _if*_b exec then ;
+: if* rot if drop exec else nip exec then ;
+\ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
+\ : ifb2 { _ifb2_b _ifb2_a } [ 0<> _ifb2_a * ] [ 0= _ifb2_b * ] bi + exec ;
+
+: times swap begin dup 0> while swap dup exec swap 1- repeat 2drop ;
+\ : times { _times2_a } 0 ?do _times2_a exec loop ;
+
 : -rot rot rot ;
 : nip swap drop ;
 : 2drop drop drop ;
