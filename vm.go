@@ -34,6 +34,7 @@ func NewForthVM() *ForthVM {
 	fvm.mem = make([]int64, 1000)
 	fvm.stack = make([]int64, 100)
 	fvm.n = -1
+	fvm.rstack = make([]int64, 0, 100)
 
 	return fvm
 }
@@ -701,7 +702,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
 	done := false
-	fvm.rstack = make([]int64, 0, 100)
+	fvm.rstack = fvm.rstack[:0]
 
 	numCmds := int64(0)
 	start := time.Now()

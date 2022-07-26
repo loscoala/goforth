@@ -77,6 +77,7 @@
 : readimage ( name-addr -- ) 6 sys ;
 : writeimage ( name-addr -- ) 7 sys ;
 
+: i r@ ;
 : 0< 0 < ;
 : 0= 0 = ;
 : 0> 0 > ;

@@ -8,19 +8,19 @@
 \ : Y-POS 0.2166393884377127 fnegate ;
 
 : mb-kernel
-  0 { i n ci c }
+  0 { _i n ci c }
   0. 0. \ z0
   begin
     bounded?
-    n i >
+    n _i >
     and
   while
     \ zn+1 = (zn * zn) + c
     zdup z* c ci z+
-    i 1+ to i
+    _i 1+ to _i
   repeat
   zdrop
-  i
+  _i
 ;
 
 : X-SIZE 128 ;

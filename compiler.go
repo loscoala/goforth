@@ -461,18 +461,14 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		result.Push("#" + lbl + " NOP")
 		fc.labels.Push(lbl)
 	} else if word == "do" || word == "?do" {
-		result.Push("LCTX")
-		result.Push("LDEF i")
-		result.Push("LDEF end")
-		{
-			stk := new(Stack)
-			stk.Push("i")
-			stk.Push("end")
-			fc.locals.Push(stk)
-		}
+		result.Push("SWP")
+		result.Push("TR")
+		result.Push("TR") // rstack: end i
 		if word == "?do" {
-			result.Push("LCL end")
-			result.Push("LCL i")
+			result.Push("FR")  // i
+			result.Push("RF")  // i end
+			result.Push("OVR") // i end i
+			result.Push("TR")  // i end
 			result.Push("EQI")
 			result.Push("NOT")
 			lbl := fc.label.CreateNewLabel()
@@ -487,20 +483,20 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		result.Push("JIN #" + lbl)
 		fc.whiles.Push(lbl)
 	} else if word == "loop" || word == "+loop" || word == "-loop" {
+		result.Push("FR")
 		if word == "-loop" {
-			result.Push("LCL i")
 			result.Push("SWP")
 			result.Push("SBI")
 		} else {
 			if word == "loop" {
 				result.Push("L 1")
 			}
-			result.Push("LCL i")
 			result.Push("ADI")
 		}
-		result.Push("LSET i")
-		result.Push("LCL end")
-		result.Push("LCL i")
+		result.Push("RF")  // i end
+		result.Push("SWP") // end i
+		result.Push("DUP") // end i i
+		result.Push("TR")  // end i
 		if word == "-loop" {
 			result.Push("LSI")
 		} else {
@@ -514,8 +510,10 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		if fc.dos.Len() > 0 {
 			result.Push("#" + fc.dos.ExPop() + " NOP")
 		}
-		fc.locals.ExPop()
-		result.Push("LCLR")
+		result.Push("FR")
+		result.Push("FR")
+		result.Push("DRP")
+		result.Push("DRP")
 	} else if word == "leave" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JMP #" + lbl)
