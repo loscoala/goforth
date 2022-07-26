@@ -55,7 +55,8 @@
 \ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
 \ : ifb2 { _ifb2_b _ifb2_a } [ 0<> _ifb2_a * ] [ 0= _ifb2_b * ] bi + exec ;
 
-: times swap begin dup 0> while swap dup exec swap 1- repeat 2drop ;
+: times swap 0 ?do dup exec loop drop ;
+\ : times swap begin dup 0> while swap dup exec swap 1- repeat 2drop ;
 \ : times { _times2_a } 0 ?do _times2_a exec loop ;
 
 : when swap if exec else drop then ;
