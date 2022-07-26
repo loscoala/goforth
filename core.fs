@@ -78,6 +78,19 @@
 : writeimage ( name-addr -- ) 7 sys ;
 
 : i r@ ;
+: j    \ jend j iend i jx --
+  r>   \ jend j iend i -- jx
+  r>   \ jend j iend -- jx i
+  r>   \ jend j -- jx i iend
+  r@   \ jend j -- jx i iend j
+  -rot \ jend j -- jx j i iend
+  >r   \ jend j iend -- jx j i
+  >r   \ jend j iend i -- jx j
+  swap \ jend j iend i -- j jx
+  >r   \ jend j iend i jx -- j
+;
+
+;
 : 0< 0 < ;
 : 0= 0 = ;
 : 0> 0 > ;
