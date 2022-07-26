@@ -514,6 +514,9 @@ const (
 	EXC
 	PCK
 	NRT
+	TR // to r
+	FR // from r
+	RF // r fetch
 )
 
 type Cell struct {
@@ -671,6 +674,12 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: PCK})
 			case "NRT":
 				cells = append(cells, Cell{cmd: NRT})
+			case "TR":
+				cells = append(cells, Cell{cmd: TR})
+			case "FR":
+				cells = append(cells, Cell{cmd: FR})
+			case "RF":
+				cells = append(cells, Cell{cmd: RF})
 			default:
 				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
@@ -808,6 +817,12 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.pick()
 		case NRT:
 			fvm.nrot()
+		case TR:
+			fvm.rpush(fvm.pop())
+		case FR:
+			fvm.push(fvm.rpop())
+		case RF:
+			fvm.push(fvm.rstack[len(fvm.rstack)-1])
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
