@@ -22,6 +22,7 @@ type ForthVM struct {
 	mem    []int64
 	stack  []int64
 	n      int
+	rstack []int64
 	lstack []Local
 	ln     int
 	l_len  int
@@ -45,6 +46,17 @@ func (fvm *ForthVM) push(i int64) {
 func (fvm *ForthVM) pop() int64 {
 	v := fvm.stack[fvm.n]
 	fvm.n -= 1
+	return v
+}
+
+func (fvm *ForthVM) rpush(i int64) {
+	fvm.rstack = append(fvm.rstack, i)
+}
+
+func (fvm *ForthVM) rpop() int64 {
+	pos := len(fvm.rstack) - 1
+	v := fvm.rstack[pos]
+	fvm.rstack = fvm.rstack[:pos]
 	return v
 }
 
@@ -680,7 +692,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
 	done := false
-	returnStack := make([]int, 0, 100)
+	fvm.rstack = make([]int64, 0, 100)
 
 	numCmds := int64(0)
 	start := time.Now()
@@ -771,10 +783,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case SUB:
 			// pass
 		case END:
-			// pop callstack
-			index := len(returnStack) - 1
-			progPtr = returnStack[index]
-			returnStack = returnStack[:index]
+			progPtr = int(fvm.rpop())
 		case MAIN:
 			// pass
 		case LCTX:
@@ -788,13 +797,12 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case LCLR:
 			fvm.lclr()
 		case CALL:
-			// push callstack
-			returnStack = append(returnStack, progPtr)
+			fvm.rpush(int64(progPtr))
 			progPtr = codeData.labels[command.argStr]
 		case REF:
 			fvm.push(int64(codeData.labels[command.argStr]))
 		case EXC:
-			returnStack = append(returnStack, progPtr)
+			fvm.rpush(int64(progPtr))
 			progPtr = int(fvm.pop())
 		case PCK:
 			fvm.pick()
