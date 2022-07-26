@@ -208,10 +208,13 @@ func parseAuto(data string) string {
 
 func compile_s(str string) []rune {
 	result := make([]rune, 0, 100)
+	result = append(result, []rune("0 ")...)
 
-	for _, i := range str {
-		result = append(result, []rune(fmt.Sprintf("%d emit ", int(i)))...)
+	for _, i := range reverse(str) {
+		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
+
+	result = append(result, []rune("print ")...)
 
 	return result
 }
