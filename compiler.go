@@ -40,8 +40,6 @@ func NewForthCompiler() *ForthCompiler {
 		"emit":  "PRA",
 		"key":   "RDI",
 		"=":     "EQI",
-		":":     "",
-		";":     "",
 		"<":     "LSI",
 		">":     "GRI",
 		"-":     "SBI",
