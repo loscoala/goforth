@@ -200,6 +200,7 @@
   while
     r> 1+ >r r@ !
   repeat
+  drop
   r>   \ adr_i
   r>   \ adr_i adr_end
   dup  \ adr_i adr_end adr_end

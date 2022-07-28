@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -230,28 +229,15 @@ func reverse(s string) string {
 	return string(r)
 }
 
-func compile_m(str string, base int) []rune {
+func compile_m(str string) []rune {
 	result := make([]rune, 0, 100)
-	result = append(result, []rune("0 ")...)
+	result = append(result, []rune(">r 0 ")...)
 
 	for _, i := range reverse(str) {
 		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
 	}
 
-	result = append(result, []rune(fmt.Sprintf("%d !s ", base))...)
-
-	return result
-}
-
-func compile_m2(str string) []rune {
-	result := make([]rune, 0, 100)
-	result = append(result, []rune("{ n } 0 ")...)
-
-	for _, i := range reverse(str) {
-		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
-	}
-
-	result = append(result, []rune("n !s done ")...)
+	result = append(result, []rune("r> !s ")...)
 
 	return result
 }
@@ -262,15 +248,8 @@ func handleForthString(str string) []rune {
 	switch fstring[0] {
 	case ".\"":
 		return compile_s(str[3 : len(str)-1])
-	case "!\"":
-		base, err := strconv.Atoi(fstring[1])
-		if err != nil {
-			log.Fatal(err)
-		}
-		pos := 4 + len(fstring[1])
-		return compile_m(str[pos:len(str)-1], base)
 	case "s\"":
-		return compile_m2(str[3 : len(str)-1])
+		return compile_m(str[3 : len(str)-1])
 	default:
 		log.Fatalf("Unknown type of string found %s\n", fstring[0])
 	}
