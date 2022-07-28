@@ -132,7 +132,7 @@
 : z! swap dup ! float+ ! ;
 : z@ dup @ float+ @ ;
 : z. swap ." (" f. ." , " f. ." i)" ;
-: zdup over over ;
+: zdup 2dup ;
 : zdrop 2drop ;
 : zover 2over ;
 : zswap 2swap ;
