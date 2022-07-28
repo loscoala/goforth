@@ -178,7 +178,7 @@
 
 : print begin dup 0> while emit repeat drop ;
 
-: !s 0 0 { n y x }
+: !s2 0 0 { n y x }
   x to y
   begin
     dup 0>
@@ -189,6 +189,25 @@
   repeat
   n x !
   drop
+;
+
+: !s \ 0 n1 n2 ...  adr
+  dup \ 0 n1 n2 ... adr adr --
+  >r  \ 0 n1 n2 ... adr -- adr
+  >r  \ 0 n1 n2 ... -- adr_end adr_i
+  begin
+    dup 0>
+  while
+    r> 1+ >r r@ !
+  repeat
+  r>   \ adr_i
+  r>   \ adr_i adr_end
+  dup  \ adr_i adr_end adr_end
+  rot \ adr_end adr_end adr_i
+  swap
+  -   \ adr_end n
+  swap
+  !
 ;
 
 : .s2 { pos }
