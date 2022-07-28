@@ -49,6 +49,15 @@
   swap \ na nb
 ;
 
+: bi2 \ n a b
+  >r  \ n a -- b
+  over \ n a n -- b
+  swap \ n n a -- b
+  exec \ n na -- b
+  swap \ na n -- b
+  r>   \ na n b
+  exec \ na nb
+;
 
 \ : if* ( n a b -- ) { _if*_b _if*_a } if _if*_a exec else _if*_b exec then ;
 : if* rot if drop else nip then exec ;
