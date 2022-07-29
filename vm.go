@@ -19,8 +19,8 @@ type Local struct {
 }
 
 type ForthVM struct {
-	mem    []int64
-	stack  []int64
+	mem    [1000]int64
+	stack  [100]int64
 	n      int
 	rstack []int64
 	lstack []Local
@@ -31,8 +31,6 @@ type ForthVM struct {
 func NewForthVM() *ForthVM {
 	fvm := new(ForthVM)
 
-	fvm.mem = make([]int64, 1000)
-	fvm.stack = make([]int64, 100)
 	fvm.n = -1
 	fvm.rstack = make([]int64, 0, 100)
 
