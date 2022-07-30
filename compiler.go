@@ -441,14 +441,9 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		result.Push("#" + lbl + " NOP")
 		fc.labels.Push(lbl)
 	} else if word == "do" || word == "?do" {
-		result.Push("SWP")
-		result.Push("TR")
-		result.Push("TR") // rstack: end i
+		result.Push("TTR") // rstack: end i
 		if word == "?do" {
-			result.Push("FR")  // i
-			result.Push("RF")  // i end
-			result.Push("OVR") // i end i
-			result.Push("TR")  // i end
+			result.Push("TRF") // end i
 			result.Push("EQI")
 			result.Push("NOT")
 			lbl := fc.label.CreateNewLabel()
@@ -490,8 +485,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		if fc.dos.Len() > 0 {
 			result.Push("#" + fc.dos.ExPop() + " NOP")
 		}
-		result.Push("FR")
-		result.Push("FR")
+		result.Push("TFR")
 		result.Push("DRP")
 		result.Push("DRP")
 	} else if word == "leave" {
