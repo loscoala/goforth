@@ -1,28 +1,8 @@
 
 : ? @ . ;
-: ?? 0 1000 mem ;
-: .?
-  dup 31 >
-  over
-  127 <
-  and
-  if
-    lb emit rb
-  else
-    drop
-  then
-;
-: mem
-  0 do
-    dup i +
-    dup @ 0<> if
-      dup . colon ? ( @ dup . .? ) space
-    else
-      drop
-    then
-  loop
-  drop
-;
+: ?? 1000 0 mem ;
+: mem do i @ dup if i . colon . space else drop then loop ;
+
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
 \ : bi ( n a b -- na nb ) { _bi_b _bi_a } dup _bi_a exec swap _bi_b exec ;
