@@ -371,6 +371,39 @@ func (fvm *ForthVM) swp() {
 	fvm.stack[fvm.n-1] = a
 }
 
+func (fvm *ForthVM) tr() {
+	fvm.rpush(fvm.pop())
+}
+
+func (fvm *ForthVM) fr() {
+	fvm.push(fvm.rpop())
+}
+
+func (fvm *ForthVM) rf() {
+	fvm.push(fvm.rstack[len(fvm.rstack)-1])
+}
+
+func (fvm *ForthVM) ttr() {
+	a := fvm.pop()
+	b := fvm.pop()
+
+	fvm.rpush(b)
+	fvm.rpush(a)
+}
+
+func (fvm *ForthVM) tfr() {
+	a := fvm.rpop()
+	b := fvm.rpop()
+
+	fvm.push(b)
+	fvm.push(a)
+}
+
+func (fvm *ForthVM) trf() {
+	fvm.push(fvm.rstack[len(fvm.rstack)-2])
+	fvm.push(fvm.rstack[len(fvm.rstack)-1])
+}
+
 func (fvm *ForthVM) getString() string {
 	value := fvm.pop()
 	length := fvm.mem[value]
@@ -513,9 +546,12 @@ const (
 	EXC
 	PCK
 	NRT
-	TR // to r
-	FR // from r
-	RF // r fetch
+	TR  // to r
+	FR  // from r
+	RF  // r fetch
+	TTR // 2 to r
+	TFR // 2 from r
+	TRF // 2 r fetch
 )
 
 type Cell struct {
@@ -682,6 +718,12 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: FR})
 			case "RF":
 				cells = append(cells, Cell{cmd: RF})
+			case "TTR":
+				cells = append(cells, Cell{cmd: TTR})
+			case "TFR":
+				cells = append(cells, Cell{cmd: TFR})
+			case "TRF":
+				cells = append(cells, Cell{cmd: TRF})
 			default:
 				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
@@ -820,11 +862,17 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case NRT:
 			fvm.nrot()
 		case TR:
-			fvm.rpush(fvm.pop())
+			fvm.tr()
 		case FR:
-			fvm.push(fvm.rpop())
+			fvm.fr()
 		case RF:
-			fvm.push(fvm.rstack[len(fvm.rstack)-1])
+			fvm.rf()
+		case TTR:
+			fvm.ttr()
+		case TFR:
+			fvm.tfr()
+		case TRF:
+			fvm.trf()
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
