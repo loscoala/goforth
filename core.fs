@@ -59,6 +59,16 @@
   exec \ na nb
 ;
 
+: bi3  \ n a b
+  >r   \ n a -- b
+  over \ n a n -- b
+  r>   \ n a n b
+  exec \ n a nb
+  >r   \ n a -- nb
+  exec \ na -- nb
+  r>   \ na nb
+;
+
 \ : if* ( n a b -- ) { _if*_b _if*_a } if _if*_a exec else _if*_b exec then ;
 : if* rot if drop else nip then exec ;
 \ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
