@@ -186,3 +186,9 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | EXC | Pops the top value from the stack and calls a SUB routine. |
 | PCK | dup = 0 pick |
 | NRT | -rot = rot rot |
+| TR | to r |
+| FR | from r |
+| RF | r fetch |
+| TTR | 2 to r |
+| TFR | 2 from r |
+| TRF | 2 r fetch |
