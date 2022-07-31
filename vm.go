@@ -689,6 +689,9 @@ func parseCode(codeStr string) *Code {
 			case "LCTX":
 				cells = append(cells, Cell{cmd: LCTX})
 			case "LSET":
+				if !locals.Contains(scmd[1]) {
+					locals.Push(scmd[1])
+				}
 				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
 			case "LDEF":
 				if !locals.Contains(scmd[1]) {
