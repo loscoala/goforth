@@ -88,6 +88,8 @@ mb                         \ compile and run mb
 
 As a result you see a zoom in the mandelbrot fractal.
 
+![mandelbrot-video](https://github.com/loscoala/goforth/raw/main/examples/manbelbrot.gif)
+
 You can also define new words:
 
 ```forth
