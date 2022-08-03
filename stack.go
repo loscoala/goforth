@@ -39,6 +39,24 @@ func (s *Stack) ExPop() string {
 	return value
 }
 
+func (s *Stack) Fetch() (string, bool) {
+	if s.IsEmpty() {
+		return "", false
+	}
+
+	index := s.Len() - 1
+	element := s.data[index]
+	return element, true
+}
+
+func (s *Stack) ExFetch() string {
+	value, ok := s.Fetch()
+	if !ok {
+		log.Fatal("Error: Fetch() from empty Stack")
+	}
+	return value
+}
+
 func (s *Stack) Reverse() *Stack {
 	var result Stack
 

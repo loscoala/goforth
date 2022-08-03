@@ -299,8 +299,8 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		localCounter int
 		localDefs    *Stack
 		assignMode   bool
-		blockMode    bool
-		blockName    string
+		blockCounter int
+		blockNames   Stack
 	)
 
 	for iter := wordDef.Iter(); iter.Next(); {
@@ -315,8 +315,9 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		}
 
 		if word2 == "[" {
-			blockMode = true
-			blockName = fc.blocks.CreateNewWord()
+			blockCounter++
+			blockName := fc.blocks.CreateNewWord()
+			blockNames.Push(blockName)
 			fc.defs[blockName] = new(Stack)
 			continue
 		}
@@ -329,9 +330,10 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 				localDefs.Push(word2)
 				result.Push("LDEF " + word2)
 			}
-		} else if blockMode {
+		} else if blockCounter > 0 {
 			if word2 == "]" {
-				blockMode = false
+				blockCounter--
+				blockName := blockNames.ExPop()
 				blockDef := new(Stack)
 				blockDef.Push("SUB " + blockName)
 				fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
@@ -339,6 +341,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 				fc.funcs[blockName] = blockDef
 				result.Push("REF " + blockName)
 			} else {
+				blockName := blockNames.ExFetch()
 				fc.defs[blockName].Push(word2)
 			}
 		} else if word2 == "to" {
