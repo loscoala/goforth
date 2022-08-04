@@ -106,7 +106,7 @@ func (fc *ForthCompiler) Compile() {
 	}
 }
 
-func parseAuto(data string) string {
+func (fc *ForthCompiler) parseAuto(data string) string {
 	result := make([]rune, 0, len(data)+1)
 	tmpStr := make([]rune, 0, 100)
 	state := 0
@@ -127,7 +127,7 @@ func parseAuto(data string) string {
 			case ' ':
 			default:
 				state = 6
-				// state6_line.append
+				tmpStr = append(tmpStr, i)
 			}
 		case 1:
 			switch i {
@@ -186,10 +186,11 @@ func parseAuto(data string) string {
 		case 6:
 			if i == '\n' {
 				state = 0
-				// TODO:
-			} // else {
-			// TODO:
-			// }
+				fc.handleMeta(string(tmpStr))
+				tmpStr = tmpStr[:0]
+			} else {
+				tmpStr = append(tmpStr, i)
+			}
 		case 7:
 			// consume "
 			tmpStr = append(tmpStr, i)
@@ -275,7 +276,7 @@ func (fc *ForthCompiler) Parse(str string) {
 		word   string
 	)
 
-	for _, i := range strings.Split(parseAuto(str), " ") {
+	for _, i := range strings.Split(fc.parseAuto(str), " ") {
 		if i == ":" {
 			first = true
 		} else if i == ";" {
@@ -290,6 +291,16 @@ func (fc *ForthCompiler) Parse(str string) {
 		} else if inside {
 			fc.defs[word].Push(i)
 		}
+	}
+}
+
+func (fc *ForthCompiler) handleMeta(meta string) {
+	cmd := strings.Split(meta, " ")
+
+	if cmd[0] == "use" {
+		fc.ParseFile(cmd[1])
+	} else {
+		log.Printf("INFO: Unknown meta command %s\n", cmd[0])
 	}
 }
 
