@@ -65,6 +65,7 @@
 : 2drop drop drop ;
 : 2nip 2swap 2drop ;
 : tuck swap over ;
+: spin -rot swap ;
 : negate 0 swap - ;
 : fnegate 0. swap f- ;
 : vswap
