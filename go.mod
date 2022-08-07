@@ -1,3 +1,3 @@
 module github.com/loscoala/goforth
 
-go 1.18
+go 1.19
