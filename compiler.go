@@ -86,7 +86,7 @@ func (fc *ForthCompiler) ByteCode() string {
 }
 
 func (fc *ForthCompiler) Compile() {
-	result := new(Stack)
+	result := NewStack()
 	fc.funcs = make(map[string]*Stack)
 	fc.output.Reset()
 
@@ -284,7 +284,7 @@ func (fc *ForthCompiler) Parse(str string) {
 		} else if i == "" {
 			continue
 		} else if first {
-			fc.defs[i] = new(Stack)
+			fc.defs[i] = NewStack()
 			word = i
 			first = false
 			inside = true
@@ -320,7 +320,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		if word2 == "{" {
 			localMode = true
 			localCounter++
-			localDefs = new(Stack)
+			localDefs = NewStack()
 			result.Push("LCTX")
 			continue
 		}
@@ -329,7 +329,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			blockCounter++
 			blockName := fc.blocks.CreateNewWord()
 			blockNames.Push(blockName)
-			fc.defs[blockName] = new(Stack)
+			fc.defs[blockName] = NewStack()
 			continue
 		}
 
@@ -345,7 +345,7 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			if word2 == "]" {
 				blockCounter--
 				blockName := blockNames.ExPop()
-				blockDef := new(Stack)
+				blockDef := NewStack()
 				blockDef.Push("SUB " + blockName)
 				fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
 				blockDef.Push("END")
@@ -412,7 +412,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 	} else if wordDef, ok := fc.defs[word]; ok {
 		if word != "main" && wordDef.Len() > 4 {
 			if _, ok := fc.funcs[word]; !ok {
-				funcDef := new(Stack)
+				funcDef := NewStack()
 				funcDef.Push("SUB " + word)
 				fc.compileWordWithLocals(word, wordDef, funcDef)
 				funcDef.Push("END")
@@ -429,7 +429,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 		realWord := word[1:]
 		if wordDef, ok := fc.defs[realWord]; ok {
 			if _, ok := fc.funcs[realWord]; !ok {
-				funcDef := new(Stack)
+				funcDef := NewStack()
 				funcDef.Push("SUB " + realWord)
 				fc.compileWordWithLocals(realWord, wordDef, funcDef)
 				funcDef.Push("END")

@@ -8,6 +8,12 @@ type Stack struct {
 	data []string
 }
 
+func NewStack() *Stack {
+	stack := new(Stack)
+	stack.data = make([]string, 0, 100)
+	return stack
+}
+
 func (s *Stack) Len() int {
 	return len(s.data)
 }
