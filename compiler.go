@@ -336,11 +336,11 @@ func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) {
 		}
 
 		if word == "]" {
-			if blockCounter > 0 {
-				blockCounter--
-			} else {
+			if blockCounter == 0 {
 				break
 			}
+
+			blockCounter--
 		}
 
 		fc.defs[blockName].Push(word)
