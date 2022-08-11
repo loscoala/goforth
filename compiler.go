@@ -304,75 +304,85 @@ func (fc *ForthCompiler) handleMeta(meta string) {
 	}
 }
 
+func (fc *ForthCompiler) compileLocals(iter *StackIter, result *Stack) {
+	localDefs := NewStack()
+	result.Push("LCTX")
+
+	for iter.Next() {
+		word := iter.Get()
+
+		if word == "}" {
+			break
+		}
+
+		localDefs.Push(word)
+		result.Push("LDEF " + word)
+	}
+
+	fc.locals.Push(localDefs)
+}
+
+func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) {
+	var blockCounter int
+
+	blockName := fc.blocks.CreateNewWord()
+	fc.defs[blockName] = NewStack()
+
+	for iter.Next() {
+		word := iter.Get()
+
+		if word == "[" {
+			blockCounter++
+		}
+
+		if word == "]" {
+			if blockCounter > 0 {
+				blockCounter--
+			} else {
+				break
+			}
+		}
+
+		fc.defs[blockName].Push(word)
+	}
+
+	blockDef := NewStack()
+	blockDef.Push("SUB " + blockName)
+	fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
+	blockDef.Push("END")
+	fc.funcs[blockName] = blockDef
+	result.Push("REF " + blockName)
+}
+
 func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) {
-	var (
-		localMode    bool
-		localCounter int
-		localDefs    *Stack
-		assignMode   bool
-		blockCounter int
-		blockNames   Stack
-	)
+	var localCounter int
 
 	for iter := wordDef.Iter(); iter.Next(); {
 		word2 := iter.Get()
 
 		if word2 == "{" {
-			localMode = true
 			localCounter++
-			localDefs = NewStack()
-			result.Push("LCTX")
-			continue
-		}
-
-		if word2 == "[" {
-			blockCounter++
-			blockName := fc.blocks.CreateNewWord()
-			blockNames.Push(blockName)
-			fc.defs[blockName] = NewStack()
-			continue
-		}
-
-		if localMode {
-			if word2 == "}" {
-				localMode = false
-				fc.locals.Push(localDefs)
-			} else {
-				localDefs.Push(word2)
-				result.Push("LDEF " + word2)
-			}
-		} else if blockCounter > 0 {
-			if word2 == "]" {
-				blockCounter--
-				blockName := blockNames.ExPop()
-				blockDef := NewStack()
-				blockDef.Push("SUB " + blockName)
-				fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
-				blockDef.Push("END")
-				fc.funcs[blockName] = blockDef
-				result.Push("REF " + blockName)
-			} else {
-				blockName := blockNames.ExFetch()
-				fc.defs[blockName].Push(word2)
-			}
+			fc.compileLocals(iter, result)
+		} else if word2 == "[" {
+			fc.compileBlock(iter, result)
 		} else if word2 == "to" {
-			assignMode = true
-		} else if assignMode {
+			iter.Next()
+			word2 = iter.Get()
 			if !fc.locals.Contains(word2) {
 				log.Fatal("NameError: Unable to assign word \"" + word2 + "\": not in local context")
 			}
 			result.Push("LSET " + word2)
-			assignMode = false
-		} else if word2 == word {
-			result.Push("CALL " + word)
-		} else if word2 == "done" {
+		} else if word == "done" {
 			localCounter--
 			fc.locals.ExPop()
 			result.Push("LCLR")
+		} else if word2 == word {
+			result.Push("CALL " + word)
 		} else {
 			fc.compileWord(word2, result)
 		}
 	}
+
 	for i := 0; i < localCounter; i++ {
 		fc.locals.ExPop()
 		result.Push("LCLR")
