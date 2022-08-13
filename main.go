@@ -22,17 +22,16 @@ func initFlags() {
 func main() {
 	initFlags()
 
-	// -----------------------
-
 	fc := NewForthCompiler()
 
-	// fc.Parse("\\ comment here \n: add2 2 + ;")
 	// fc.ParseFile(path.Join(path.Dir(os.Args[0]), "core.fs"))
 	fc.Parse(corefs)
 
 	if len(fname) == 0 {
 		fc.StartREPL()
 	} else {
-		fc.RunFile(fname)
+		if err := fc.RunFile(fname); err != nil {
+			printError(err)
+		}
 	}
 }

@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 )
 
-/* --------- For later use --------------
+// --------- For later use --------------
+/*
 type Compiler interface {
-	Compile()
+	Compile() error
 	Parse(s string)
-	ParseFile(filename string)
+	ParseFile(filename string) error
 	StartREPL()
-	RunFile(filename string)
+	RunFile(filename string) error
 }
 */
 
@@ -32,8 +32,8 @@ type ForthCompiler struct {
 }
 
 func NewForthCompiler() *ForthCompiler {
-	ft := new(ForthCompiler)
-	ft.data = map[string]string{
+	fc := new(ForthCompiler)
+	fc.data = map[string]string{
 		"!":     "STR",
 		"@":     "LV",
 		".":     "PRI",
@@ -77,20 +77,23 @@ func NewForthCompiler() *ForthCompiler {
 		"2r>":   "TFR",
 		"2r@":   "TRF",
 	}
-	ft.defs = make(map[string]*Stack)
-	return ft
+	fc.defs = make(map[string]*Stack)
+	return fc
 }
 
 func (fc *ForthCompiler) ByteCode() string {
 	return fc.output.String()
 }
 
-func (fc *ForthCompiler) Compile() {
+func (fc *ForthCompiler) Compile() error {
 	result := NewStack()
 	fc.funcs = make(map[string]*Stack)
 	fc.output.Reset()
 
-	fc.compileWord("main", result)
+	if err := fc.compileWord("main", result); err != nil {
+		return err
+	}
+
 	result.Push("STP")
 
 	for _, v := range fc.funcs {
@@ -104,6 +107,8 @@ func (fc *ForthCompiler) Compile() {
 	for iter := result.Iter(); iter.Next(); {
 		fc.output.WriteString(iter.Get() + ";")
 	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) parseAuto(data string) string {
@@ -252,21 +257,20 @@ func handleForthString(str string) []rune {
 		return compile_s(str[3 : len(str)-1])
 	case "s\"":
 		return compile_m(str[3 : len(str)-1])
-	default:
-		log.Fatalf("Unknown type of string found %s\n", fstring[0])
 	}
 
 	return nil
 }
 
-func (fc *ForthCompiler) ParseFile(filename string) {
+func (fc *ForthCompiler) ParseFile(filename string) error {
 	data, err := os.ReadFile(filename)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	fc.Parse(string(data))
+	return nil
 }
 
 func (fc *ForthCompiler) Parse(str string) {
@@ -299,8 +303,6 @@ func (fc *ForthCompiler) handleMeta(meta string) {
 
 	if cmd[0] == "use" {
 		fc.ParseFile(cmd[1])
-	} else {
-		log.Printf("INFO: Unknown meta command %s\n", cmd[0])
 	}
 }
 
@@ -322,7 +324,7 @@ func (fc *ForthCompiler) compileLocals(iter *StackIter, result *Stack) {
 	fc.locals.Push(localDefs)
 }
 
-func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) {
+func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) error {
 	var blockCounter int
 
 	blockName := fc.blocks.CreateNewWord()
@@ -348,13 +350,17 @@ func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) {
 
 	blockDef := NewStack()
 	blockDef.Push("SUB " + blockName)
-	fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef)
+	if err := fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef); err != nil {
+		return err
+	}
 	blockDef.Push("END")
 	fc.funcs[blockName] = blockDef
 	result.Push("REF " + blockName)
+
+	return nil
 }
 
-func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) {
+func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) error {
 	var localCounter int
 
 	for iter := wordDef.Iter(); iter.Next(); {
@@ -364,22 +370,26 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 			localCounter++
 			fc.compileLocals(iter, result)
 		} else if word2 == "[" {
-			fc.compileBlock(iter, result)
+			if err := fc.compileBlock(iter, result); err != nil {
+				return err
+			}
 		} else if word2 == "to" {
 			iter.Next()
 			word2 = iter.Get()
 			if !fc.locals.Contains(word2) {
-				log.Fatal("NameError: Unable to assign word \"" + word2 + "\": not in local context")
+				return fmt.Errorf("unable to assign word \"%s\": not in local context", word2)
 			}
 			result.Push("LSET " + word2)
-		} else if word == "done" {
+		} else if word2 == "done" {
 			localCounter--
 			fc.locals.ExPop()
 			result.Push("LCLR")
 		} else if word2 == word {
 			result.Push("CALL " + word)
 		} else {
-			fc.compileWord(word2, result)
+			if err := fc.compileWord(word2, result); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -387,6 +397,8 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, resu
 		fc.locals.ExPop()
 		result.Push("LCLR")
 	}
+
+	return nil
 }
 
 func isFloat(s string) bool {
@@ -412,7 +424,7 @@ func isNumeric(s string) bool {
 	return true
 }
 
-func (fc *ForthCompiler) compileWord(word string, result *Stack) {
+func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 	if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {
@@ -424,14 +436,18 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 			if _, ok := fc.funcs[word]; !ok {
 				funcDef := NewStack()
 				funcDef.Push("SUB " + word)
-				fc.compileWordWithLocals(word, wordDef, funcDef)
+				if err := fc.compileWordWithLocals(word, wordDef, funcDef); err != nil {
+					return err
+				}
 				funcDef.Push("END")
 				fc.funcs[word] = funcDef
 			}
 
 			result.Push("CALL " + word)
 		} else {
-			fc.compileWordWithLocals(word, wordDef, result)
+			if err := fc.compileWordWithLocals(word, wordDef, result); err != nil {
+				return err
+			}
 		}
 	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
 		result.Push("LCL " + word)
@@ -441,12 +457,14 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 			if _, ok := fc.funcs[realWord]; !ok {
 				funcDef := NewStack()
 				funcDef.Push("SUB " + realWord)
-				fc.compileWordWithLocals(realWord, wordDef, funcDef)
+				if err := fc.compileWordWithLocals(realWord, wordDef, funcDef); err != nil {
+					return err
+				}
 				funcDef.Push("END")
 				fc.funcs[realWord] = funcDef
 			}
 		} else {
-			log.Fatal("NameError: Unable to reference word \"" + realWord + "\": Unknown word.")
+			return fmt.Errorf("unable to reference word \"%s\": Unknown word", realWord)
 		}
 		result.Push("REF " + realWord)
 	} else if word == "if" {
@@ -530,6 +548,8 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) {
 			result.Push("#" + fc.whiles.ExPop() + " NOP")
 		}
 	} else {
-		log.Fatal("Word \"" + word + "\" unknown")
+		return fmt.Errorf("word \"%s\" unknown", word)
 	}
+
+	return nil
 }

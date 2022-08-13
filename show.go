@@ -73,6 +73,14 @@ func printWord(word string, s *Stack) {
 	fmt.Println(";")
 }
 
+func printError(err error) {
+	if colored {
+		fmt.Printf("%s[Error]%s: %s\n", FAIL, ENDC, err)
+	} else {
+		fmt.Printf("[Error]: %s\n", err)
+	}
+}
+
 func (fc *ForthCompiler) printDefinition(word string) {
 	s, ok := fc.defs[word]
 
@@ -186,7 +194,9 @@ func (fc *ForthCompiler) StartREPL() {
 			continue
 		} else if text[0] == '#' && len(text) > 1 {
 			// open a file an parse its contents
-			fc.ParseFile(text[2:])
+			if err := fc.ParseFile(text[2:]); err != nil {
+				printError(err)
+			}
 			continue
 		} else if text[0] == '$' && len(text) == 1 {
 			for i := 0; i <= fvm.n; i++ {
@@ -197,7 +207,11 @@ func (fc *ForthCompiler) StartREPL() {
 		}
 
 		fc.Parse(": main " + text + " ;")
-		fc.Compile()
+
+		if err := fc.Compile(); err != nil {
+			printError(err)
+			continue
+		}
 
 		fc.printByteCode()
 
@@ -206,9 +220,17 @@ func (fc *ForthCompiler) StartREPL() {
 	}
 }
 
-func (fc *ForthCompiler) RunFile(str string) {
-	fc.ParseFile(str)
-	fc.Compile()
+func (fc *ForthCompiler) RunFile(str string) error {
+	if err := fc.ParseFile(str); err != nil {
+		return err
+	}
+
+	if err := fc.Compile(); err != nil {
+		return err
+	}
+
 	fvm := NewForthVM()
 	fvm.Run(fc.ByteCode())
+
+	return nil
 }
