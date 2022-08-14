@@ -239,3 +239,18 @@ func (fc *ForthCompiler) RunFile(str string) error {
 
 	return nil
 }
+
+func (fc *ForthCompiler) Run(prog string) error {
+	if err := fc.Parse(prog); err != nil {
+		return err
+	}
+
+	if err := fc.Compile(); err != nil {
+		return err
+	}
+
+	fvm := NewForthVM()
+	fvm.Run(fc.ByteCode())
+
+	return nil
+}

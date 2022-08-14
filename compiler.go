@@ -13,6 +13,7 @@ type Compiler interface {
 	ParseFile(filename string) error
 	StartREPL()
 	RunFile(filename string) error
+	Run(prog string) error
 }
 
 type ForthCompiler struct {
