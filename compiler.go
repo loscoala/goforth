@@ -6,16 +6,14 @@ import (
 	"strings"
 )
 
-// --------- For later use --------------
-/*
+// This is the public API for ForthCompiler.
 type Compiler interface {
 	Compile() error
-	Parse(s string)
+	Parse(s string) error
 	ParseFile(filename string) error
 	StartREPL()
 	RunFile(filename string) error
 }
-*/
 
 type ForthCompiler struct {
 	label  Label
@@ -111,7 +109,7 @@ func (fc *ForthCompiler) Compile() error {
 	return nil
 }
 
-func (fc *ForthCompiler) parseAuto(data string) string {
+func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 	result := make([]rune, 0, len(data)+1)
 	tmpStr := make([]rune, 0, 100)
 	state := 0
@@ -149,6 +147,9 @@ func (fc *ForthCompiler) parseAuto(data string) string {
 			case '\t':
 				result = append(result, ' ')
 			case '.':
+				if index+1 == len(data) {
+					break
+				}
 				if data[index+1] == '"' {
 					tmpStr = append(tmpStr, i)
 					state = 7
@@ -156,6 +157,9 @@ func (fc *ForthCompiler) parseAuto(data string) string {
 					result = append(result, i)
 				}
 			case '!':
+				if index+1 == len(data) {
+					break
+				}
 				if data[index+1] == '"' {
 					tmpStr = append(tmpStr, i)
 					state = 7
@@ -163,6 +167,9 @@ func (fc *ForthCompiler) parseAuto(data string) string {
 					result = append(result, i)
 				}
 			case 's':
+				if index+1 == len(data) {
+					break
+				}
 				if data[index+1] == '"' {
 					tmpStr = append(tmpStr, i)
 					state = 7
@@ -191,7 +198,9 @@ func (fc *ForthCompiler) parseAuto(data string) string {
 		case 6:
 			if i == '\n' {
 				state = 0
-				fc.handleMeta(string(tmpStr))
+				if err := fc.handleMeta(string(tmpStr)); err != nil {
+					return "", err
+				}
 				tmpStr = tmpStr[:0]
 			} else {
 				tmpStr = append(tmpStr, i)
@@ -212,7 +221,11 @@ func (fc *ForthCompiler) parseAuto(data string) string {
 		}
 	}
 
-	return string(result)
+	if state != 0 {
+		return "", fmt.Errorf("syntax error: state should be 0 but is %d", state)
+	}
+
+	return string(result), nil
 }
 
 func compile_s(str string) []rune {
@@ -269,18 +282,23 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 		return err
 	}
 
-	fc.Parse(string(data))
-	return nil
+	return fc.Parse(string(data))
 }
 
-func (fc *ForthCompiler) Parse(str string) {
+func (fc *ForthCompiler) Parse(str string) error {
 	var (
 		inside bool
 		first  bool
 		word   string
 	)
 
-	for _, i := range strings.Split(fc.parseAuto(str), " ") {
+	code, err := fc.parseAuto(str)
+
+	if err != nil {
+		return err
+	}
+
+	for _, i := range strings.Split(code, " ") {
 		if i == ":" {
 			first = true
 		} else if i == ";" {
@@ -296,14 +314,18 @@ func (fc *ForthCompiler) Parse(str string) {
 			fc.defs[word].Push(i)
 		}
 	}
+
+	return nil
 }
 
-func (fc *ForthCompiler) handleMeta(meta string) {
+func (fc *ForthCompiler) handleMeta(meta string) error {
 	cmd := strings.Split(meta, " ")
 
 	if cmd[0] == "use" {
-		fc.ParseFile(cmd[1])
+		return fc.ParseFile(cmd[1])
 	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) compileLocals(iter *StackIter, result *Stack) {

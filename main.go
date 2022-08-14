@@ -25,7 +25,9 @@ func main() {
 	fc := NewForthCompiler()
 
 	// fc.ParseFile(path.Join(path.Dir(os.Args[0]), "core.fs"))
-	fc.Parse(corefs)
+	if err := fc.Parse(corefs); err != nil {
+		printError(err)
+	}
 
 	if len(fname) == 0 {
 		fc.StartREPL()

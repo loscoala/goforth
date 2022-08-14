@@ -180,7 +180,9 @@ func (fc *ForthCompiler) StartREPL() {
 
 		if text[0] == ':' {
 			// just parse
-			fc.Parse(text)
+			if err := fc.Parse(text); err != nil {
+				printError(err)
+			}
 			continue
 		}
 
@@ -206,7 +208,10 @@ func (fc *ForthCompiler) StartREPL() {
 			continue
 		}
 
-		fc.Parse(": main " + text + " ;")
+		if err := fc.Parse(": main " + text + " ;"); err != nil {
+			printError(err)
+			continue
+		}
 
 		if err := fc.Compile(); err != nil {
 			printError(err)
