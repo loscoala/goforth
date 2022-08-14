@@ -421,6 +421,17 @@ func (fvm *ForthVM) getString() string {
 	return builder.String()
 }
 
+func (fvm *ForthVM) setString(str string) {
+	addr := fvm.pop()
+	length := int64(len(str))
+
+	fvm.mem[addr] = length
+
+	for i := int64(0); i < length; i++ {
+		fvm.mem[addr+1+i] = int64(str[i])
+	}
+}
+
 func (fvm *ForthVM) sys() {
 	syscall := fvm.pop()
 
@@ -450,14 +461,7 @@ func (fvm *ForthVM) sys() {
 			log.Fatal(err)
 		}
 
-		dest := fvm.pop()
-
-		content_len := int64(len(content))
-		fvm.mem[dest] = content_len
-
-		for i := int64(0); i < content_len; i++ {
-			fvm.mem[dest+1+i] = int64(content[i])
-		}
+		fvm.setString(string(content))
 	case 6:
 		// read memory from image
 		// name-addr readimage
