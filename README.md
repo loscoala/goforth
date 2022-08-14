@@ -16,7 +16,9 @@ This implementation uses static memory at the runtime of the ForthVM. No allocat
 
 Memory needed:
 1000x int64 <- for the memory
+
 100x int64  <- locals
+
 100x int64  <- return stack
 
 Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`.
@@ -25,20 +27,29 @@ Currently there is no parallel ForthVM execution via goroutines. If you want to 
 
 Simply execute `goforth`
 
-You can also execute forth-scripts:
+1. You can also execute forth-scripts:
 
 ```sh
 goforth --file=forthscript.fs
 ```
 
-In the Shebang you can alternatively write the following:
+2. In the Shebang you can alternatively write the following:
 
 ```md
 #!goforth --file
 # code goes here...
 ```
 
-The compiler loads `core.fs` automatically.
+3. Or in the command line:
+
+```sh
+goforth -script '
+: myfunc ." Hello World" ;
+: main myfunc ;
+'
+```
+
+The compiler has `core.fs` automatically included into the binary.
 
 ## Installation
 
