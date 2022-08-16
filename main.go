@@ -35,11 +35,11 @@ func main() {
 		if err := fc.Run(script); err != nil {
 			printError(err)
 		}
-	} else if len(fname) == 0 {
-		fc.StartREPL()
-	} else {
+	} else if len(fname) > 0 {
 		if err := fc.RunFile(fname); err != nil {
 			printError(err)
 		}
+	} else {
+		fc.StartREPL()
 	}
 }
