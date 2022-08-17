@@ -77,6 +77,7 @@
 : readfile ( dest-addr name-addr -- ) 5 sys ;
 : readimage ( name-addr -- ) 6 sys ;
 : writeimage ( name-addr -- ) 7 sys ;
+: read ( name-addr buffer-size -- ) 8 sys ;
 
 : i r@ ;
 : j    \ jend j iend i jx --

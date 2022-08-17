@@ -494,6 +494,15 @@ func (fvm *ForthVM) sys() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	case 8:
+		nbytes := fvm.pop()
+		buf := make([]byte, nbytes)
+		if n, err := os.Stdin.Read(buf); err != nil {
+			fvm.setString("")
+		} else {
+			str := string(buf[:n])
+			fvm.setString(str)
+		}
 	default:
 		fmt.Println("ERROR")
 	}
