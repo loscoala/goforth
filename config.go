@@ -1,7 +1,7 @@
 package goforth
 
 import (
-  _ "embed"
+	_ "embed"
 )
 
 // The core words dictionary
@@ -11,4 +11,3 @@ var Core string
 
 // Colored output
 var Colored bool
-
