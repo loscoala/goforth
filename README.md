@@ -25,7 +25,7 @@ Currently there is no parallel ForthVM execution via goroutines. If you want to 
 
 ## Usage
 
-Simply execute `goforth`
+Simply execute `goforth`. See "Installation"
 
 1. You can also execute forth-scripts:
 
@@ -56,7 +56,13 @@ The compiler has `core.fs` automatically included into the binary.
 If you do want to get the latest version of `goforth`, change to any directory that is both outside of your `GOPATH` and outside of a module (a temp directory is fine), and run:
 
 ```sh
-go install github.com/loscoala/goforth@latest
+go install github.com/loscoala/goforth/cmd/goforth@latest
+```
+
+If you do want to add the latest version to your go.mod inside your project run:
+
+```sh
+go get github.com/loscoala/goforth@latest
 ```
 
 ## Build and Dependencies
@@ -67,7 +73,7 @@ go install github.com/loscoala/goforth@latest
 
 ```sh
 git clone https://github.com/loscoala/goforth.git
-cd goforth
+cd goforth/cmd/goforth
 go build
 ```
 
@@ -129,6 +135,52 @@ which prints:
 
 ```forth
 120
+```
+
+## Embedding
+
+First, you have to add goforth to go.mod:
+
+```sh
+go get github.com/loscoala/goforth@latest
+```
+
+Then in golang you can import goforth:
+
+```go
+import "github.com/loscoala/goforth"
+```
+
+Now all you need is a ForthCompiler:
+
+```go
+fc := goforth.NewForthCompiler()
+
+fc.Fvm.Sysfunc = func(fvm goforth.VM, syscall int64) {
+  switch syscall {
+  case 999:
+    value := fvm.Pop()
+    result := fvm.Push(value + value)
+    fmt.Println("This is a custom sys call in Forth")
+  default:
+    fmt.Println("Not implemented")
+  }
+}
+
+// Parse the Core lib:
+if err := fc.Parse(goforth.Core); err != nil {
+  goforth.PrintError(err)
+}
+
+// Run some code:
+if err := fc.Run(": main .\" Hello World!\" ;"); err != nil {
+  goforth.PrintError(err)
+}
+
+// Call custom syscall (calculated 10+10 and prints it):
+if err := fc.Run(": customcall 999 sys ; : main 10 customcall . ;"); err != nil {
+  goforth.PrintError(err)
+}
 ```
 
 ## Description of the files
