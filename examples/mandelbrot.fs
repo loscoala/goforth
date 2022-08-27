@@ -1,4 +1,4 @@
-#!../goforth -file
+#!goforth -file
 
 \ : bounded? zdup zabs 2.0 f<= ;
 : bounded? zdup dup f* swap dup f* f+ 4.0 f<= ;

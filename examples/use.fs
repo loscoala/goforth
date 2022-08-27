@@ -1,4 +1,4 @@
-#!../goforth -file
+#!goforth -file
 
 use map.fs
 

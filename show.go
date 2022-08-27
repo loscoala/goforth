@@ -1,4 +1,4 @@
-package main
+package goforth
 
 import (
 	"bufio"
@@ -73,8 +73,8 @@ func printWord(word string, s *Stack) {
 	fmt.Println(";")
 }
 
-func printError(err error) {
-	if colored {
+func PrintError(err error) {
+	if Colored {
 		fmt.Printf("%s[Error]%s: %s\n", FAIL, ENDC, err)
 	} else {
 		fmt.Printf("[Error]: %s\n", err)
@@ -90,20 +90,20 @@ func (fc *ForthCompiler) printDefinition(word string) {
 
 		if !ok2 {
 			if isBaseSytax(word) {
-				if colored {
+				if Colored {
 					fmt.Printf("Word %s is a compiler builtin.\n", getWordColored(fc, word))
 				} else {
 					fmt.Printf("Word \"%s\" is a compiler builtin.\n", word)
 				}
 			} else {
-				if colored {
+				if Colored {
 					fmt.Printf("Unknown word %s%s%s\n", FAIL, word, ENDC)
 				} else {
 					fmt.Printf("Unknown word \"%s\"\n", word)
 				}
 			}
 		} else {
-			if colored {
+			if Colored {
 				fmt.Printf("%s %s %s %s\n", getWordColored(fc, ":"), getWordColored(fc, word),
 					getWordColored(fc, p), getWordColored(fc, ";"))
 			} else {
@@ -114,7 +114,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 		return
 	}
 
-	if colored {
+	if Colored {
 		printWordColored(fc, word, s)
 	} else {
 		printWord(word, s)
@@ -122,7 +122,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 }
 
 func (fc *ForthCompiler) printAllDefinitions() {
-	if colored {
+	if Colored {
 		for k, s := range fc.defs {
 			printWordColored(fc, k, s)
 		}
@@ -135,7 +135,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 }
 
 func (fc *ForthCompiler) printByteCode() {
-	if colored {
+	if Colored {
 		for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 			if cmd == "" {
 				continue
@@ -163,7 +163,6 @@ func isWhiteSpace(s string) bool {
 
 func (fc *ForthCompiler) StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
-	fvm := NewForthVM()
 
 	for {
 		fmt.Print("forth> ")
@@ -181,7 +180,7 @@ func (fc *ForthCompiler) StartREPL() {
 		if text[0] == ':' {
 			// just parse
 			if err := fc.Parse(text); err != nil {
-				printError(err)
+				PrintError(err)
 			}
 			continue
 		}
@@ -197,30 +196,30 @@ func (fc *ForthCompiler) StartREPL() {
 		} else if text[0] == '#' && len(text) > 1 {
 			// open a file an parse its contents
 			if err := fc.ParseFile(text[2:]); err != nil {
-				printError(err)
+				PrintError(err)
 			}
 			continue
 		} else if text[0] == '$' && len(text) == 1 {
-			for i := 0; i <= fvm.n; i++ {
-				fmt.Printf("%d ", fvm.stack[i])
+			for i := 0; i <= fc.Fvm.n; i++ {
+				fmt.Printf("%d ", fc.Fvm.stack[i])
 			}
 			fmt.Println("")
 			continue
 		}
 
 		if err := fc.Parse(": main " + text + " ;"); err != nil {
-			printError(err)
+			PrintError(err)
 			continue
 		}
 
 		if err := fc.Compile(); err != nil {
-			printError(err)
+			PrintError(err)
 			continue
 		}
 
 		fc.printByteCode()
 
-		fvm.Run(fc.ByteCode())
+		fc.Fvm.Run(fc.ByteCode())
 		fmt.Println("")
 	}
 }
@@ -234,8 +233,7 @@ func (fc *ForthCompiler) RunFile(str string) error {
 		return err
 	}
 
-	fvm := NewForthVM()
-	fvm.Run(fc.ByteCode())
+	fc.Fvm.Run(fc.ByteCode())
 
 	return nil
 }
@@ -249,8 +247,7 @@ func (fc *ForthCompiler) Run(prog string) error {
 		return err
 	}
 
-	fvm := NewForthVM()
-	fvm.Run(fc.ByteCode())
+	fc.Fvm.Run(fc.ByteCode())
 
 	return nil
 }

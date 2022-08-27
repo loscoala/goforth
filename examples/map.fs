@@ -1,4 +1,4 @@
-#!../goforth -file
+#!goforth -file
 
 : add2 2 + ;
 : array 10 ;

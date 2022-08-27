@@ -1,4 +1,4 @@
-#!../goforth -file
+#!goforth -file
 
 \ this is our base address in memory
 : adr 0 ;

@@ -1,4 +1,4 @@
-package main
+package goforth
 
 import (
 	"bytes"
@@ -18,15 +18,28 @@ type Local struct {
 	data   int64
 }
 
+type VM interface {
+	Push(int64)
+	Pop() int64
+	Rpush(int64)
+	Rpop() int64
+	Fpush(float64)
+	Fpop() float64
+	GetString() string
+	SetString(string)
+	GetMemory() *[1000]int64
+}
+
 type ForthVM struct {
-	mem    [1000]int64
-	stack  [100]int64
-	n      int
-	rstack [100]int64
-	rn     int
-	lstack []Local
-	ln     int
-	l_len  int
+	mem     [1000]int64
+	stack   [100]int64
+	n       int
+	rstack  [100]int64
+	rn      int
+	lstack  []Local
+	ln      int
+	l_len   int
+	Sysfunc func(VM, int64)
 }
 
 func NewForthVM() *ForthVM {
@@ -38,36 +51,36 @@ func NewForthVM() *ForthVM {
 	return fvm
 }
 
-func (fvm *ForthVM) push(i int64) {
+func (fvm *ForthVM) Push(i int64) {
 	fvm.n += 1
 	fvm.stack[fvm.n] = i
 }
 
-func (fvm *ForthVM) pop() int64 {
+func (fvm *ForthVM) Pop() int64 {
 	v := fvm.stack[fvm.n]
 	fvm.n -= 1
 	return v
 }
 
-func (fvm *ForthVM) rpush(i int64) {
+func (fvm *ForthVM) Rpush(i int64) {
 	fvm.rn += 1
 	fvm.rstack[fvm.rn] = i
 }
 
-func (fvm *ForthVM) rpop() int64 {
+func (fvm *ForthVM) Rpop() int64 {
 	v := fvm.rstack[fvm.rn]
 	fvm.rn -= 1
 	return v
 }
 
-func (fvm *ForthVM) fpop() float64 {
-	value := fvm.pop()
+func (fvm *ForthVM) Fpop() float64 {
+	value := fvm.Pop()
 	return *(*float64)(unsafe.Pointer(&value))
 }
 
-func (fvm *ForthVM) fpush(f float64) {
+func (fvm *ForthVM) Fpush(f float64) {
 	val := *(*int64)(unsafe.Pointer(&f))
-	fvm.push(val)
+	fvm.Push(val)
 }
 
 func (fvm *ForthVM) lctx() {
@@ -82,14 +95,14 @@ func (fvm *ForthVM) local_get(name, ctx int) *Local {
 }
 
 func (fvm *ForthVM) ldef(name int) {
-	v := fvm.pop()
+	v := fvm.Pop()
 	local := fvm.local_get(name, fvm.ln)
 	local.data = v
 	local.active = true
 }
 
 func (fvm *ForthVM) lset(name int) {
-	v := fvm.pop()
+	v := fvm.Pop()
 	for i := fvm.ln; i > -1; i-- {
 		if local := fvm.local_get(name, i); local.active {
 			local.data = v
@@ -101,7 +114,7 @@ func (fvm *ForthVM) lset(name int) {
 func (fvm *ForthVM) lcl(name int) {
 	for i := fvm.ln; i > -1; i-- {
 		if local := fvm.local_get(name, i); local.active {
-			fvm.push(local.data)
+			fvm.Push(local.data)
 			return
 		}
 	}
@@ -112,186 +125,186 @@ func (fvm *ForthVM) lclr() {
 }
 
 func (fvm *ForthVM) lv() {
-	fvm.push(fvm.mem[fvm.pop()])
+	fvm.Push(fvm.mem[fvm.Pop()])
 }
 
 func (fvm *ForthVM) lsi() {
 	var v int64 = 0
 
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	if a > b {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) gri() {
 	var v int64 = 0
 
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	if a < b {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) jin() bool {
-	return fvm.pop() == 0
+	return fvm.Pop() == 0
 }
 
 func (fvm *ForthVM) adi() {
-	fvm.push(fvm.pop() + fvm.pop())
+	fvm.Push(fvm.Pop() + fvm.Pop())
 }
 
 func (fvm *ForthVM) sbi() {
-	a := fvm.pop()
-	b := fvm.pop()
-	fvm.push(b - a)
+	a := fvm.Pop()
+	b := fvm.Pop()
+	fvm.Push(b - a)
 }
 
 func (fvm *ForthVM) dvi() {
-	a := fvm.pop()
-	b := fvm.pop()
-	fvm.push(b / a)
+	a := fvm.Pop()
+	b := fvm.Pop()
+	fvm.Push(b / a)
 }
 
 func (fvm *ForthVM) mli() {
-	fvm.push(fvm.pop() * fvm.pop())
+	fvm.Push(fvm.Pop() * fvm.Pop())
 }
 
 // f+
 func (fvm *ForthVM) adf() {
-	fvm.fpush(fvm.fpop() + fvm.fpop())
+	fvm.Fpush(fvm.Fpop() + fvm.Fpop())
 }
 
 // f-
 func (fvm *ForthVM) sbf() {
-	a := fvm.fpop()
-	b := fvm.fpop()
-	fvm.fpush(b - a)
+	a := fvm.Fpop()
+	b := fvm.Fpop()
+	fvm.Fpush(b - a)
 }
 
 // f/
 func (fvm *ForthVM) dvf() {
-	a := fvm.fpop()
-	b := fvm.fpop()
-	fvm.fpush(b / a)
+	a := fvm.Fpop()
+	b := fvm.Fpop()
+	fvm.Fpush(b / a)
 }
 
 // f*
 func (fvm *ForthVM) mlf() {
-	fvm.fpush(fvm.fpop() * fvm.fpop())
+	fvm.Fpush(fvm.Fpop() * fvm.Fpop())
 }
 
 func (fvm *ForthVM) pri() {
 	// fmt.Fprintf(w, "%d", pop())
-	fmt.Printf("%d", fvm.pop())
+	fmt.Printf("%d", fvm.Pop())
 }
 
 // f.
 func (fvm *ForthVM) prf() {
-	fmt.Printf("%f", fvm.fpop())
+	fmt.Printf("%f", fvm.Fpop())
 }
 
 // f<
 func (fvm *ForthVM) lsf() {
 	var v int64 = 0
 
-	a := fvm.fpop()
-	b := fvm.fpop()
+	a := fvm.Fpop()
+	b := fvm.Fpop()
 
 	if a > b {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 // f>
 func (fvm *ForthVM) grf() {
 	var v int64 = 0
 
-	a := fvm.fpop()
-	b := fvm.fpop()
+	a := fvm.Fpop()
+	b := fvm.Fpop()
 
 	if a < b {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) pra() {
 	// fmt.Fprintf(w, "%c", pop())
-	fmt.Printf("%c", fvm.pop())
+	fmt.Printf("%c", fvm.Pop())
 }
 
 func (fvm *ForthVM) rdi() {
 	var i int64
 	fmt.Scanf("%d", &i)
-	fvm.push(i)
+	fvm.Push(i)
 }
 
 func (fvm *ForthVM) eqi() {
 	var v int64 = 0
 
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	if a == b {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) and() {
 	var v int64 = 0
 
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	if a != 0 && b != 0 {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) or() {
 	var v int64 = 0
 
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	if a != 0 || b != 0 {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) not() {
 	var v int64 = 0
 
-	a := fvm.pop()
+	a := fvm.Pop()
 
 	if a == 0 {
 		v = 1
 	}
 
-	fvm.push(v)
+	fvm.Push(v)
 }
 
 func (fvm *ForthVM) str() {
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
 	fvm.mem[a] = b
 }
@@ -299,71 +312,71 @@ func (fvm *ForthVM) str() {
 // Forth functions
 
 func (fvm *ForthVM) dup() {
-	fvm.push(fvm.stack[fvm.n])
+	fvm.Push(fvm.stack[fvm.n])
 }
 
 func (fvm *ForthVM) pick() {
-	value := int(fvm.pop())
-	fvm.push(fvm.stack[fvm.n-value])
+	value := int(fvm.Pop())
+	fvm.Push(fvm.stack[fvm.n-value])
 }
 
 func (fvm *ForthVM) ovr() {
-	fvm.push(fvm.stack[fvm.n-1])
+	fvm.Push(fvm.stack[fvm.n-1])
 }
 
 func (fvm *ForthVM) tvr() {
 	c := fvm.stack[fvm.n-2]
 	d := fvm.stack[fvm.n-3]
-	fvm.push(d)
-	fvm.push(c)
+	fvm.Push(d)
+	fvm.Push(c)
 }
 
 func (fvm *ForthVM) twp() {
-	a := fvm.pop()
-	b := fvm.pop()
-	c := fvm.pop()
-	d := fvm.pop()
-	fvm.push(b)
-	fvm.push(a)
-	fvm.push(d)
-	fvm.push(c)
+	a := fvm.Pop()
+	b := fvm.Pop()
+	c := fvm.Pop()
+	d := fvm.Pop()
+	fvm.Push(b)
+	fvm.Push(a)
+	fvm.Push(d)
+	fvm.Push(c)
 }
 
 func (fvm *ForthVM) qdp() {
 	a := fvm.stack[fvm.n]
 
 	if a != 0 {
-		fvm.push(a)
+		fvm.Push(a)
 	}
 }
 
 func (fvm *ForthVM) rot() {
-	a := fvm.pop()
-	b := fvm.pop()
-	c := fvm.pop()
-	fvm.push(b)
-	fvm.push(a)
-	fvm.push(c)
+	a := fvm.Pop()
+	b := fvm.Pop()
+	c := fvm.Pop()
+	fvm.Push(b)
+	fvm.Push(a)
+	fvm.Push(c)
 }
 
 func (fvm *ForthVM) nrot() {
-	a := fvm.pop()
-	b := fvm.pop()
-	c := fvm.pop()
-	fvm.push(a)
-	fvm.push(c)
-	fvm.push(b)
+	a := fvm.Pop()
+	b := fvm.Pop()
+	c := fvm.Pop()
+	fvm.Push(a)
+	fvm.Push(c)
+	fvm.Push(b)
 }
 
 func (fvm *ForthVM) tdp() {
 	a := fvm.stack[fvm.n]
 	b := fvm.stack[fvm.n-1]
-	fvm.push(b)
-	fvm.push(a)
+	fvm.Push(b)
+	fvm.Push(a)
 }
 
 func (fvm *ForthVM) drp() {
-	fvm.pop()
+	fvm.Pop()
 }
 
 func (fvm *ForthVM) swp() {
@@ -373,40 +386,40 @@ func (fvm *ForthVM) swp() {
 }
 
 func (fvm *ForthVM) tr() {
-	fvm.rpush(fvm.pop())
+	fvm.Rpush(fvm.Pop())
 }
 
 func (fvm *ForthVM) fr() {
-	fvm.push(fvm.rpop())
+	fvm.Push(fvm.Rpop())
 }
 
 func (fvm *ForthVM) rf() {
-	fvm.push(fvm.rstack[fvm.rn])
+	fvm.Push(fvm.rstack[fvm.rn])
 }
 
 func (fvm *ForthVM) ttr() {
-	a := fvm.pop()
-	b := fvm.pop()
+	a := fvm.Pop()
+	b := fvm.Pop()
 
-	fvm.rpush(b)
-	fvm.rpush(a)
+	fvm.Rpush(b)
+	fvm.Rpush(a)
 }
 
 func (fvm *ForthVM) tfr() {
-	a := fvm.rpop()
-	b := fvm.rpop()
+	a := fvm.Rpop()
+	b := fvm.Rpop()
 
-	fvm.push(b)
-	fvm.push(a)
+	fvm.Push(b)
+	fvm.Push(a)
 }
 
 func (fvm *ForthVM) trf() {
-	fvm.push(fvm.rstack[fvm.rn-1])
-	fvm.push(fvm.rstack[fvm.rn])
+	fvm.Push(fvm.rstack[fvm.rn-1])
+	fvm.Push(fvm.rstack[fvm.rn])
 }
 
-func (fvm *ForthVM) getString() string {
-	value := fvm.pop()
+func (fvm *ForthVM) GetString() string {
+	value := fvm.Pop()
 	length := fvm.mem[value]
 	var builder strings.Builder
 
@@ -421,8 +434,8 @@ func (fvm *ForthVM) getString() string {
 	return builder.String()
 }
 
-func (fvm *ForthVM) setString(str string) {
-	addr := fvm.pop()
+func (fvm *ForthVM) SetString(str string) {
+	addr := fvm.Pop()
 	length := int64(len(str))
 
 	fvm.mem[addr] = length
@@ -432,40 +445,44 @@ func (fvm *ForthVM) setString(str string) {
 	}
 }
 
+func (fvm *ForthVM) GetMemory() *[1000]int64 {
+	return &fvm.mem
+}
+
 func (fvm *ForthVM) sys() {
-	syscall := fvm.pop()
+	syscall := fvm.Pop()
 
 	switch syscall {
 	case 1:
-		mod := fvm.pop()
-		n := fvm.pop()
-		fvm.push(n % mod)
+		mod := fvm.Pop()
+		n := fvm.Pop()
+		fvm.Push(n % mod)
 	case 2:
 		// fsqrt
-		value := fvm.fpop()
-		fvm.fpush(math.Sqrt(value))
+		value := fvm.Fpop()
+		fvm.Fpush(math.Sqrt(value))
 	case 3:
 		// i->f
-		value := fvm.pop()
-		fvm.fpush(float64(value))
+		value := fvm.Pop()
+		fvm.Fpush(float64(value))
 	case 4:
 		// f->i
-		value := fvm.fpop()
-		fvm.push(int64(value))
+		value := fvm.Fpop()
+		fvm.Push(int64(value))
 	case 5:
 		// dest-addr name-addr readfile
-		name := fvm.getString()
+		name := fvm.GetString()
 		content, err := os.ReadFile(name)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fvm.setString(string(content))
+		fvm.SetString(string(content))
 	case 6:
 		// read memory from image
 		// name-addr readimage
-		name := fvm.getString()
+		name := fvm.GetString()
 		content, err := os.ReadFile(name)
 
 		if err != nil {
@@ -488,23 +505,27 @@ func (fvm *ForthVM) sys() {
 			log.Fatal(err)
 		}
 
-		name := fvm.getString()
+		name := fvm.GetString()
 		err = os.WriteFile(name, buf.Bytes(), 0666)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 	case 8:
-		nbytes := fvm.pop()
+		nbytes := fvm.Pop()
 		buf := make([]byte, nbytes)
 		if n, err := os.Stdin.Read(buf); err != nil {
-			fvm.setString("")
+			fvm.SetString("")
 		} else {
 			str := string(buf[:n])
-			fvm.setString(str)
+			fvm.SetString(str)
 		}
 	default:
-		fmt.Println("ERROR")
+		if fvm.Sysfunc != nil {
+			fvm.Sysfunc(VM(fvm), syscall)
+		} else {
+			log.Fatalf("ERROR: sys() - Unknown call \"%d\"\n", syscall)
+		}
 	}
 }
 
@@ -841,9 +862,9 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case LV:
 			fvm.lv()
 		case L:
-			fvm.push(command.arg)
+			fvm.Push(command.arg)
 		case LF:
-			fvm.fpush(command.argf)
+			fvm.Fpush(command.argf)
 		case STR:
 			fvm.str()
 		case SYS:
@@ -853,7 +874,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case SUB:
 			// pass
 		case END:
-			progPtr = int(fvm.rpop())
+			progPtr = int(fvm.Rpop())
 		case MAIN:
 			// pass
 		case LCTX:
@@ -867,13 +888,13 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case LCLR:
 			fvm.lclr()
 		case CALL:
-			fvm.rpush(int64(progPtr))
+			fvm.Rpush(int64(progPtr))
 			progPtr = codeData.labels[command.argStr]
 		case REF:
-			fvm.push(int64(codeData.labels[command.argStr]))
+			fvm.Push(int64(codeData.labels[command.argStr]))
 		case EXC:
-			fvm.rpush(int64(progPtr))
-			progPtr = int(fvm.pop())
+			fvm.Rpush(int64(progPtr))
+			progPtr = int(fvm.Pop())
 		case PCK:
 			fvm.pick()
 		case NRT:

@@ -1,4 +1,4 @@
-package main
+package goforth
 
 import (
 	"fmt"
@@ -28,6 +28,7 @@ type ForthCompiler struct {
 	data   map[string]string
 	defs   map[string]*Stack
 	output strings.Builder
+	Fvm    *ForthVM
 }
 
 func NewForthCompiler() *ForthCompiler {
@@ -77,6 +78,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2r@":   "TRF",
 	}
 	fc.defs = make(map[string]*Stack)
+	fc.Fvm = NewForthVM()
 	return fc
 }
 
@@ -225,6 +227,9 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 	if state != 0 {
 		return "", fmt.Errorf("syntax error: state should be 0 but is %d", state)
 	}
+
+	// shortCode := regexp.MustCompile(`\s+`).ReplaceAllString(string(result), " ")
+	// return shortCode, nil
 
 	return string(result), nil
 }
