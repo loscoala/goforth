@@ -160,7 +160,7 @@ fc.Fvm.Sysfunc = func(fvm goforth.VM, syscall int64) {
   switch syscall {
   case 999:
     value := fvm.Pop()
-    result := fvm.Push(value + value)
+    fvm.Push(value + value)
     fmt.Println("This is a custom sys call in Forth")
   default:
     fmt.Println("Not implemented")
