@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -40,6 +41,7 @@ type ForthVM struct {
 	ln      int
 	l_len   int
 	Sysfunc func(VM, int64)
+	Out     io.Writer
 }
 
 func NewForthVM() *ForthVM {
@@ -47,6 +49,7 @@ func NewForthVM() *ForthVM {
 
 	fvm.n = -1
 	fvm.rn = -1
+	fvm.Out = os.Stdout
 
 	return fvm
 }
@@ -203,13 +206,12 @@ func (fvm *ForthVM) mlf() {
 }
 
 func (fvm *ForthVM) pri() {
-	// fmt.Fprintf(w, "%d", pop())
-	fmt.Printf("%d", fvm.Pop())
+	fmt.Fprintf(fvm.Out, "%d", fvm.Pop())
 }
 
 // f.
 func (fvm *ForthVM) prf() {
-	fmt.Printf("%f", fvm.Fpop())
+	fmt.Fprintf(fvm.Out, "%f", fvm.Fpop())
 }
 
 // f<
@@ -241,8 +243,7 @@ func (fvm *ForthVM) grf() {
 }
 
 func (fvm *ForthVM) pra() {
-	// fmt.Fprintf(w, "%c", pop())
-	fmt.Printf("%c", fvm.Pop())
+	fmt.Fprintf(fvm.Out, "%c", fvm.Pop())
 }
 
 func (fvm *ForthVM) rdi() {
