@@ -159,16 +159,6 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 				} else {
 					result = append(result, i)
 				}
-			case '!':
-				if index+1 == len(data) {
-					break
-				}
-				if data[index+1] == '"' {
-					tmpStr = append(tmpStr, i)
-					state = 7
-				} else {
-					result = append(result, i)
-				}
 			case 's':
 				if index+1 == len(data) {
 					break
