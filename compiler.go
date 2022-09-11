@@ -204,9 +204,16 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 			state = 8
 		case 8:
 			// inside string
+			if index+1 == len(data) {
+				break
+			}
+
 			tmpStr = append(tmpStr, i)
 
-			if i == '"' {
+			if i == '\\' && data[index+1] == '"' {
+				tmpStr = tmpStr[:len(tmpStr)-1]
+				state = 7
+			} else if i == '"' {
 				result = append(result, handleForthString(string(tmpStr))...)
 				tmpStr = tmpStr[:0]
 				state = 1
