@@ -15,6 +15,7 @@
 : title [ ." title" ] enclose ;
 : p [ ." p" ] enclose ;
 : h1 [ ." h1" ] enclose ;
+: b [ ." b" ] enclose ;
 
 : main
   document
@@ -25,7 +26,7 @@
     ] head
     [
       [ ." Example Page" ] h1
-      [ ." Hello World!" ] p
+      [ ." Hello " [ ." World!" ] b ] p
     ] body
   ] html
 ;
