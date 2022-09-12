@@ -17,7 +17,7 @@
 : h1 [ ." h1" ] enclose ;
 : b [ ." b" ] enclose ;
 
-: main
+: test
   document
   [
     [
@@ -30,3 +30,6 @@
     ] body
   ] html
 ;
+
+: main test ;
+
