@@ -207,7 +207,7 @@ func (fc *ForthCompiler) StartREPL() {
 			continue
 		}
 
-		if err := fc.Parse(": main " + text + " ;"); err != nil {
+		if err := fc.Parse(": main\n" + text + "\n;"); err != nil {
 			PrintError(err)
 			continue
 		}
