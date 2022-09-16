@@ -521,6 +521,13 @@ func (fvm *ForthVM) sys() {
 			str := string(buf[:n])
 			fvm.SetString(str)
 		}
+	case 9:
+		v := fvm.Pop()
+		if v != 0 {
+			ShowByteCode = true
+		} else {
+			ShowByteCode = false
+		}
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(VM(fvm), syscall)

@@ -165,7 +165,7 @@ func (fc *ForthCompiler) StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Print("forth> ")
+		fmt.Print(Repl)
 		scanner.Scan()
 		text := scanner.Text()
 
@@ -217,7 +217,14 @@ func (fc *ForthCompiler) StartREPL() {
 			continue
 		}
 
-		fc.printByteCode()
+		if ShowByteCode {
+			fc.printByteCode()
+		}
+
+		// skip empty code
+		if strings.Count(fc.ByteCode(), ";") == 2 {
+			continue
+		}
 
 		fc.Fvm.Run(fc.ByteCode())
 		fmt.Println("")

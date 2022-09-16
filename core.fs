@@ -78,6 +78,7 @@
 : readimage ( name-addr -- ) 6 sys ;
 : writeimage ( name-addr -- ) 7 sys ;
 : read ( name-addr buffer-size -- ) 8 sys ;
+: debug ( bool -- ) 9 sys ;
 
 : i r@ ;
 : j    \ jend j iend i jx --

@@ -11,3 +11,9 @@ var Core string
 
 // Colored output
 var Colored bool
+
+// The prompt in StartREPL
+var Repl = "forth> "
+
+// Show byte code in StartREPL
+var ShowByteCode bool
