@@ -99,14 +99,16 @@ func (fc *ForthCompiler) Compile() error {
 
 	for _, v := range fc.funcs {
 		for iter := v.Iter(); iter.Next(); {
-			fc.output.WriteString(iter.Get() + ";")
+			fc.output.WriteString(iter.Get())
+			fc.output.WriteByte(';')
 		}
 	}
 
 	fc.output.WriteString("MAIN;")
 
 	for iter := result.Iter(); iter.Next(); {
-		fc.output.WriteString(iter.Get() + ";")
+		fc.output.WriteString(iter.Get())
+		fc.output.WriteByte(';')
 	}
 
 	return nil
