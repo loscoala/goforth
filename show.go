@@ -6,24 +6,23 @@ import (
 	"os"
 	"strings"
 	"unicode"
-)
 
-const (
-	HEADER    = "\033[95m"
-	OKBLUE    = "\033[94m"
-	OKCYAN    = "\033[96m"
-	OKGREEN   = "\033[92m"
-	WARNING   = "\033[93m"
-	FAIL      = "\033[91m"
-	ENDC      = "\033[0m"
-	BOLD      = "\033[91m"
-	UNDERLINE = "\033[4m"
+	"github.com/fatih/color"
 )
 
 var baseSyntax = [...]string{
 	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "-loop", "if", "then",
 	"else", "{", "}", "[", "]", "until", "again", "leave", "to", "done", ":", ";",
 }
+
+var (
+	magenta = color.New(color.FgHiMagenta).SprintFunc()
+	cyan    = color.New(color.FgHiCyan).SprintFunc()
+	green   = color.New(color.FgHiGreen).SprintFunc()
+	blue    = color.New(color.FgHiBlue).SprintFunc()
+	yellow  = color.New(color.FgHiYellow).SprintFunc()
+	red     = color.New(color.FgHiRed).SprintFunc()
+)
 
 func isBaseSytax(word string) bool {
 	for _, w := range baseSyntax {
@@ -36,21 +35,17 @@ func isBaseSytax(word string) bool {
 }
 
 func getWordColored(fc *ForthCompiler, word string) string {
-	var color string
-
 	if _, ok := fc.data[word]; ok {
-		color = HEADER
+		return magenta(word)
 	} else if _, ok := fc.defs[word]; ok {
-		color = OKCYAN
+		return cyan(word)
 	} else if isBaseSytax(word) {
-		color = OKGREEN
+		return green(word)
 	} else if isFloat(word) || isNumeric(word) {
-		color = OKBLUE
+		return blue(word)
 	} else {
-		color = WARNING
+		return yellow(word)
 	}
-
-	return fmt.Sprintf("%s%s%s", color, word, ENDC)
 }
 
 func printWordColored(fc *ForthCompiler, word string, s *Stack) {
@@ -75,7 +70,7 @@ func printWord(word string, s *Stack) {
 
 func PrintError(err error) {
 	if Colored {
-		fmt.Printf("%s[Error]%s: %s\n", FAIL, ENDC, err)
+		fmt.Printf("%s: %s\n", red("[Error]"), err)
 	} else {
 		fmt.Printf("[Error]: %s\n", err)
 	}
@@ -97,7 +92,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 				}
 			} else {
 				if Colored {
-					fmt.Printf("Unknown word %s%s%s\n", FAIL, word, ENDC)
+					fmt.Printf("Unknown word %s\n", red(word))
 				} else {
 					fmt.Printf("Unknown word \"%s\"\n", word)
 				}
@@ -140,7 +135,7 @@ func (fc *ForthCompiler) printByteCode() {
 			if cmd == "" {
 				continue
 			}
-			fmt.Printf("%s%s%s;", WARNING, cmd, ENDC)
+			fmt.Printf("%s;", yellow(cmd))
 			if cmd == "END" {
 				fmt.Println("")
 			}
