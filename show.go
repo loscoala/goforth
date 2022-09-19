@@ -161,7 +161,34 @@ func isWhiteSpace(s string) bool {
 	return true
 }
 
-func (fc *ForthCompiler) StartREPL() {
+func (fc *ForthCompiler) handleStdin() {
+	scanner := bufio.NewScanner(os.Stdin)
+	data := make([]byte, 0, 1000)
+
+	for scanner.Scan() {
+		data = append(data, scanner.Bytes()...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		PrintError(err)
+		return
+	}
+
+	if err := fc.Parse(string(data)); err != nil {
+		PrintError(err)
+		return
+	}
+
+	if err := fc.Compile(); err != nil {
+		PrintError(err)
+		return
+	}
+
+	fc.Fvm.Run(fc.ByteCode())
+	fmt.Println("")
+}
+
+func (fc *ForthCompiler) handleREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -228,6 +255,21 @@ func (fc *ForthCompiler) StartREPL() {
 
 		fc.Fvm.Run(fc.ByteCode())
 		fmt.Println("")
+	}
+}
+
+func (fc *ForthCompiler) StartREPL() {
+	stat, err := os.Stdin.Stat()
+
+	if err != nil {
+		PrintError(err)
+		return
+	}
+
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		fc.handleStdin()
+	} else {
+		fc.handleREPL()
 	}
 }
 
