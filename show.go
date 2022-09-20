@@ -169,17 +169,11 @@ func (fc *ForthCompiler) handleStdin() {
 		return
 	}
 
-	if err := fc.Parse(string(data)); err != nil {
+	if err := fc.Run(string(data)); err != nil {
 		PrintError(err)
 		return
 	}
 
-	if err := fc.Compile(); err != nil {
-		PrintError(err)
-		return
-	}
-
-	fc.Fvm.Run(fc.ByteCode())
 	fmt.Println("")
 }
 
