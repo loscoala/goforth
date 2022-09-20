@@ -130,9 +130,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 				state = 4
 			case '(':
 				state = 5
-			case '\n':
-			case '\t':
-			case ' ':
+			case '\n', '\r', '\t', ' ':
 			default:
 				state = 6
 				tmpStr = append(tmpStr, i)
@@ -147,9 +145,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 				state = 0
 				result = append(result, i)
 				result = append(result, ' ')
-			case '\n':
-				result = append(result, ' ')
-			case '\t':
+			case '\n', '\r', '\t':
 				result = append(result, ' ')
 			case '.':
 				if index+1 == len(data) {
@@ -197,7 +193,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 					return "", err
 				}
 				tmpStr = tmpStr[:0]
-			} else {
+			} else if i != '\r' {
 				tmpStr = append(tmpStr, i)
 			}
 		case 7:
