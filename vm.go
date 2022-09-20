@@ -523,6 +523,7 @@ func (fvm *ForthVM) sys() {
 		}
 	case 9:
 		ShowByteCode = fvm.Pop() != 0
+		ShowExecutionTime = ShowByteCode
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(VM(fvm), syscall)
@@ -920,5 +921,8 @@ func (fvm *ForthVM) Run(codeStr string) {
 	}
 
 	elapsed := time.Since(start)
-	fmt.Printf("\n\nexecution time: %s\nNumber of Cmds: %d\nSpeed: %f cmd/ns", elapsed, numCmds, float64(numCmds)/float64(elapsed.Nanoseconds()))
+
+	if ShowExecutionTime {
+		fmt.Printf("\n\nexecution time: %s\nNumber of Cmds: %d\nSpeed: %f cmd/ns", elapsed, numCmds, float64(numCmds)/float64(elapsed.Nanoseconds()))
+	}
 }

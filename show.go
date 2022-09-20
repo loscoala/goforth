@@ -173,8 +173,6 @@ func (fc *ForthCompiler) handleStdin() {
 		PrintError(err)
 		return
 	}
-
-	fmt.Println("")
 }
 
 func (fc *ForthCompiler) handleREPL() {

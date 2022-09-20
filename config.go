@@ -17,3 +17,6 @@ var Repl = "forth> "
 
 // Show byte code in StartREPL
 var ShowByteCode bool
+
+// Show execution time in vm.Run
+var ShowExecutionTime bool
