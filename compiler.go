@@ -459,6 +459,8 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 		result.Push("L " + word)
 	} else if isFloat(word) {
 		result.Push("LF " + word)
+	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
+		result.Push("LCL " + word)
 	} else if value, ok := fc.data[word]; ok {
 		result.Push(value)
 	} else if wordDef, ok := fc.defs[word]; ok {
@@ -479,8 +481,6 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 				return err
 			}
 		}
-	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
-		result.Push("LCL " + word)
 	} else if word[0] == '&' {
 		realWord := word[1:]
 		if wordDef, ok := fc.defs[realWord]; ok {
