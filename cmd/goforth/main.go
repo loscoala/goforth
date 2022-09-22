@@ -25,7 +25,7 @@ func main() {
 	fc := goforth.NewForthCompiler()
 
 	// custom sys func
-	//fc.Fvm.Sysfunc = func(fvm goforth.VM, syscall int64) {
+	//fc.Fvm.Sysfunc = func(fvm *goforth.ForthVM, syscall int64) {
 	//	switch syscall {
 	//	case 999:
 	//		fmt.Println("This is a custom call")

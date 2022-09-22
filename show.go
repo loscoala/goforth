@@ -214,7 +214,7 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			continue
 		} else if text[0] == '$' && len(text) == 1 {
-			for _, v := range fc.Fvm.stack {
+			for _, v := range fc.Fvm.Stack {
 				fmt.Printf("%d ", v)
 			}
 			fmt.Println("")

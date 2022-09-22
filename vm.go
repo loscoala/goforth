@@ -19,58 +19,46 @@ type Local struct {
 	data   int64
 }
 
-type VM interface {
-	Push(int64)
-	Pop() int64
-	Rpush(int64)
-	Rpop() int64
-	Fpush(float64)
-	Fpop() float64
-	GetString() string
-	SetString(string)
-	GetMemory() *[]int64
-}
-
 type ForthVM struct {
-	mem     []int64
-	stack   []int64
-	rstack  []int64
+	Mem     []int64
+	Stack   []int64
+	Rstack  []int64
 	lstack  []Local
 	ln      int
 	l_len   int
-	Sysfunc func(VM, int64)
+	Sysfunc func(*ForthVM, int64)
 	Out     io.Writer
 }
 
 func NewForthVM() *ForthVM {
 	fvm := new(ForthVM)
 
-	fvm.stack = make([]int64, 0, 100)
-	fvm.rstack = make([]int64, 0, 100)
+	fvm.Stack = make([]int64, 0, 100)
+	fvm.Rstack = make([]int64, 0, 100)
 	fvm.Out = os.Stdout
 
 	return fvm
 }
 
 func (fvm *ForthVM) Push(i int64) {
-	fvm.stack = append(fvm.stack, i)
+	fvm.Stack = append(fvm.Stack, i)
 }
 
 func (fvm *ForthVM) Pop() int64 {
-	n := len(fvm.stack)-1
-	value := fvm.stack[n]
-	fvm.stack = fvm.stack[:n]
+	n := len(fvm.Stack) - 1
+	value := fvm.Stack[n]
+	fvm.Stack = fvm.Stack[:n]
 	return value
 }
 
 func (fvm *ForthVM) Rpush(i int64) {
-	fvm.rstack = append(fvm.rstack, i)
+	fvm.Rstack = append(fvm.Rstack, i)
 }
 
 func (fvm *ForthVM) Rpop() int64 {
-	rn := len(fvm.rstack)-1
-	value := fvm.rstack[rn]
-	fvm.rstack = fvm.rstack[:rn]
+	rn := len(fvm.Rstack) - 1
+	value := fvm.Rstack[rn]
+	fvm.Rstack = fvm.Rstack[:rn]
 	return value
 }
 
@@ -84,7 +72,7 @@ func (fvm *ForthVM) Fpush(f float64) {
 	fvm.Push(val)
 }
 
-func (fvm *ForthVM) lctx() {
+func (fvm *ForthVM) Lctx() {
 	fvm.ln += 1
 	for i := 0; i < fvm.l_len; i++ {
 		fvm.local_get(i, fvm.ln).active = false
@@ -95,14 +83,13 @@ func (fvm *ForthVM) local_get(name, ctx int) *Local {
 	return &fvm.lstack[fvm.l_len*ctx+name]
 }
 
-func (fvm *ForthVM) ldef(name int) {
-	v := fvm.Pop()
+func (fvm *ForthVM) Ldef(name int) {
 	local := fvm.local_get(name, fvm.ln)
-	local.data = v
+	local.data = fvm.Pop()
 	local.active = true
 }
 
-func (fvm *ForthVM) lset(name int) {
+func (fvm *ForthVM) Lset(name int) {
 	v := fvm.Pop()
 	for i := fvm.ln; i > -1; i-- {
 		if local := fvm.local_get(name, i); local.active {
@@ -112,7 +99,7 @@ func (fvm *ForthVM) lset(name int) {
 	}
 }
 
-func (fvm *ForthVM) lcl(name int) {
+func (fvm *ForthVM) Lcl(name int) {
 	for i := fvm.ln; i > -1; i-- {
 		if local := fvm.local_get(name, i); local.active {
 			fvm.Push(local.data)
@@ -121,16 +108,16 @@ func (fvm *ForthVM) lcl(name int) {
 	}
 }
 
-func (fvm *ForthVM) lclr() {
+func (fvm *ForthVM) Lclr() {
 	fvm.ln -= 1
 }
 
-func (fvm *ForthVM) lv() {
-	fvm.Push(fvm.mem[fvm.Pop()])
+func (fvm *ForthVM) Lv() {
+	fvm.Push(fvm.Mem[fvm.Pop()])
 }
 
-func (fvm *ForthVM) lsi() {
-	var v int64 = 0
+func (fvm *ForthVM) Lsi() {
+	var v int64
 
 	a := fvm.Pop()
 	b := fvm.Pop()
@@ -142,8 +129,8 @@ func (fvm *ForthVM) lsi() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) gri() {
-	var v int64 = 0
+func (fvm *ForthVM) Gri() {
+	var v int64
 
 	a := fvm.Pop()
 	b := fvm.Pop()
@@ -155,66 +142,66 @@ func (fvm *ForthVM) gri() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) jin() bool {
+func (fvm *ForthVM) Jin() bool {
 	return fvm.Pop() == 0
 }
 
-func (fvm *ForthVM) adi() {
+func (fvm *ForthVM) Adi() {
 	fvm.Push(fvm.Pop() + fvm.Pop())
 }
 
-func (fvm *ForthVM) sbi() {
+func (fvm *ForthVM) Sbi() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 	fvm.Push(b - a)
 }
 
-func (fvm *ForthVM) dvi() {
+func (fvm *ForthVM) Dvi() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 	fvm.Push(b / a)
 }
 
-func (fvm *ForthVM) mli() {
+func (fvm *ForthVM) Mli() {
 	fvm.Push(fvm.Pop() * fvm.Pop())
 }
 
 // f+
-func (fvm *ForthVM) adf() {
+func (fvm *ForthVM) Adf() {
 	fvm.Fpush(fvm.Fpop() + fvm.Fpop())
 }
 
 // f-
-func (fvm *ForthVM) sbf() {
+func (fvm *ForthVM) Sbf() {
 	a := fvm.Fpop()
 	b := fvm.Fpop()
 	fvm.Fpush(b - a)
 }
 
 // f/
-func (fvm *ForthVM) dvf() {
+func (fvm *ForthVM) Dvf() {
 	a := fvm.Fpop()
 	b := fvm.Fpop()
 	fvm.Fpush(b / a)
 }
 
 // f*
-func (fvm *ForthVM) mlf() {
+func (fvm *ForthVM) Mlf() {
 	fvm.Fpush(fvm.Fpop() * fvm.Fpop())
 }
 
-func (fvm *ForthVM) pri() {
+func (fvm *ForthVM) Pri() {
 	fmt.Fprintf(fvm.Out, "%d", fvm.Pop())
 }
 
 // f.
-func (fvm *ForthVM) prf() {
+func (fvm *ForthVM) Prf() {
 	fmt.Fprintf(fvm.Out, "%f", fvm.Fpop())
 }
 
 // f<
-func (fvm *ForthVM) lsf() {
-	var v int64 = 0
+func (fvm *ForthVM) Lsf() {
+	var v int64
 
 	a := fvm.Fpop()
 	b := fvm.Fpop()
@@ -227,8 +214,8 @@ func (fvm *ForthVM) lsf() {
 }
 
 // f>
-func (fvm *ForthVM) grf() {
-	var v int64 = 0
+func (fvm *ForthVM) Grf() {
+	var v int64
 
 	a := fvm.Fpop()
 	b := fvm.Fpop()
@@ -240,18 +227,18 @@ func (fvm *ForthVM) grf() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) pra() {
+func (fvm *ForthVM) Pra() {
 	fmt.Fprintf(fvm.Out, "%c", fvm.Pop())
 }
 
-func (fvm *ForthVM) rdi() {
+func (fvm *ForthVM) Rdi() {
 	var i int64
 	fmt.Scanf("%d", &i)
 	fvm.Push(i)
 }
 
-func (fvm *ForthVM) eqi() {
-	var v int64 = 0
+func (fvm *ForthVM) Eqi() {
+	var v int64
 
 	a := fvm.Pop()
 	b := fvm.Pop()
@@ -263,8 +250,8 @@ func (fvm *ForthVM) eqi() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) and() {
-	var v int64 = 0
+func (fvm *ForthVM) And() {
+	var v int64
 
 	a := fvm.Pop()
 	b := fvm.Pop()
@@ -276,8 +263,8 @@ func (fvm *ForthVM) and() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) or() {
-	var v int64 = 0
+func (fvm *ForthVM) Or() {
+	var v int64
 
 	a := fvm.Pop()
 	b := fvm.Pop()
@@ -289,8 +276,8 @@ func (fvm *ForthVM) or() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) not() {
-	var v int64 = 0
+func (fvm *ForthVM) Not() {
+	var v int64
 
 	a := fvm.Pop()
 
@@ -301,37 +288,37 @@ func (fvm *ForthVM) not() {
 	fvm.Push(v)
 }
 
-func (fvm *ForthVM) str() {
+func (fvm *ForthVM) Str() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 
-	fvm.mem[a] = b
+	fvm.Mem[a] = b
 }
 
 // Forth functions
 
-func (fvm *ForthVM) dup() {
-	fvm.Push(fvm.stack[len(fvm.stack)-1])
+func (fvm *ForthVM) Dup() {
+	fvm.Push(fvm.Stack[len(fvm.Stack)-1])
 }
 
-func (fvm *ForthVM) pick() {
+func (fvm *ForthVM) Pick() {
 	value := int(fvm.Pop())
-	fvm.Push(fvm.stack[(len(fvm.stack)-1)-value])
+	fvm.Push(fvm.Stack[(len(fvm.Stack)-1)-value])
 }
 
-func (fvm *ForthVM) ovr() {
-	fvm.Push(fvm.stack[len(fvm.stack)-2])
+func (fvm *ForthVM) Ovr() {
+	fvm.Push(fvm.Stack[len(fvm.Stack)-2])
 }
 
-func (fvm *ForthVM) tvr() {
-	n := len(fvm.stack)-1
-	c := fvm.stack[n-2]
-	d := fvm.stack[n-3]
+func (fvm *ForthVM) Tvr() {
+	n := len(fvm.Stack) - 1
+	c := fvm.Stack[n-2]
+	d := fvm.Stack[n-3]
 	fvm.Push(d)
 	fvm.Push(c)
 }
 
-func (fvm *ForthVM) twp() {
+func (fvm *ForthVM) Twp() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 	c := fvm.Pop()
@@ -342,16 +329,16 @@ func (fvm *ForthVM) twp() {
 	fvm.Push(c)
 }
 
-func (fvm *ForthVM) qdp() {
-	n := len(fvm.stack)-1
-	a := fvm.stack[n]
+func (fvm *ForthVM) Qdp() {
+	n := len(fvm.Stack) - 1
+	a := fvm.Stack[n]
 
 	if a != 0 {
 		fvm.Push(a)
 	}
 }
 
-func (fvm *ForthVM) rot() {
+func (fvm *ForthVM) Rot() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 	c := fvm.Pop()
@@ -360,7 +347,7 @@ func (fvm *ForthVM) rot() {
 	fvm.Push(c)
 }
 
-func (fvm *ForthVM) nrot() {
+func (fvm *ForthVM) Nrot() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 	c := fvm.Pop()
@@ -369,39 +356,39 @@ func (fvm *ForthVM) nrot() {
 	fvm.Push(b)
 }
 
-func (fvm *ForthVM) tdp() {
-	n := len(fvm.stack)-1
-	a := fvm.stack[n]
-	b := fvm.stack[n-1]
+func (fvm *ForthVM) Tdp() {
+	n := len(fvm.Stack) - 1
+	a := fvm.Stack[n]
+	b := fvm.Stack[n-1]
 	fvm.Push(b)
 	fvm.Push(a)
 }
 
-func (fvm *ForthVM) drp() {
+func (fvm *ForthVM) Drp() {
 	fvm.Pop()
 }
 
-func (fvm *ForthVM) swp() {
-	n := len(fvm.stack)-1
-	a := fvm.stack[n]
-	fvm.stack[n] = fvm.stack[n-1]
-	fvm.stack[n-1] = a
+func (fvm *ForthVM) Swp() {
+	n := len(fvm.Stack) - 1
+	a := fvm.Stack[n]
+	fvm.Stack[n] = fvm.Stack[n-1]
+	fvm.Stack[n-1] = a
 }
 
-func (fvm *ForthVM) tr() {
+func (fvm *ForthVM) Tr() {
 	fvm.Rpush(fvm.Pop())
 }
 
-func (fvm *ForthVM) fr() {
+func (fvm *ForthVM) Fr() {
 	fvm.Push(fvm.Rpop())
 }
 
-func (fvm *ForthVM) rf() {
-	rn := len(fvm.rstack)-1
-	fvm.Push(fvm.rstack[rn])
+func (fvm *ForthVM) Rf() {
+	rn := len(fvm.Rstack) - 1
+	fvm.Push(fvm.Rstack[rn])
 }
 
-func (fvm *ForthVM) ttr() {
+func (fvm *ForthVM) Ttr() {
 	a := fvm.Pop()
 	b := fvm.Pop()
 
@@ -409,7 +396,7 @@ func (fvm *ForthVM) ttr() {
 	fvm.Rpush(a)
 }
 
-func (fvm *ForthVM) tfr() {
+func (fvm *ForthVM) Tfr() {
 	a := fvm.Rpop()
 	b := fvm.Rpop()
 
@@ -417,19 +404,19 @@ func (fvm *ForthVM) tfr() {
 	fvm.Push(a)
 }
 
-func (fvm *ForthVM) trf() {
-	rn := len(fvm.rstack)-1
-	fvm.Push(fvm.rstack[rn-1])
-	fvm.Push(fvm.rstack[rn])
+func (fvm *ForthVM) Trf() {
+	rn := len(fvm.Rstack) - 1
+	fvm.Push(fvm.Rstack[rn-1])
+	fvm.Push(fvm.Rstack[rn])
 }
 
 func (fvm *ForthVM) GetString() string {
 	value := fvm.Pop()
-	length := fvm.mem[value]
+	length := fvm.Mem[value]
 	var builder strings.Builder
 
 	for i := int64(0); i < length; i++ {
-		err := builder.WriteByte(byte(fvm.mem[value+1+i]))
+		err := builder.WriteByte(byte(fvm.Mem[value+1+i]))
 
 		if err != nil {
 			log.Fatal(err)
@@ -443,18 +430,14 @@ func (fvm *ForthVM) SetString(str string) {
 	addr := fvm.Pop()
 	length := int64(len(str))
 
-	fvm.mem[addr] = length
+	fvm.Mem[addr] = length
 
 	for i := int64(0); i < length; i++ {
-		fvm.mem[addr+1+i] = int64(str[i])
+		fvm.Mem[addr+1+i] = int64(str[i])
 	}
 }
 
-func (fvm *ForthVM) GetMemory() *[]int64 {
-	return &fvm.mem
-}
-
-func (fvm *ForthVM) sys() {
+func (fvm *ForthVM) Sys() {
 	syscall := fvm.Pop()
 
 	switch syscall {
@@ -495,7 +478,7 @@ func (fvm *ForthVM) sys() {
 		}
 
 		buf := bytes.NewReader(content)
-		err = binary.Read(buf, binary.LittleEndian, &fvm.mem)
+		err = binary.Read(buf, binary.LittleEndian, &fvm.Mem)
 
 		if err != nil {
 			log.Fatal(err)
@@ -504,7 +487,7 @@ func (fvm *ForthVM) sys() {
 		// write memory into image
 		// name-addr writeimage
 		buf := new(bytes.Buffer)
-		err := binary.Write(buf, binary.LittleEndian, fvm.mem)
+		err := binary.Write(buf, binary.LittleEndian, fvm.Mem)
 
 		if err != nil {
 			log.Fatal(err)
@@ -531,13 +514,13 @@ func (fvm *ForthVM) sys() {
 	case 10:
 		n := fvm.Pop()
 		mem := make([]int64, n)
-		copy(mem, fvm.mem)
-		fvm.mem = mem
+		copy(mem, fvm.Mem)
+		fvm.Mem = mem
 	case 11:
-		fvm.Push(int64(len(fvm.mem)))
+		fvm.Push(int64(len(fvm.Mem)))
 	default:
 		if fvm.Sysfunc != nil {
-			fvm.Sysfunc(VM(fvm), syscall)
+			fvm.Sysfunc(fvm, syscall)
 		} else {
 			log.Fatalf("ERROR: sys() - Unknown call \"%d\"\n", syscall)
 		}
@@ -798,7 +781,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
 	done := false
-	fvm.rstack = fvm.rstack[:0]
+	fvm.Rstack = fvm.Rstack[:0]
 
 	numCmds := int64(0)
 	start := time.Now()
@@ -809,81 +792,81 @@ func (fvm *ForthVM) Run(codeStr string) {
 
 		switch command.cmd {
 		case RDI:
-			fvm.rdi()
+			fvm.Rdi()
 		case PRI:
-			fvm.pri()
+			fvm.Pri()
 		case PRA:
-			fvm.pra()
+			fvm.Pra()
 		case DUP:
-			fvm.dup()
+			fvm.Dup()
 		case OVR:
-			fvm.ovr()
+			fvm.Ovr()
 		case TVR:
-			fvm.tvr()
+			fvm.Tvr()
 		case TWP:
-			fvm.twp()
+			fvm.Twp()
 		case QDP:
-			fvm.qdp()
+			fvm.Qdp()
 		case ROT:
-			fvm.rot()
+			fvm.Rot()
 		case TDP:
-			fvm.tdp()
+			fvm.Tdp()
 		case DRP:
-			fvm.drp()
+			fvm.Drp()
 		case SWP:
-			fvm.swp()
+			fvm.Swp()
 		case ADI:
-			fvm.adi()
+			fvm.Adi()
 		case NOP:
 			// pass
 		case JMP:
 			progPtr = codeData.labels[command.argStr] - 1
 		case JIN:
-			if fvm.jin() {
+			if fvm.Jin() {
 				progPtr = codeData.labels[command.argStr] - 1
 			}
 		case SBI:
-			fvm.sbi()
+			fvm.Sbi()
 		case DVI:
-			fvm.dvi()
+			fvm.Dvi()
 		case LSI:
-			fvm.lsi()
+			fvm.Lsi()
 		case GRI:
-			fvm.gri()
+			fvm.Gri()
 		case MLI:
-			fvm.mli()
+			fvm.Mli()
 		case ADF:
-			fvm.adf()
+			fvm.Adf()
 		case SBF:
-			fvm.sbf()
+			fvm.Sbf()
 		case MLF:
-			fvm.mlf()
+			fvm.Mlf()
 		case DVF:
-			fvm.dvf()
+			fvm.Dvf()
 		case PRF:
-			fvm.prf()
+			fvm.Prf()
 		case LSF:
-			fvm.lsf()
+			fvm.Lsf()
 		case GRF:
-			fvm.grf()
+			fvm.Grf()
 		case OR:
-			fvm.or()
+			fvm.Or()
 		case AND:
-			fvm.and()
+			fvm.And()
 		case NOT:
-			fvm.not()
+			fvm.Not()
 		case EQI:
-			fvm.eqi()
+			fvm.Eqi()
 		case LV:
-			fvm.lv()
+			fvm.Lv()
 		case L:
 			fvm.Push(command.arg)
 		case LF:
 			fvm.Fpush(command.argf)
 		case STR:
-			fvm.str()
+			fvm.Str()
 		case SYS:
-			fvm.sys()
+			fvm.Sys()
 		case STP:
 			done = true
 		case SUB:
@@ -893,15 +876,15 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case MAIN:
 			// pass
 		case LCTX:
-			fvm.lctx()
+			fvm.Lctx()
 		case LSET:
-			fvm.lset(command.localIndex)
+			fvm.Lset(command.localIndex)
 		case LDEF:
-			fvm.ldef(command.localIndex)
+			fvm.Ldef(command.localIndex)
 		case LCL:
-			fvm.lcl(command.localIndex)
+			fvm.Lcl(command.localIndex)
 		case LCLR:
-			fvm.lclr()
+			fvm.Lclr()
 		case CALL:
 			fvm.Rpush(int64(progPtr))
 			progPtr = codeData.labels[command.argStr]
@@ -911,21 +894,21 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.Rpush(int64(progPtr))
 			progPtr = int(fvm.Pop())
 		case PCK:
-			fvm.pick()
+			fvm.Pick()
 		case NRT:
-			fvm.nrot()
+			fvm.Nrot()
 		case TR:
-			fvm.tr()
+			fvm.Tr()
 		case FR:
-			fvm.fr()
+			fvm.Fr()
 		case RF:
-			fvm.rf()
+			fvm.Rf()
 		case TTR:
-			fvm.ttr()
+			fvm.Ttr()
 		case TFR:
-			fvm.tfr()
+			fvm.Tfr()
 		case TRF:
-			fvm.trf()
+			fvm.Trf()
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
