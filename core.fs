@@ -1,11 +1,37 @@
 
 : ? @ . ;
-: ?? 1000 0 mem ;
-: mem do i @ dup if i . colon . space else drop then loop ;
+: ?? memsize 0 mem ;
+: mem ?do i @ dup if i . colon . space else drop then loop ;
 
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
 \ : bi ( n a b -- na nb ) { _bi_b _bi_a } dup _bi_a exec swap _bi_b exec ;
+
+: each1 \ a f --
+  swap \ f a -
+  dup  \ f a a --
+  @    \ f a l --
+  over \ f a l a --
+  +    \ f a l+a --
+  1+   \ f a l+a+1 --
+  >r   \ f a -- end
+  1+   \ f it -- end
+  begin
+    dup \ f it it -- end
+    r@  \ f it it end -- end
+    <   \ f it b -- end
+  while
+    dup  \ f it it -- end
+    @    \ f it value -- end
+    2 pick \ f it value f -- end
+    exec   \ f it -- end
+    1+
+  repeat
+  r>
+  drop
+  drop
+  drop
+;
 
 (
 : bi  \ n a b
@@ -79,6 +105,8 @@
 : writeimage ( name-addr -- ) 7 sys ;
 : read ( name-addr buffer-size -- ) 8 sys ;
 : debug ( bool -- ) 9 sys ;
+: allocate ( size -- ) 10 sys ;
+: memsize ( -- size ) 11 sys ;
 
 : i r@ ;
 : j    \ jend j iend i jx --

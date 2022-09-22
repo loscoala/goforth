@@ -3,6 +3,7 @@
 : add2 2 + ;
 : array 10 ;
 : init
+  20 allocate
   array newS
   20 array +s
   40 array +s

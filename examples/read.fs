@@ -13,6 +13,7 @@
   * cat ../main.go | ./read.fs
 )
 : main
+  110 allocate
   begin
     adr size read
     adr @ if

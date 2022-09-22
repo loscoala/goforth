@@ -33,7 +33,11 @@
 : scale-y i>f F-Y-SIZE f/ scale-factor f* Y-POS f+ ;
 : scale-x i>f F-X-SIZE f/ F-X-SIZE F-Y-SIZE f/ f- scale-factor f* X-POS f+ ;
 
-: mb-init 0 s"  ====+++++++++********#########%%%%%%%%@@@@@@@@@@@@" ;
+: mb-init
+  memsize 55 < if 55 allocate then
+  0 s"  ====+++++++++********#########%%%%%%%%@@@@@@@@@@@@"
+;
+
 : mb-draw 20 / 1+ @ emit ;
 
 : mb

@@ -28,15 +28,13 @@ type VM interface {
 	Fpop() float64
 	GetString() string
 	SetString(string)
-	GetMemory() *[1000]int64
+	GetMemory() *[]int64
 }
 
 type ForthVM struct {
-	mem     [1000]int64
-	stack   [100]int64
-	n       int
-	rstack  [100]int64
-	rn      int
+	mem     []int64
+	stack   []int64
+	rstack  []int64
 	lstack  []Local
 	ln      int
 	l_len   int
@@ -47,33 +45,33 @@ type ForthVM struct {
 func NewForthVM() *ForthVM {
 	fvm := new(ForthVM)
 
-	fvm.n = -1
-	fvm.rn = -1
+	fvm.stack = make([]int64, 0, 100)
+	fvm.rstack = make([]int64, 0, 100)
 	fvm.Out = os.Stdout
 
 	return fvm
 }
 
 func (fvm *ForthVM) Push(i int64) {
-	fvm.n += 1
-	fvm.stack[fvm.n] = i
+	fvm.stack = append(fvm.stack, i)
 }
 
 func (fvm *ForthVM) Pop() int64 {
-	v := fvm.stack[fvm.n]
-	fvm.n -= 1
-	return v
+	n := len(fvm.stack)-1
+	value := fvm.stack[n]
+	fvm.stack = fvm.stack[:n]
+	return value
 }
 
 func (fvm *ForthVM) Rpush(i int64) {
-	fvm.rn += 1
-	fvm.rstack[fvm.rn] = i
+	fvm.rstack = append(fvm.rstack, i)
 }
 
 func (fvm *ForthVM) Rpop() int64 {
-	v := fvm.rstack[fvm.rn]
-	fvm.rn -= 1
-	return v
+	rn := len(fvm.rstack)-1
+	value := fvm.rstack[rn]
+	fvm.rstack = fvm.rstack[:rn]
+	return value
 }
 
 func (fvm *ForthVM) Fpop() float64 {
@@ -313,21 +311,22 @@ func (fvm *ForthVM) str() {
 // Forth functions
 
 func (fvm *ForthVM) dup() {
-	fvm.Push(fvm.stack[fvm.n])
+	fvm.Push(fvm.stack[len(fvm.stack)-1])
 }
 
 func (fvm *ForthVM) pick() {
 	value := int(fvm.Pop())
-	fvm.Push(fvm.stack[fvm.n-value])
+	fvm.Push(fvm.stack[(len(fvm.stack)-1)-value])
 }
 
 func (fvm *ForthVM) ovr() {
-	fvm.Push(fvm.stack[fvm.n-1])
+	fvm.Push(fvm.stack[len(fvm.stack)-2])
 }
 
 func (fvm *ForthVM) tvr() {
-	c := fvm.stack[fvm.n-2]
-	d := fvm.stack[fvm.n-3]
+	n := len(fvm.stack)-1
+	c := fvm.stack[n-2]
+	d := fvm.stack[n-3]
 	fvm.Push(d)
 	fvm.Push(c)
 }
@@ -344,7 +343,8 @@ func (fvm *ForthVM) twp() {
 }
 
 func (fvm *ForthVM) qdp() {
-	a := fvm.stack[fvm.n]
+	n := len(fvm.stack)-1
+	a := fvm.stack[n]
 
 	if a != 0 {
 		fvm.Push(a)
@@ -370,8 +370,9 @@ func (fvm *ForthVM) nrot() {
 }
 
 func (fvm *ForthVM) tdp() {
-	a := fvm.stack[fvm.n]
-	b := fvm.stack[fvm.n-1]
+	n := len(fvm.stack)-1
+	a := fvm.stack[n]
+	b := fvm.stack[n-1]
 	fvm.Push(b)
 	fvm.Push(a)
 }
@@ -381,9 +382,10 @@ func (fvm *ForthVM) drp() {
 }
 
 func (fvm *ForthVM) swp() {
-	a := fvm.stack[fvm.n]
-	fvm.stack[fvm.n] = fvm.stack[fvm.n-1]
-	fvm.stack[fvm.n-1] = a
+	n := len(fvm.stack)-1
+	a := fvm.stack[n]
+	fvm.stack[n] = fvm.stack[n-1]
+	fvm.stack[n-1] = a
 }
 
 func (fvm *ForthVM) tr() {
@@ -395,7 +397,8 @@ func (fvm *ForthVM) fr() {
 }
 
 func (fvm *ForthVM) rf() {
-	fvm.Push(fvm.rstack[fvm.rn])
+	rn := len(fvm.rstack)-1
+	fvm.Push(fvm.rstack[rn])
 }
 
 func (fvm *ForthVM) ttr() {
@@ -415,8 +418,9 @@ func (fvm *ForthVM) tfr() {
 }
 
 func (fvm *ForthVM) trf() {
-	fvm.Push(fvm.rstack[fvm.rn-1])
-	fvm.Push(fvm.rstack[fvm.rn])
+	rn := len(fvm.rstack)-1
+	fvm.Push(fvm.rstack[rn-1])
+	fvm.Push(fvm.rstack[rn])
 }
 
 func (fvm *ForthVM) GetString() string {
@@ -446,7 +450,7 @@ func (fvm *ForthVM) SetString(str string) {
 	}
 }
 
-func (fvm *ForthVM) GetMemory() *[1000]int64 {
+func (fvm *ForthVM) GetMemory() *[]int64 {
 	return &fvm.mem
 }
 
@@ -524,6 +528,13 @@ func (fvm *ForthVM) sys() {
 	case 9:
 		ShowByteCode = fvm.Pop() != 0
 		ShowExecutionTime = ShowByteCode
+	case 10:
+		n := fvm.Pop()
+		mem := make([]int64, n)
+		copy(mem, fvm.mem)
+		fvm.mem = mem
+	case 11:
+		fvm.Push(int64(len(fvm.mem)))
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(VM(fvm), syscall)
@@ -787,7 +798,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
 	done := false
-	fvm.rn = -1
+	fvm.rstack = fvm.rstack[:0]
 
 	numCmds := int64(0)
 	start := time.Now()
