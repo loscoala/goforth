@@ -12,16 +12,9 @@ In this forth you can define local variables with curley brackets like in other 
 
 ## Why goforth?
 
-This implementation uses static memory at the runtime of the ForthVM. No allocations.
+Goforth can be used as an embeddable programming language. See topic Embedding.
 
-Memory needed:
-1000x int64 <- for the memory
-
-100x int64  <- locals
-
-100x int64  <- return stack
-
-Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`.
+Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`. Maybe in the future.
 
 ## Usage
 
@@ -31,6 +24,10 @@ Simply execute `goforth`. See "Installation"
 
 ```sh
 goforth --file=forthscript.fs
+```
+
+```sh
+echo ": main 5 5 + . ;" | goforth
 ```
 
 2. In the Shebang you can alternatively write the following:
@@ -67,14 +64,13 @@ go get github.com/loscoala/goforth@latest
 
 ## Build and Dependencies
 
-- All you need is a golang compiler 1.18. No other dependencies.
+- All you need is a golang compiler 1.19.
 
-- Simply build the project with
+- Simply build the project with build.sh
 
 ```sh
 git clone https://github.com/loscoala/goforth.git
-cd goforth/cmd/goforth
-go build
+./build.sh
 ```
 
 ## Howto start
@@ -90,10 +86,12 @@ Start `./goforth` and in the REPL you can look what the dictionary contains by t
 
 ## Examples
 
+### Mandelbrot
+
 Start the interpreter:
 
 ```sh
-./goforth
+goforth
 ```
 Then inside the REPL type the following:
 
@@ -106,6 +104,8 @@ mb                         \ compile and run mb
 As a result you see a zoom in the mandelbrot fractal.
 
 ![mandelbrot-video](https://github.com/loscoala/goforth/raw/main/examples/manbelbrot.gif)
+
+### Interactive development
 
 You can also define new words:
 
@@ -137,6 +137,10 @@ which prints:
 120
 ```
 
+### Debugging
+
+By calling `true debug` you can enable the benchmark mode.
+
 ## Embedding
 
 First, you have to add goforth to go.mod:
@@ -156,7 +160,7 @@ Now all you need is a ForthCompiler:
 ```go
 fc := goforth.NewForthCompiler()
 
-fc.Fvm.Sysfunc = func(fvm goforth.VM, syscall int64) {
+fc.Fvm.Sysfunc = func(fvm *goforth.ForthVM, syscall int64) {
   switch syscall {
   case 999:
     value := fvm.Pop()
@@ -193,6 +197,7 @@ if err := fc.Run(": customcall 999 sys ; : main 10 customcall . ;"); err != nil 
 | stack.go | A stack of strings implementation |
 | label.go | A label generator for the bytecode |
 | show.go | Visual representation and the REPL  |
+| config.go | Configuration during runtime |
 
 ## VM commands
 
