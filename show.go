@@ -207,6 +207,11 @@ func (fc *ForthCompiler) handleREPL() {
 			// show all definitions
 			fc.printAllDefinitions()
 			continue
+		} else if strings.Index(text, "use ") == 0 {
+			if err := fc.ParseFile(text[4:]); err != nil {
+				PrintError(err)
+			}
+			continue
 		} else if text[0] == '#' && len(text) > 1 {
 			// open a file an parse its contents
 			if err := fc.ParseFile(text[2:]); err != nil {
