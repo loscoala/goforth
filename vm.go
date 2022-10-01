@@ -519,6 +519,16 @@ func (fvm *ForthVM) Sys() {
 		fvm.Mem = mem
 	case 11:
 		fvm.Push(int64(len(fvm.Mem)))
+	case 12:
+		// compare
+		str1 := fvm.GetString()
+		str2 := fvm.GetString()
+
+		if str1 == str2 {
+			fvm.Push(1)
+		} else {
+			fvm.Push(0)
+		}
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(fvm, syscall)

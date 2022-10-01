@@ -212,6 +212,61 @@ func (fc *ForthCompiler) handleREPL() {
 				PrintError(err)
 			}
 			continue
+		} else if strings.Index(text, "debug ") == 0 {
+			if err := fc.Parse(": main\n" + text[6:] + "\n;"); err != nil {
+				PrintError(err)
+				continue
+			}
+
+			if err := fc.Compile(); err != nil {
+				PrintError(err)
+				continue
+			}
+
+			fc.printByteCode()
+			fmt.Println("")
+
+			fc.Fvm.PrepareRun(fc.ByteCode())
+			fc.Fvm.Stack = fc.Fvm.Stack[:0]
+
+			var out strings.Builder
+			oldOut := fc.Fvm.Out
+			fc.Fvm.Out = &out
+			var ok bool
+			var err error
+			for !ok {
+				if ok, err = fc.Fvm.RunStep(); err != nil {
+					PrintError(err)
+					break
+				} else {
+					if !ok {
+						cmd := fc.Fvm.CodeData.Command.String()
+						fmt.Printf("%s", Yellow(cmd))
+
+						if len(cmd) < 8 {
+							fmt.Printf("\t\t| ")
+						} else {
+							fmt.Printf("\t| ")
+						}
+
+						for _, v := range fc.Fvm.Stack {
+							fmt.Printf("%s ", Yellow(v))
+						}
+
+						fmt.Printf("\t-- ")
+
+						for _, v := range fc.Fvm.Rstack {
+							fmt.Printf("%s ", Yellow(v))
+						}
+
+						fmt.Printf("\t%s\n", Cyan(out.String()))
+						out.Reset()
+					}
+				}
+			}
+
+			fc.Fvm.Out = oldOut
+			continue
 		} else if text[0] == '#' && len(text) > 1 {
 			// open a file an parse its contents
 			if err := fc.ParseFile(text[2:]); err != nil {

@@ -107,6 +107,7 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
+: compare ( str1 str2 -- bool ) 12 sys ;
 
 : i r@ ;
 : j    \ jend j iend i jx --
