@@ -20,14 +20,15 @@ type Local struct {
 }
 
 type ForthVM struct {
-	Mem     []int64
-	Stack   []int64
-	Rstack  []int64
-	lstack  []Local
-	ln      int
-	l_len   int
-	Sysfunc func(*ForthVM, int64)
-	Out     io.Writer
+	Mem      []int64
+	Stack    []int64
+	Rstack   []int64
+	lstack   []Local
+	ln       int
+	l_len    int
+	Sysfunc  func(*ForthVM, int64)
+	Out      io.Writer
+	CodeData *Code
 }
 
 func NewForthVM() *ForthVM {
@@ -587,6 +588,66 @@ const (
 	TRF // 2 r fetch
 )
 
+var CellName = map[int]string{
+	RDI:  "RDI",
+	PRI:  "PRI",
+	PRA:  "PRA",
+	DUP:  "DUP",
+	OVR:  "OVR",
+	TVR:  "TVR",
+	TWP:  "TWP",
+	QDP:  "QDP",
+	ROT:  "ROT",
+	TDP:  "TDP",
+	DRP:  "DRP",
+	SWP:  "SWP",
+	NOP:  "NOP",
+	JMP:  "JMP",
+	JIN:  "JIN",
+	ADI:  "ADI",
+	SBI:  "SBI",
+	DVI:  "DVI",
+	LSI:  "LSI",
+	GRI:  "GRI",
+	MLI:  "MLI",
+	ADF:  "ADF",
+	SBF:  "SBF",
+	MLF:  "MLF",
+	DVF:  "DVF",
+	PRF:  "PRF",
+	LSF:  "LSF",
+	GRF:  "GRF",
+	OR:   "OR",
+	AND:  "AND",
+	NOT:  "NOT",
+	EQI:  "EQI",
+	LV:   "LV",
+	L:    "L",
+	LF:   "LF",
+	STR:  "STR",
+	SYS:  "SYS",
+	STP:  "STP",
+	SUB:  "SUB",
+	END:  "END",
+	MAIN: "MAIN",
+	LCTX: "LCTX",
+	LDEF: "LDEF",
+	LSET: "LSET",
+	LCL:  "LCL",
+	LCLR: "LCLR",
+	CALL: "CALL",
+	REF:  "REF",
+	EXC:  "EXC",
+	PCK:  "PCK",
+	NRT:  "NRT",
+	TR:   "TR",
+	FR:   "FR",
+	RF:   "RF",
+	TTR:  "TTR",
+	TFR:  "TFR",
+	TRF:  "TRF",
+}
+
 type Cell struct {
 	cmd        int
 	arg        int64
@@ -596,14 +657,16 @@ type Cell struct {
 }
 
 func (c Cell) String() string {
-	return fmt.Sprintf("{cmd:%d, arg:%d, argStr:%s}", c.cmd, c.arg, c.argStr)
+	return fmt.Sprintf("%s %d %s", CellName[c.cmd], c.arg, c.argStr)
 }
 
 type Code struct {
 	cells     []Cell         // actual code
 	labels    map[string]int // labels indices of NOP and SUB
 	numLocals int            // number of locals
-	posMain   int            // position of MAIN
+	PosMain   int            // position of MAIN
+	ProgPtr   int            // program pointer, used in RunStep
+	Command   *Cell          // current command to execute, used in RunStep
 }
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
@@ -717,7 +780,7 @@ func parseCode(codeStr string) *Code {
 			case "END":
 				cells = append(cells, Cell{cmd: END})
 			case "MAIN":
-				code.posMain = pos
+				code.PosMain = pos
 				cells = append(cells, Cell{cmd: MAIN})
 			case "LCTX":
 				cells = append(cells, Cell{cmd: LCTX})
@@ -772,23 +835,29 @@ func parseCode(codeStr string) *Code {
 	return code
 }
 
-// (SUB xx ... END)* MAIN ... STP delimited by semicolon
-func (fvm *ForthVM) Run(codeStr string) {
-	codeData := parseCode(codeStr)
+func (fvm *ForthVM) PrepareRun(codeStr string) {
+	fvm.CodeData = parseCode(codeStr)
+	fvm.CodeData.ProgPtr = fvm.CodeData.PosMain
+	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
 
 	fvm.ln = -1
-	fvm.l_len = codeData.numLocals
+	fvm.l_len = fvm.CodeData.numLocals
 	fvm.lstack = make([]Local, fvm.l_len*100)
 
-	done := false
 	fvm.Rstack = fvm.Rstack[:0]
+}
 
+// (SUB xx ... END)* MAIN ... STP delimited by semicolon
+func (fvm *ForthVM) Run(codeStr string) {
+	fvm.PrepareRun(codeStr)
+
+	done := false
 	numCmds := int64(0)
 	start := time.Now()
 
-	for progPtr := codeData.posMain + 1; !done; progPtr++ {
+	for progPtr := fvm.CodeData.PosMain + 1; !done; progPtr++ {
 		numCmds++
-		command := codeData.cells[progPtr]
+		command := &fvm.CodeData.cells[progPtr]
 
 		switch command.cmd {
 		case RDI:
@@ -820,10 +889,10 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case NOP:
 			// pass
 		case JMP:
-			progPtr = codeData.labels[command.argStr] - 1
+			progPtr = fvm.CodeData.labels[command.argStr] - 1
 		case JIN:
 			if fvm.Jin() {
-				progPtr = codeData.labels[command.argStr] - 1
+				progPtr = fvm.CodeData.labels[command.argStr] - 1
 			}
 		case SBI:
 			fvm.Sbi()
@@ -887,9 +956,9 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.Lclr()
 		case CALL:
 			fvm.Rpush(int64(progPtr))
-			progPtr = codeData.labels[command.argStr]
+			progPtr = fvm.CodeData.labels[command.argStr]
 		case REF:
-			fvm.Push(int64(codeData.labels[command.argStr]))
+			fvm.Push(int64(fvm.CodeData.labels[command.argStr]))
 		case EXC:
 			fvm.Rpush(int64(progPtr))
 			progPtr = int(fvm.Pop())
@@ -914,9 +983,138 @@ func (fvm *ForthVM) Run(codeStr string) {
 		}
 	}
 
-	elapsed := time.Since(start)
-
 	if ShowExecutionTime {
+		elapsed := time.Since(start)
 		fmt.Printf("\n\nexecution time: %s\nNumber of Cmds: %d\nSpeed: %f cmd/ns", elapsed, numCmds, float64(numCmds)/float64(elapsed.Nanoseconds()))
 	}
+}
+
+func (fvm *ForthVM) RunStep() bool {
+	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
+
+	switch fvm.CodeData.Command.cmd {
+	case RDI:
+		fvm.Rdi()
+	case PRI:
+		fvm.Pri()
+	case PRA:
+		fvm.Pra()
+	case DUP:
+		fvm.Dup()
+	case OVR:
+		fvm.Ovr()
+	case TVR:
+		fvm.Tvr()
+	case TWP:
+		fvm.Twp()
+	case QDP:
+		fvm.Qdp()
+	case ROT:
+		fvm.Rot()
+	case TDP:
+		fvm.Tdp()
+	case DRP:
+		fvm.Drp()
+	case SWP:
+		fvm.Swp()
+	case ADI:
+		fvm.Adi()
+	case NOP:
+		// pass
+	case JMP:
+		fvm.CodeData.ProgPtr = fvm.CodeData.labels[fvm.CodeData.Command.argStr] - 1
+	case JIN:
+		if fvm.Jin() {
+			fvm.CodeData.ProgPtr = fvm.CodeData.labels[fvm.CodeData.Command.argStr] - 1
+		}
+	case SBI:
+		fvm.Sbi()
+	case DVI:
+		fvm.Dvi()
+	case LSI:
+		fvm.Lsi()
+	case GRI:
+		fvm.Gri()
+	case MLI:
+		fvm.Mli()
+	case ADF:
+		fvm.Adf()
+	case SBF:
+		fvm.Sbf()
+	case MLF:
+		fvm.Mlf()
+	case DVF:
+		fvm.Dvf()
+	case PRF:
+		fvm.Prf()
+	case LSF:
+		fvm.Lsf()
+	case GRF:
+		fvm.Grf()
+	case OR:
+		fvm.Or()
+	case AND:
+		fvm.And()
+	case NOT:
+		fvm.Not()
+	case EQI:
+		fvm.Eqi()
+	case LV:
+		fvm.Lv()
+	case L:
+		fvm.Push(fvm.CodeData.Command.arg)
+	case LF:
+		fvm.Fpush(fvm.CodeData.Command.argf)
+	case STR:
+		fvm.Str()
+	case SYS:
+		fvm.Sys()
+	case STP:
+		return true
+	case SUB:
+		// pass
+	case END:
+		fvm.CodeData.ProgPtr = int(fvm.Rpop())
+	case MAIN:
+		// pass
+	case LCTX:
+		fvm.Lctx()
+	case LSET:
+		fvm.Lset(fvm.CodeData.Command.localIndex)
+	case LDEF:
+		fvm.Ldef(fvm.CodeData.Command.localIndex)
+	case LCL:
+		fvm.Lcl(fvm.CodeData.Command.localIndex)
+	case LCLR:
+		fvm.Lclr()
+	case CALL:
+		fvm.Rpush(int64(fvm.CodeData.ProgPtr))
+		fvm.CodeData.ProgPtr = fvm.CodeData.labels[fvm.CodeData.Command.argStr]
+	case REF:
+		fvm.Push(int64(fvm.CodeData.labels[fvm.CodeData.Command.argStr]))
+	case EXC:
+		fvm.Rpush(int64(fvm.CodeData.ProgPtr))
+		fvm.CodeData.ProgPtr = int(fvm.Pop())
+	case PCK:
+		fvm.Pick()
+	case NRT:
+		fvm.Nrot()
+	case TR:
+		fvm.Tr()
+	case FR:
+		fvm.Fr()
+	case RF:
+		fvm.Rf()
+	case TTR:
+		fvm.Ttr()
+	case TFR:
+		fvm.Tfr()
+	case TRF:
+		fvm.Trf()
+	default:
+		log.Fatalf("ERROR: Unknown command %v\n", fvm.CodeData.Command)
+	}
+
+	fvm.CodeData.ProgPtr++
+	return false
 }

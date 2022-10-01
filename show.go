@@ -16,12 +16,12 @@ var baseSyntax = [...]string{
 }
 
 var (
-	magenta = color.New(color.FgHiMagenta).SprintFunc()
-	cyan    = color.New(color.FgHiCyan).SprintFunc()
-	green   = color.New(color.FgHiGreen).SprintFunc()
-	blue    = color.New(color.FgHiBlue).SprintFunc()
-	yellow  = color.New(color.FgHiYellow).SprintFunc()
-	red     = color.New(color.FgHiRed).SprintFunc()
+	Magenta = color.New(color.FgHiMagenta).SprintFunc()
+	Cyan    = color.New(color.FgHiCyan).SprintFunc()
+	Green   = color.New(color.FgHiGreen).SprintFunc()
+	Blue    = color.New(color.FgHiBlue).SprintFunc()
+	Yellow  = color.New(color.FgHiYellow).SprintFunc()
+	Red     = color.New(color.FgHiRed).SprintFunc()
 )
 
 func isBaseSytax(word string) bool {
@@ -36,15 +36,15 @@ func isBaseSytax(word string) bool {
 
 func getWordColored(fc *ForthCompiler, word string) string {
 	if _, ok := fc.data[word]; ok {
-		return magenta(word)
+		return Magenta(word)
 	} else if _, ok := fc.defs[word]; ok {
-		return cyan(word)
+		return Cyan(word)
 	} else if isBaseSytax(word) {
-		return green(word)
+		return Green(word)
 	} else if isFloat(word) || isNumeric(word) {
-		return blue(word)
+		return Blue(word)
 	} else {
-		return yellow(word)
+		return Yellow(word)
 	}
 }
 
@@ -70,7 +70,7 @@ func printWord(word string, s *Stack) {
 
 func PrintError(err error) {
 	if Colored {
-		fmt.Printf("%s: %s\n", red("[Error]"), err)
+		fmt.Printf("%s: %s\n", Red("[Error]"), err)
 	} else {
 		fmt.Printf("[Error]: %s\n", err)
 	}
@@ -92,7 +92,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 				}
 			} else {
 				if Colored {
-					fmt.Printf("Unknown word %s\n", red(word))
+					fmt.Printf("Unknown word %s\n", Red(word))
 				} else {
 					fmt.Printf("Unknown word \"%s\"\n", word)
 				}
@@ -135,7 +135,7 @@ func (fc *ForthCompiler) printByteCode() {
 			if cmd == "" {
 				continue
 			}
-			fmt.Printf("%s;", yellow(cmd))
+			fmt.Printf("%s;", Yellow(cmd))
 			if cmd == "END" {
 				fmt.Println("")
 			}
