@@ -989,7 +989,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 	}
 }
 
-func (fvm *ForthVM) RunStep() bool {
+func (fvm *ForthVM) RunStep() (bool, error) {
 	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
 
 	switch fvm.CodeData.Command.cmd {
@@ -1070,7 +1070,7 @@ func (fvm *ForthVM) RunStep() bool {
 	case SYS:
 		fvm.Sys()
 	case STP:
-		return true
+		return true, nil
 	case SUB:
 		// pass
 	case END:
@@ -1112,9 +1112,9 @@ func (fvm *ForthVM) RunStep() bool {
 	case TRF:
 		fvm.Trf()
 	default:
-		log.Fatalf("ERROR: Unknown command %v\n", fvm.CodeData.Command)
+		return true, fmt.Errorf("ERROR: Unknown command %v\n", fvm.CodeData.Command)
 	}
 
 	fvm.CodeData.ProgPtr++
-	return false
+	return false, nil
 }
