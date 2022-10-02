@@ -1131,7 +1131,7 @@ func (fvm *ForthVM) RunStep() (bool, error) {
 	case TRF:
 		fvm.Trf()
 	default:
-		return true, fmt.Errorf("ERROR: Unknown command %v\n", fvm.CodeData.Command)
+		return true, fmt.Errorf("ERROR: Unknown command %v", fvm.CodeData.Command)
 	}
 
 	fvm.CodeData.ProgPtr++
