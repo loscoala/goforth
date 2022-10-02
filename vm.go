@@ -670,7 +670,7 @@ func (c Cell) String() string {
 	switch c.cmd {
 	case L, PCK:
 		return fmt.Sprintf("%s %d", CellName[c.cmd], c.arg)
-	case LDEF, LSET, CALL, JIN, JMP, NOP, REF:
+	case LDEF, LSET, CALL, JIN, JMP, NOP, REF, LCL:
 		return fmt.Sprintf("%s %s", CellName[c.cmd], c.argStr)
 	case LF:
 		return fmt.Sprintf("%s %f", CellName[c.cmd], c.argf)
