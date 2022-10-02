@@ -225,8 +225,6 @@ func (fc *ForthCompiler) handleREPL() {
 
 			fc.printByteCode()
 			fmt.Println("")
-
-			fc.Fvm.PrepareRun(fc.ByteCode())
 			fc.printDebug()
 			continue
 		} else if text[0] == '#' && len(text) > 1 {
@@ -268,11 +266,16 @@ func (fc *ForthCompiler) handleREPL() {
 }
 
 func (fc *ForthCompiler) printDebug() {
-	var out strings.Builder
+	var (
+		out strings.Builder
+		ok  bool
+		err error
+	)
+
 	oldOut := fc.Fvm.Out
 	fc.Fvm.Out = &out
-	var ok bool
-	var err error
+
+	fc.Fvm.PrepareRun(fc.ByteCode())
 
 	for !ok {
 		fmt.Printf("%3d ", fc.Fvm.CodeData.ProgPtr)
