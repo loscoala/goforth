@@ -854,6 +854,8 @@ func parseCode(codeStr string) *Code {
 	return code
 }
 
+// Initializes the virtual machine.
+// You should call the method before RunStep.
 func (fvm *ForthVM) PrepareRun(codeStr string) {
 	fvm.CodeData = parseCode(codeStr)
 	fvm.CodeData.ProgPtr = fvm.CodeData.PosMain
@@ -866,7 +868,7 @@ func (fvm *ForthVM) PrepareRun(codeStr string) {
 	fvm.Rstack = fvm.Rstack[:0]
 }
 
-// (SUB xx ... END)* MAIN ... STP delimited by semicolon
+// Executes the ByteCode passed as a parameter.
 func (fvm *ForthVM) Run(codeStr string) {
 	fvm.PrepareRun(codeStr)
 
@@ -1008,6 +1010,8 @@ func (fvm *ForthVM) Run(codeStr string) {
 	}
 }
 
+// Runs a single step of the virtual machine.
+// Note: You must call PrepareRun once before calling RunStep for the first time
 func (fvm *ForthVM) RunStep() (bool, error) {
 	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
 

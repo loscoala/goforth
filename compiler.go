@@ -82,10 +82,13 @@ func NewForthCompiler() *ForthCompiler {
 	return fc
 }
 
+// The ByteCode of the "main" word previously compiled with Compile().
 func (fc *ForthCompiler) ByteCode() string {
 	return fc.output.String()
 }
 
+// Compiles the word "main".
+// Side effect: ByteCode() contains the result.
 func (fc *ForthCompiler) Compile() error {
 	result := NewStack()
 	fc.funcs = make(map[string]*Stack)
@@ -293,6 +296,7 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 	return fc.Parse(string(data))
 }
 
+// Parses the given Forth code and adds the word to the dictionary of the compiler.
 func (fc *ForthCompiler) Parse(str string) error {
 	var (
 		inside bool
