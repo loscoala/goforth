@@ -227,45 +227,7 @@ func (fc *ForthCompiler) handleREPL() {
 			fmt.Println("")
 
 			fc.Fvm.PrepareRun(fc.ByteCode())
-			fc.Fvm.Stack = fc.Fvm.Stack[:0]
-
-			var out strings.Builder
-			oldOut := fc.Fvm.Out
-			fc.Fvm.Out = &out
-			var ok bool
-			var err error
-			for !ok {
-				if ok, err = fc.Fvm.RunStep(); err != nil {
-					PrintError(err)
-					break
-				} else {
-					if !ok {
-						cmd := fc.Fvm.CodeData.Command.String()
-						fmt.Printf("%s", Yellow(cmd))
-
-						if len(cmd) < 8 {
-							fmt.Printf("\t\t| ")
-						} else {
-							fmt.Printf("\t| ")
-						}
-
-						for _, v := range fc.Fvm.Stack {
-							fmt.Printf("%s ", Yellow(v))
-						}
-
-						fmt.Printf("\t-- ")
-
-						for _, v := range fc.Fvm.Rstack {
-							fmt.Printf("%s ", Yellow(v))
-						}
-
-						fmt.Printf("\t%s\n", Cyan(out.String()))
-						out.Reset()
-					}
-				}
-			}
-
-			fc.Fvm.Out = oldOut
+			fc.printDebug()
 			continue
 		} else if text[0] == '#' && len(text) > 1 {
 			// open a file an parse its contents
@@ -303,6 +265,43 @@ func (fc *ForthCompiler) handleREPL() {
 		fc.Fvm.Run(fc.ByteCode())
 		fmt.Println("")
 	}
+}
+
+func (fc *ForthCompiler) printDebug() {
+	var out strings.Builder
+	oldOut := fc.Fvm.Out
+	fc.Fvm.Out = &out
+	var ok bool
+	var err error
+
+	for !ok {
+		fmt.Printf("%3d ", fc.Fvm.CodeData.ProgPtr)
+
+		if ok, err = fc.Fvm.RunStep(); err != nil {
+			PrintError(err)
+			break
+		} else {
+			cmd := fc.Fvm.CodeData.Command.String()
+
+			if !ok {
+				output := out.String()
+				if output == "\n" || output == "\r\n" {
+					output = "\\n"
+				}
+
+				fmt.Printf("%-15s | %-25s | %-25s | %s\n",
+					cmd,
+					strings.Trim(fmt.Sprintf("%v", fc.Fvm.Stack), "[]"),
+					strings.Trim(fmt.Sprintf("%v", fc.Fvm.Rstack), "[]"),
+					output)
+				out.Reset()
+			} else {
+				fmt.Printf("%s\n", cmd)
+			}
+		}
+	}
+
+	fc.Fvm.Out = oldOut
 }
 
 func (fc *ForthCompiler) StartREPL() {
