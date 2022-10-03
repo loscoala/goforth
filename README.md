@@ -141,6 +141,36 @@ which prints:
 
 By calling `true debug` you can enable the benchmark mode.
 
+The actual debugger can be run like this:
+
+```forth
+debug 34 21 min .
+```
+
+Which gives the following result:
+
+```
+SUB min;TDP;LSI;JIN #0;DRP;JMP #1;#0 NOP;SWP;DRP;#1 NOP;END;
+MAIN;L 34;L 21;CALL min;PRI;STP;
+
+ 11 MAIN            |                           |                           |
+ 12 L 34            | 34                        |                           |
+ 13 L 21            | 34 21                     |                           |
+ 14 CALL min        | 34 21                     | 14                        |
+  1 TDP             | 34 21 34 21               | 14                        |
+  2 LSI             | 34 21 0                   | 14                        |
+  3 JIN #0          | 34 21                     | 14                        |
+  6 NOP #0          | 34 21                     | 14                        |
+  7 SWP             | 21 34                     | 14                        |
+  8 DRP             | 21                        | 14                        |
+  9 NOP #1          | 21                        | 14                        |
+ 10 END             | 21                        |                           |
+ 15 PRI             |                           |                           | 21
+ 16 STP
+```
+
+As you can see on the top there is the ByteCode and below you see the program pointer, the command, the stack, the return stack and the output.
+
 ## Embedding
 
 First, you have to add goforth to go.mod:
