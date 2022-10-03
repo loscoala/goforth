@@ -82,6 +82,7 @@ Start `./goforth` and in the REPL you can look what the dictionary contains by t
 | % | Shows the complete dictionary |
 | % name | Shows the definition of *name* in the dictionary |
 | # filename | Loads a file |
+| use filename | Loads a file |
 | $ | Shows the values of the stack |
 
 ## Examples
