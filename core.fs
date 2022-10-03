@@ -33,6 +33,8 @@
   drop
 ;
 
+: map1 swap dup @ over + 1+ >r 1+ begin dup r@ < while dup @ 2 pick exec over ! 1+ repeat r> drop drop drop ;
+
 (
 : bi  \ n a b
   rot \ a b n
