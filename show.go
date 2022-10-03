@@ -3,10 +3,12 @@ package goforth
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"unicode"
 
+	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 )
 
@@ -175,13 +177,57 @@ func (fc *ForthCompiler) handleStdin() {
 	}
 }
 
+func (fc *ForthCompiler) initCompleter() readline.AutoCompleter {
+	items := make([]readline.PrefixCompleterInterface, 0, 100)
+
+	for k := range fc.defs {
+		items = append(items, readline.PcItem(k))
+	}
+
+	c := readline.NewPrefixCompleter(items...)
+
+	return c
+}
+
+func (fc *ForthCompiler) initReadline() *readline.Instance {
+	instance, err := readline.NewEx(&readline.Config{
+		Prompt:          Repl,
+		InterruptPrompt: "^C",
+		EOFPrompt:       "type 'exit' to quit",
+		AutoComplete:    fc.initCompleter(),
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	return instance
+}
+
 func (fc *ForthCompiler) handleREPL() {
-	scanner := bufio.NewScanner(os.Stdin)
+	var text string
+
+	line := fc.initReadline()
+	defer line.Close()
+	line.CaptureExitSignal()
+	line.SetPrompt(Repl)
 
 	for {
-		fmt.Print(Repl)
-		scanner.Scan()
-		text := scanner.Text()
+		// encapsulate err
+		{
+			var err error
+			text, err = line.Readline()
+
+			if err == readline.ErrInterrupt {
+				if len(text) == 0 {
+					break
+				} else {
+					continue
+				}
+			} else if err == io.EOF {
+				break
+			}
+		}
 
 		if isWhiteSpace(text) {
 			continue
@@ -196,6 +242,7 @@ func (fc *ForthCompiler) handleREPL() {
 			if err := fc.Parse(text); err != nil {
 				PrintError(err)
 			}
+			line.Config.AutoComplete = fc.initCompleter()
 			continue
 		}
 
@@ -211,6 +258,7 @@ func (fc *ForthCompiler) handleREPL() {
 			if err := fc.ParseFile(text[4:]); err != nil {
 				PrintError(err)
 			}
+			line.Config.AutoComplete = fc.initCompleter()
 			continue
 		} else if strings.Index(text, "debug ") == 0 {
 			if err := fc.Parse(": main\n" + text[6:] + "\n;"); err != nil {
@@ -232,6 +280,7 @@ func (fc *ForthCompiler) handleREPL() {
 			if err := fc.ParseFile(text[2:]); err != nil {
 				PrintError(err)
 			}
+			line.Config.AutoComplete = fc.initCompleter()
 			continue
 		} else if text[0] == '$' && len(text) == 1 {
 			for _, v := range fc.Fvm.Stack {
@@ -256,7 +305,7 @@ func (fc *ForthCompiler) handleREPL() {
 		}
 
 		// skip empty code
-		if strings.Count(fc.ByteCode(), ";") == 2 {
+		if fc.defs["main"].Len() == 0 {
 			continue
 		}
 
