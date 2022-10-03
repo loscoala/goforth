@@ -210,7 +210,6 @@ func (fc *ForthCompiler) handleREPL() {
 	line := fc.initReadline()
 	defer line.Close()
 	line.CaptureExitSignal()
-	line.SetPrompt(Repl)
 
 	for {
 		// encapsulate err
