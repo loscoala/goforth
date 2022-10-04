@@ -334,21 +334,17 @@ func (fc *ForthCompiler) printDebug() {
 		} else {
 			cmd := fc.Fvm.CodeData.Command.String()
 
-			if !ok {
-				output := out.String()
-				if output == "\n" || output == "\r\n" {
-					output = "\\n"
-				}
-
-				fmt.Printf("%-15s | %-25s | %-25s | %s\n",
-					cmd,
-					strings.Trim(fmt.Sprintf("%v", fc.Fvm.Stack), "[]"),
-					strings.Trim(fmt.Sprintf("%v", fc.Fvm.Rstack), "[]"),
-					output)
-				out.Reset()
-			} else {
-				fmt.Printf("%s\n", cmd)
+			output := out.String()
+			if output == "\n" || output == "\r\n" {
+				output = "\\n"
 			}
+
+			fmt.Printf("%-15s | %-25s | %-25s | %s\n",
+				cmd,
+				strings.Trim(fmt.Sprintf("%v", fc.Fvm.Stack), "[]"),
+				strings.Trim(fmt.Sprintf("%v", fc.Fvm.Rstack), "[]"),
+				output)
+			out.Reset()
 		}
 	}
 
