@@ -141,6 +141,7 @@
 : 0<= 0 <= ;
 : 0>= 0 >= ;
 : slow_mod begin 2dup >= while dup -rot - swap repeat drop ;
+: $ 0 sys ;
 : mod 1 sys ;
 : fsqrt 2 sys ;
 : factor mod 0= ;

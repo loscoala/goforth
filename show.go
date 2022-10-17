@@ -281,12 +281,6 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
-		} else if text[0] == '$' && len(text) == 1 {
-			for _, v := range fc.Fvm.Stack {
-				fmt.Printf("%d ", v)
-			}
-			fmt.Println("")
-			continue
 		}
 
 		if err := fc.Parse(": main\n" + text + "\n;"); err != nil {

@@ -442,6 +442,13 @@ func (fvm *ForthVM) Sys() {
 	syscall := fvm.Pop()
 
 	switch syscall {
+	case 0:
+		for _, v := range fvm.Stack {
+			fvm.Push(v)
+			fvm.Pri()
+			fvm.Push(32)
+			fvm.Pra()
+		}
 	case 1:
 		mod := fvm.Pop()
 		n := fvm.Pop()
