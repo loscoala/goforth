@@ -150,17 +150,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 				result = append(result, ' ')
 			case '\n', '\r', '\t':
 				result = append(result, ' ')
-			case '.':
-				if index+1 == len(data) {
-					break
-				}
-				if data[index+1] == '"' {
-					tmpStr = append(tmpStr, i)
-					state = 7
-				} else {
-					result = append(result, i)
-				}
-			case 's':
+			case '.', 's':
 				if index+1 == len(data) {
 					break
 				}
@@ -215,7 +205,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 				tmpStr = tmpStr[:len(tmpStr)-1]
 				state = 7
 			} else if i == '"' {
-				result = append(result, handleForthString(string(tmpStr))...)
+				result = append(result, handleForthString(tmpStr)...)
 				tmpStr = tmpStr[:0]
 				state = 1
 			}
@@ -232,7 +222,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 	return string(result), nil
 }
 
-func compile_s(str string) []rune {
+func compile_s(str []rune) []rune {
 	result := make([]rune, 0, 100)
 
 	if len(str) > 9 {
@@ -252,15 +242,22 @@ func compile_s(str string) []rune {
 	return result
 }
 
-func reverse(s string) string {
-	r := []rune(s)
+// modifies argument s to s' and returns s'
+func reverse(s []rune) []rune {
+	r := s // shallow copy
+
+	// Optimization in order to omit make and copy
+	// r := make([]rune, len(s))
+	// copy(r, s)
+
 	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
 		r[i], r[j] = r[j], r[i]
 	}
-	return string(r)
+
+	return r
 }
 
-func compile_m(str string) []rune {
+func compile_m(str []rune) []rune {
 	result := make([]rune, 0, 100)
 	result = append(result, []rune(">r 0 ")...)
 
@@ -273,13 +270,11 @@ func compile_m(str string) []rune {
 	return result
 }
 
-func handleForthString(str string) []rune {
-	fstring := strings.Split(str, " ")
-
-	switch fstring[0] {
-	case ".\"":
+func handleForthString(str []rune) []rune {
+	switch str[0] {
+	case '.':
 		return compile_s(str[3 : len(str)-1])
-	case "s\"":
+	case 's':
 		return compile_m(str[3 : len(str)-1])
 	}
 
