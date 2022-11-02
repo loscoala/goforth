@@ -249,6 +249,7 @@
 ;
 
 : .s3 [ emit ] each ;
+: .s4 [ emit ] each1 ;
 
 : +s dup ++ dup @ + ! ;
 : -s -- ;
