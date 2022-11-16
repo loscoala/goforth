@@ -117,18 +117,25 @@ func (fc *ForthCompiler) Compile() error {
 	return nil
 }
 
-func (fc *ForthCompiler) parseAuto(data string) (string, error) {
-	result := make([]rune, 0, len(data)+1)
-	tmpStr := make([]rune, 0, 100)
-	state := 0
+// Parses the given Forth code and adds the word to the dictionary of the compiler.
+func (fc *ForthCompiler) Parse(str string) error {
+	var (
+		state   int
+		counter int
+		word    string
+		def     *Stack
+	)
 
-	for index, i := range data {
+	result := make([]rune, 0, 100)
+	tmpStr := make([]rune, 0, 100)
+
+	for index, i := range str {
 		switch state {
 		case 0:
 			switch i {
 			case ':':
 				state = 1
-				result = append(result, i)
+				def = NewStack()
 			case '\\':
 				state = 4
 			case '(':
@@ -145,16 +152,25 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 			case '\\':
 				state = 2
 			case ';':
+				fc.defs[word] = def
+				counter = 0
 				state = 0
-				result = append(result, i)
-				result = append(result, ' ')
-			case '\n', '\r', '\t':
-				result = append(result, ' ')
+			case '\n', '\r', '\t', ' ':
+				if len(result) > 0 {
+					if counter == 0 {
+						word = string(result)
+					} else {
+						def.Push(string(result))
+					}
+
+					counter++
+					result = result[:0]
+				}
 			case '.', 's':
-				if index+1 == len(data) {
+				if index+1 == len(str) {
 					break
 				}
-				if data[index+1] == '"' {
+				if str[index+1] == '"' {
 					tmpStr = append(tmpStr, i)
 					state = 7
 				} else {
@@ -183,7 +199,7 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 			if i == '\n' {
 				state = 0
 				if err := fc.handleMeta(string(tmpStr)); err != nil {
-					return "", err
+					return err
 				}
 				tmpStr = tmpStr[:0]
 			} else if i != '\r' {
@@ -195,17 +211,17 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 			state = 8
 		case 8:
 			// inside string
-			if index+1 == len(data) {
+			if index+1 == len(str) {
 				break
 			}
 
 			tmpStr = append(tmpStr, i)
 
-			if i == '\\' && data[index+1] == '"' {
+			if i == '\\' && str[index+1] == '"' {
 				tmpStr = tmpStr[:len(tmpStr)-1]
 				state = 7
 			} else if i == '"' {
-				result = append(result, handleForthString(tmpStr)...)
+				def.handleForthString(tmpStr)
 				tmpStr = tmpStr[:0]
 				state = 1
 			}
@@ -213,33 +229,27 @@ func (fc *ForthCompiler) parseAuto(data string) (string, error) {
 	}
 
 	if state != 0 {
-		return "", fmt.Errorf("syntax error: state should be 0 but is %d", state)
+		return fmt.Errorf("syntax error: state should be 0 but is %d", state)
 	}
 
-	// shortCode := regexp.MustCompile(`\s+`).ReplaceAllString(string(result), " ")
-	// return shortCode, nil
-
-	return string(result), nil
+	return nil
 }
 
-func compile_s(str []rune) []rune {
-	result := make([]rune, 0, 100)
-
+func (s *Stack) compile_s(str []rune) {
 	if len(str) > 9 {
-		result = append(result, []rune("0 ")...)
+		s.Push("0")
 
 		for _, i := range reverse(str) {
-			result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
+			s.Push(fmt.Sprintf("%d", int(i)))
 		}
 
-		result = append(result, []rune("print ")...)
+		s.Push("print")
 	} else {
 		for _, i := range str {
-			result = append(result, []rune(fmt.Sprintf("%d emit ", int(i)))...)
+			s.Push(fmt.Sprintf("%d", int(i)))
+			s.Push("emit")
 		}
 	}
-
-	return result
 }
 
 // modifies argument s to s' and returns s'
@@ -257,28 +267,25 @@ func reverse(s []rune) []rune {
 	return r
 }
 
-func compile_m(str []rune) []rune {
-	result := make([]rune, 0, 100)
-	result = append(result, []rune(">r 0 ")...)
+func (s *Stack) compile_m(str []rune) {
+	s.Push(">r")
+	s.Push("0")
 
 	for _, i := range reverse(str) {
-		result = append(result, []rune(fmt.Sprintf("%d ", int(i)))...)
+		s.Push(fmt.Sprintf("%d", int(i)))
 	}
 
-	result = append(result, []rune("r> !s ")...)
-
-	return result
+	s.Push("r>")
+	s.Push("!s")
 }
 
-func handleForthString(str []rune) []rune {
+func (s *Stack) handleForthString(str []rune) {
 	switch str[0] {
 	case '.':
-		return compile_s(str[3 : len(str)-1])
+		s.compile_s(str[3 : len(str)-1])
 	case 's':
-		return compile_m(str[3 : len(str)-1])
+		s.compile_m(str[3 : len(str)-1])
 	}
-
-	return nil
 }
 
 func (fc *ForthCompiler) ParseFile(filename string) error {
@@ -289,40 +296,6 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 	}
 
 	return fc.Parse(string(data))
-}
-
-// Parses the given Forth code and adds the word to the dictionary of the compiler.
-func (fc *ForthCompiler) Parse(str string) error {
-	var (
-		inside bool
-		first  bool
-		word   string
-	)
-
-	code, err := fc.parseAuto(str)
-
-	if err != nil {
-		return err
-	}
-
-	for _, i := range strings.Split(code, " ") {
-		if i == ":" {
-			first = true
-		} else if i == ";" {
-			inside = false
-		} else if i == "" {
-			continue
-		} else if first {
-			fc.defs[i] = NewStack()
-			word = i
-			first = false
-			inside = true
-		} else if inside {
-			fc.defs[word].Push(i)
-		}
-	}
-
-	return nil
 }
 
 func (fc *ForthCompiler) handleMeta(meta string) error {
