@@ -129,6 +129,12 @@ func (s *Stack) GetIndex(str string) int {
 	return -1
 }
 
+func (s *Stack) Each(f func(value string)) {
+	for iter := s.Iter(); iter.Next(); {
+		f(iter.Get())
+	}
+}
+
 // -------------------- SliceStack ----------------------------
 
 type SliceStack []*Stack
