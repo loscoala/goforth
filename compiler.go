@@ -126,8 +126,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 		def     *Stack
 	)
 
-	result := make([]rune, 0, 100)
-	tmpStr := make([]rune, 0, 100)
+	buffer := make([]rune, 0, 100)
 
 	for index, i := range str {
 		switch state {
@@ -143,7 +142,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 			case '\n', '\r', '\t', ' ':
 			default:
 				state = 6
-				tmpStr = append(tmpStr, i)
+				buffer = append(buffer, i)
 			}
 		case 1:
 			switch i {
@@ -156,28 +155,29 @@ func (fc *ForthCompiler) Parse(str string) error {
 				counter = 0
 				state = 0
 			case '\n', '\r', '\t', ' ':
-				if len(result) > 0 {
+				if len(buffer) > 0 {
 					if counter == 0 {
-						word = string(result)
+						word = string(buffer)
 					} else {
-						def.Push(string(result))
+						def.Push(string(buffer))
 					}
 
 					counter++
-					result = result[:0]
+					buffer = buffer[:0]
 				}
 			case '.', 's':
 				if index+1 == len(str) {
 					break
 				}
-				if str[index+1] == '"' {
-					tmpStr = append(tmpStr, i)
+
+				if len(buffer) == 0 && str[index+1] == '"' {
+					buffer = append(buffer, i)
 					state = 7
 				} else {
-					result = append(result, i)
+					buffer = append(buffer, i)
 				}
 			default:
-				result = append(result, i)
+				buffer = append(buffer, i)
 			}
 		case 2:
 			if i == '\n' {
@@ -198,16 +198,16 @@ func (fc *ForthCompiler) Parse(str string) error {
 		case 6:
 			if i == '\n' {
 				state = 0
-				if err := fc.handleMeta(string(tmpStr)); err != nil {
+				if err := fc.handleMeta(string(buffer)); err != nil {
 					return err
 				}
-				tmpStr = tmpStr[:0]
+				buffer = buffer[:0]
 			} else if i != '\r' {
-				tmpStr = append(tmpStr, i)
+				buffer = append(buffer, i)
 			}
 		case 7:
 			// consume "
-			tmpStr = append(tmpStr, i)
+			buffer = append(buffer, i)
 			state = 8
 		case 8:
 			// inside string
@@ -215,14 +215,14 @@ func (fc *ForthCompiler) Parse(str string) error {
 				break
 			}
 
-			tmpStr = append(tmpStr, i)
+			buffer = append(buffer, i)
 
 			if i == '\\' && str[index+1] == '"' {
-				tmpStr = tmpStr[:len(tmpStr)-1]
+				buffer = buffer[:len(buffer)-1]
 				state = 7
 			} else if i == '"' {
-				def.handleForthString(tmpStr)
-				tmpStr = tmpStr[:0]
+				def.handleForthString(buffer)
+				buffer = buffer[:0]
 				state = 1
 			}
 		}
