@@ -33,6 +33,27 @@
   drop
 ;
 
+: each2   \ f a --
+  { f a } \     --
+  a @     \ l   --
+  a + 1+  \ l+a+1 --
+  >r      \ -- end
+  a 1+    \ it -- end
+  begin
+    dup
+    r@
+    <
+  while
+    dup
+    @
+    f
+    exec
+    1+
+  repeat
+  r>
+  2drop
+;
+
 : map1 swap dup @ over + 1+ >r 1+ begin dup r@ < while dup @ 2 pick exec over ! 1+ repeat r> drop drop drop ;
 
 (
