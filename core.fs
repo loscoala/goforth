@@ -271,6 +271,7 @@
 
 : .s3 [ emit ] each ;
 : .s4 [ emit ] each1 ;
+: .s5 [ emit ] each2 ;
 
 : +s dup ++ dup @ + ! ;
 : -s -- ;
