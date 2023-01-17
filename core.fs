@@ -132,6 +132,8 @@
 : memsize ( -- size ) 11 sys ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 
+\ iend is the upper limit inside a do .. loop
+: iend 2r> 2dup 2>r drop ;
 : i r@ ;
 : j    \ jend j iend i jx --
   r>   \ jend j iend i -- jx
