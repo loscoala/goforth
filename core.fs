@@ -202,7 +202,7 @@
 ;
 : _z*
   3 pick 2 pick f* 3 pick 2 pick f* f- 4 pick 2 pick f* 3 pick 5 pick f* f+
-  2swap 2drop 2swap 2drop
+  2nip 2nip
 ;
 
 : 2! tuck ! cell+ ! ;
