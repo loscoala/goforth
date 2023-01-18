@@ -200,6 +200,10 @@
 : z* { d c b a }
   a c f* b d f* f- a d f* c b f* f+
 ;
+: _z*
+  3 pick 2 pick f* 3 pick 2 pick f* f- 4 pick 2 pick f* 3 pick 5 pick f* f+
+  2swap 2drop 2swap 2drop
+;
 
 : 2! tuck ! cell+ ! ;
 : 2@ dup cell+ @ swap @ ;
