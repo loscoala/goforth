@@ -148,7 +148,12 @@ func (fvm *ForthVM) Jin() bool {
 }
 
 func (fvm *ForthVM) Adi() {
-	fvm.Push(fvm.Pop() + fvm.Pop())
+	// fvm.Push(fvm.Pop() + fvm.Pop())
+
+	a := fvm.Pop()
+	n := len(fvm.Stack) - 1
+
+	fvm.Stack[n] = a + fvm.Stack[n]
 }
 
 func (fvm *ForthVM) Sbi() {
@@ -169,26 +174,50 @@ func (fvm *ForthVM) Mli() {
 
 // f+
 func (fvm *ForthVM) Adf() {
-	fvm.Fpush(fvm.Fpop() + fvm.Fpop())
+	// fvm.Fpush(fvm.Fpop() + fvm.Fpop())
+
+	a := fvm.Fpop()
+	n := len(fvm.Stack) - 1
+	s := a + *(*float64)(unsafe.Pointer(&fvm.Stack[n]))
+
+	fvm.Stack[n] = *(*int64)(unsafe.Pointer(&s))
 }
 
 // f-
 func (fvm *ForthVM) Sbf() {
+	// a := fvm.Fpop()
+	// b := fvm.Fpop()
+	// fvm.Fpush(b - a)
+
 	a := fvm.Fpop()
-	b := fvm.Fpop()
-	fvm.Fpush(b - a)
+	n := len(fvm.Stack) - 1
+	s := *(*float64)(unsafe.Pointer(&fvm.Stack[n])) - a
+
+	fvm.Stack[n] = *(*int64)(unsafe.Pointer(&s))
 }
 
 // f/
 func (fvm *ForthVM) Dvf() {
+	// a := fvm.Fpop()
+	// b := fvm.Fpop()
+	// fvm.Fpush(b / a)
+
 	a := fvm.Fpop()
-	b := fvm.Fpop()
-	fvm.Fpush(b / a)
+	n := len(fvm.Stack) - 1
+	s := *(*float64)(unsafe.Pointer(&fvm.Stack[n])) / a
+
+	fvm.Stack[n] = *(*int64)(unsafe.Pointer(&s))
 }
 
 // f*
 func (fvm *ForthVM) Mlf() {
-	fvm.Fpush(fvm.Fpop() * fvm.Fpop())
+	// fvm.Fpush(fvm.Fpop() * fvm.Fpop())
+
+	a := fvm.Fpop()
+	n := len(fvm.Stack) - 1
+	s := *(*float64)(unsafe.Pointer(&fvm.Stack[n])) * a
+
+	fvm.Stack[n] = *(*int64)(unsafe.Pointer(&s))
 }
 
 func (fvm *ForthVM) Pri() {
@@ -303,8 +332,12 @@ func (fvm *ForthVM) Dup() {
 }
 
 func (fvm *ForthVM) Pick() {
-	value := int(fvm.Pop())
-	fvm.Push(fvm.Stack[(len(fvm.Stack)-1)-value])
+	// value := int(fvm.Pop())
+	// fvm.Push(fvm.Stack[(len(fvm.Stack)-1)-value])
+
+	n := len(fvm.Stack) - 1
+	value := int(fvm.Stack[n])
+	fvm.Stack[n] = fvm.Stack[n-1-value]
 }
 
 func (fvm *ForthVM) Ovr() {
