@@ -1,10 +1,10 @@
 # goforth
 
-This is a compiler and interpreter for a forth-like language.
+This is a compiler and byte code interpreter for a forth-like language.
 
 In general, Forth is, among other things, a programming language whose ideals are freedom and simplicity. Freedom requires knowledge and responsibility, and simplicity is yet more demanding. But "simple" can also mean rudimentary. This Forth attempts to be simple as possible and also fast as possible.
 
-In this forth you can define local variables with curley brackets like in other forths and produce callable subroutines. The compiler produces human readable bytecode and is amazingly fast...
+In this forth you can define local variables with curley brackets like in other forths and produce callable byte code subroutines. The compiler produces human readable bytecode and is amazingly fast.
 
 ## Overview
 
@@ -92,13 +92,14 @@ Start `./goforth` and in the REPL you can look what the dictionary contains by t
 Start the interpreter:
 
 ```sh
-goforth
+./cmd/goforth/goforth
 ```
 Then inside the REPL type the following:
 
 ```forth
-# examples/mandelbrot.fs   \ loads the file mandelbrot.fs and parses it
+use examples/mandelbrot.fs \ loads the file mandelbrot.fs and parses it
 mb-init                    \ compile and run mb-init
+true debug                 \ OPTIONAL in order to show byte code and benchmark
 mb                         \ compile and run mb
 ```
 
