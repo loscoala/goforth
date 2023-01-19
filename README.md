@@ -142,6 +142,24 @@ which prints:
 
 By calling `true debug` you can enable the benchmark mode.
 
+```forth
+true debug
+```
+
+Now the byte code is displayed and the runtime of the program.
+
+```
+forth> true debug
+forth> 5 3 min .
+SUB min;TDP;LSI;JIN #0;DRP;JMP #1;#0 NOP;SWP;DRP;#1 NOP;END;
+MAIN;L 5;L 3;CALL min;PRI;STP;
+3
+
+execution time: 15.947µs
+Number of Cmds: 13
+Speed: 0.000815 cmd/ns
+```
+
 The actual debugger can be run like this:
 
 ```forth
