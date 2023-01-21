@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
+	"os/exec"
 	"strings"
 	"unicode"
 
@@ -281,6 +283,23 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
+		} else if strings.Index(text, "compile ") == 0 {
+			if err := fc.Parse(": main\n" + text[8:] + "\n;"); err != nil {
+				PrintError(err)
+				continue
+			}
+
+			if err := fc.Compile(); err != nil {
+				PrintError(err)
+				continue
+			}
+
+			if ShowByteCode {
+				fc.printByteCode()
+				fmt.Println("")
+			}
+			fc.compileToC()
+			continue
 		}
 
 		if err := fc.Parse(": main\n" + text + "\n;"); err != nil {
@@ -304,6 +323,110 @@ func (fc *ForthCompiler) handleREPL() {
 
 		fc.Fvm.Run(fc.ByteCode())
 		fmt.Println("")
+	}
+}
+
+func randomStringBytes(n int) string {
+	b := make([]byte, n)
+
+	for i := range b {
+		b[i] = byte(65 + rand.Intn(26))
+	}
+
+	return string(b)
+}
+
+func InitNameCache() func(name string) string {
+	cache := make(map[string]string)
+
+	return func(name string) string {
+		if name == "" {
+			// return all names
+			var result strings.Builder
+			for k, v := range cache {
+				result.WriteString(fmt.Sprintf("static void %s(void); // %s\n", v, k))
+			}
+			if result.Len() > 0 {
+				result.WriteString("\n")
+			}
+			return result.String()
+		}
+
+		if ret, ok := cache[name]; ok {
+			return ret
+		}
+
+		r := "fvm_" + randomStringBytes(6)
+
+		cache[name] = r
+		return r
+	}
+}
+
+func (fc *ForthCompiler) compileToC() {
+	var result strings.Builder
+	funcs := InitNameCache()
+
+	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
+		if cmd == "" {
+			continue
+		}
+
+		scmd := strings.Split(cmd, " ")
+
+		if len(scmd) == 2 && scmd[0][0] == '#' {
+			// NOP
+			result.WriteString(fmt.Sprintf("l%s:\n", scmd[0][1:]))
+		} else {
+			switch scmd[0] {
+			case "JMP": //
+				result.WriteString(fmt.Sprintf("  goto l%s;\n", scmd[1][1:]))
+			case "JIN": //
+				result.WriteString(fmt.Sprintf("  if (fvm_jin()) goto l%s;\n", scmd[1][1:]))
+			case "L": //
+				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", scmd[1]))
+			case "LF": //
+				result.WriteString(fmt.Sprintf("  fvm_fpush(%s);\n", scmd[1])) // TODO: show valid float format like 1. -> 1.0
+			case "STP":
+				result.WriteString("  fvm_stp();\n}\n")
+			case "SUB": //
+				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
+			case "END":
+				result.WriteString("}\n\n")
+			case "MAIN":
+				result.WriteString("int main(int argc, char** argv) {\n")
+			case "CALL": //
+				result.WriteString(fmt.Sprintf("  %s(); // %s\n", funcs(scmd[1]), scmd[1]))
+			case "REF": //
+				result.WriteString(fmt.Sprintf("  fvm_ref(&%s); // %s\n", funcs(scmd[1]), scmd[1]))
+			default:
+				result.WriteString(fmt.Sprintf("  fvm_%s();\n", strings.ToLower(scmd[0])))
+			}
+		}
+	}
+
+	// fmt.Println(funcs(""))
+	// fmt.Println(result.String())
+
+	os.WriteFile("lib/main.c", []byte("#include \"vm.c\"\n\n"+funcs("")+result.String()), 0644)
+
+	{
+		cmd := exec.Command("gcc-11", "-o", "main", "main.c", "-O0")
+		cmd.Dir = "lib/"
+
+		if err := cmd.Run(); err != nil {
+			PrintError(err)
+		}
+	}
+
+	{
+		cmd := exec.Command("lib/main")
+
+		if out, err := cmd.Output(); err != nil {
+			PrintError(err)
+		} else {
+			fmt.Println(string(out))
+		}
 	}
 }
 
