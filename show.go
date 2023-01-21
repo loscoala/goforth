@@ -276,13 +276,6 @@ func (fc *ForthCompiler) handleREPL() {
 			fmt.Println("")
 			fc.printDebug()
 			continue
-		} else if text[0] == '#' && len(text) > 1 {
-			// open a file an parse its contents
-			if err := fc.ParseFile(text[2:]); err != nil {
-				PrintError(err)
-			}
-			line.Config.AutoComplete = fc.initCompleter()
-			continue
 		} else if strings.Index(text, "compile ") == 0 {
 			if err := fc.Parse(": main\n" + text[8:] + "\n;"); err != nil {
 				PrintError(err)
