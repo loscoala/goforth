@@ -324,6 +324,7 @@ static inline void fvm_trf(void) {
 
 static inline void fvm_sys(void) {
   long sys, value;
+  double dvalue;
 
   sys = fvm_pop();
 
@@ -333,6 +334,10 @@ static inline void fvm_sys(void) {
       value = fvm_pop();
       fvm_fpush((double)value);
       break;
+    case 4:
+      // f>i
+      dvalue = fvm_fpop();
+      fvm_push((long)dvalue);
     case 10:
       // allocate
       // TODO: not implemented
