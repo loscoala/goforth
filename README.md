@@ -138,6 +138,43 @@ which prints:
 120
 ```
 
+### Generate C-Code
+
+To translate one or more words into C code and generate a native binary file there is a `compile` statement.
+
+This is how the `html.fs` example written in Forth can be easily translated into C and executed immediately:
+
+```forth
+use examples/html.fs
+compile test
+```
+
+The word `test` was defined in the sample file as follows:
+
+```forth
+: test
+  document
+  [
+    [
+      [ ." charset=\"utf-8\"" ] meta
+      [ ." Example Page" ] title
+    ] head
+    [
+      [ ." Example Page" ] h1
+      [ ." Hello " [ ." World!" ] b ] p
+    ] body
+  ] html
+;
+```
+After the `compile test` statement, a C file `main.c` was generated in the `lib` directory and compiled with the gcc-11 compiler and executed.
+
+The result is also shown as follows:
+
+```html
+<!doctype html>
+<html lang="de-DE"><head><meta charset="utf-8"><title>Example Page</title></head><body><h1>Example Page</h1><p>Hello <b>World!</b></p></body></html>
+```
+
 ### Debugging
 
 By calling `true debug` you can enable the benchmark mode.
