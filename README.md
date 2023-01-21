@@ -68,6 +68,8 @@ go get github.com/loscoala/goforth@latest
 
 - Simply build the project with build.sh
 
+- For C code generation you need a working gcc-11 compiler.
+
 ```sh
 git clone https://github.com/loscoala/goforth.git
 ./build.sh
@@ -96,10 +98,10 @@ Start the interpreter:
 Then inside the REPL type the following:
 
 ```forth
-use examples/mandelbrot.fs \ loads the file mandelbrot.fs and parses it
-mb-init                    \ compile and run mb-init
-true debug                 \ OPTIONAL in order to show byte code and benchmark
-mb                         \ compile and run mb
+forth> use examples/mandelbrot.fs \ loads the file mandelbrot.fs and parses it
+forth> mb-init                    \ compile and run mb-init
+forth> true debug                 \ OPTIONAL in order to show byte code and benchmark
+forth> mb                         \ compile and run mb
 ```
 
 As a result you see a zoom in the mandelbrot fractal.
@@ -111,7 +113,7 @@ As a result you see a zoom in the mandelbrot fractal.
 You can also define new words:
 
 ```forth
-: myadd 2 + ;
+forth> : myadd 2 + ;
 ```
 
 Or words with a local context:
@@ -129,7 +131,7 @@ Or words with a local context:
 then run it:
 
 ```forth
-5 fakulty .
+forth> 5 fakulty .
 ```
 
 which prints:
@@ -145,8 +147,8 @@ To translate one or more words into C code and generate a native binary file the
 This is how the `html.fs` example written in Forth can be easily translated into C and executed immediately:
 
 ```forth
-use examples/html.fs
-compile test
+forth> use examples/html.fs
+forth> compile test
 ```
 
 The word `test` was defined in the sample file as follows:
@@ -180,10 +182,10 @@ The result is also shown as follows:
 By calling `true debug` you can enable the benchmark mode.
 
 ```forth
-true debug
+forth> true debug
 ```
 
-Now the byte code is displayed and the runtime of the program.
+Now the byte code is displayed and the execution time of the program.
 
 ```
 forth> true debug
@@ -200,7 +202,7 @@ Speed: 0.000815 cmd/ns
 The actual debugger can be run like this:
 
 ```forth
-debug 34 21 min .
+forth> debug 34 21 min .
 ```
 
 Which gives the following result:
