@@ -329,7 +329,7 @@ func randomStringBytes(n int) string {
 	return string(b)
 }
 
-func InitNameCache() func(name string) string {
+func initNameCache() func(name string) string {
 	cache := make(map[string]string)
 
 	return func(name string) string {
@@ -358,7 +358,7 @@ func InitNameCache() func(name string) string {
 
 func (fc *ForthCompiler) compileToC() {
 	var result strings.Builder
-	funcs := InitNameCache()
+	funcs := initNameCache()
 
 	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 		if cmd == "" {
