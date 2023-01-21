@@ -257,7 +257,7 @@ static inline void fvm_rot(void) {
   fvm_push(c);
 }
 
-static inline void fvm_nrot(void) {
+static inline void fvm_nrt(void) {
   long a, b, c;
   a = fvm_pop();
   b = fvm_pop();
@@ -323,7 +323,27 @@ static inline void fvm_trf(void) {
 }
 
 static inline void fvm_sys(void) {
-  fvm_pop();
+  long sys, value;
+
+  sys = fvm_pop();
+
+  switch (sys) {
+    case 3:
+      // i>f
+      value = fvm_pop();
+      fvm_fpush((double)value);
+      break;
+    case 10:
+      // allocate
+      // TODO: not implemented
+      break;
+    case 11:
+      // memsize
+      fvm_push(VM_MEM_SIZE);
+      break;
+    default:
+      printf("ERROR: Unknown sys command\n");
+  }
 }
 
 static inline void fvm_ref(void (*f)(void)) {
