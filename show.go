@@ -372,25 +372,32 @@ func (fc *ForthCompiler) compileToC() {
 			result.WriteString(fmt.Sprintf("l%s:\n", scmd[0][1:]))
 		} else {
 			switch scmd[0] {
-			case "JMP": //
+			case "JMP":
 				result.WriteString(fmt.Sprintf("  goto l%s;\n", scmd[1][1:]))
-			case "JIN": //
+			case "JIN":
 				result.WriteString(fmt.Sprintf("  if (fvm_jin()) goto l%s;\n", scmd[1][1:]))
-			case "L": //
+			case "L":
 				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", scmd[1]))
-			case "LF": //
-				result.WriteString(fmt.Sprintf("  fvm_fpush(%s);\n", scmd[1])) // TODO: show valid float format like 1. -> 1.0
+			case "LF":
+				// TODO: currently it only works with valied floats in Forth like 1.0 and not 1.
+				result.WriteString(fmt.Sprintf("  fvm_fpush(%s);\n", scmd[1]))
 			case "STP":
+				if ShowExecutionTime {
+					result.WriteString("\n  end = clock();\n  time_spend = (double)(end - begin);\n  printf(\"\\ntime: %fs\\n\", time_spend / CLOCKS_PER_SEC);\n")
+				}
 				result.WriteString("  fvm_stp();\n}\n")
-			case "SUB": //
+			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
 				result.WriteString("}\n\n")
 			case "MAIN":
 				result.WriteString("int main(int argc, char** argv) {\n")
-			case "CALL": //
+				if ShowExecutionTime {
+					result.WriteString("  clock_t begin, end;\n  double time_spend;\n\n  begin = clock();\n\n")
+				}
+			case "CALL":
 				result.WriteString(fmt.Sprintf("  %s(); // %s\n", funcs(scmd[1]), scmd[1]))
-			case "REF": //
+			case "REF":
 				result.WriteString(fmt.Sprintf("  fvm_ref(&%s); // %s\n", funcs(scmd[1]), scmd[1]))
 			default:
 				result.WriteString(fmt.Sprintf("  fvm_%s();\n", strings.ToLower(scmd[0])))
@@ -398,10 +405,12 @@ func (fc *ForthCompiler) compileToC() {
 		}
 	}
 
-	// fmt.Println(funcs(""))
-	// fmt.Println(result.String())
+	timeheader := ""
+	if ShowExecutionTime {
+		timeheader = "#include <time.h>\n\n"
+	}
 
-	os.WriteFile("lib/main.c", []byte("#include \"vm.c\"\n\n"+funcs("")+result.String()), 0644)
+	os.WriteFile("lib/main.c", []byte("#include \"vm.c\"\n\n"+timeheader+funcs("")+result.String()), 0644)
 
 	{
 		cmd := exec.Command("gcc-12", "-o", "main", "main.c", "-O0")
