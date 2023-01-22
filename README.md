@@ -68,7 +68,7 @@ go get github.com/loscoala/goforth@latest
 
 - Simply build the project with build.sh
 
-- For C code generation you need a working gcc-11 compiler.
+- For C code generation you need a working gcc-12 compiler.
 
 ```sh
 git clone https://github.com/loscoala/goforth.git

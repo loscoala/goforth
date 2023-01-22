@@ -404,7 +404,7 @@ func (fc *ForthCompiler) compileToC() {
 	os.WriteFile("lib/main.c", []byte("#include \"vm.c\"\n\n"+funcs("")+result.String()), 0644)
 
 	{
-		cmd := exec.Command("gcc-11", "-o", "main", "main.c", "-O0")
+		cmd := exec.Command("gcc-12", "-o", "main", "main.c", "-O0")
 		cmd.Dir = "lib/"
 
 		if err := cmd.Run(); err != nil {
