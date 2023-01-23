@@ -68,7 +68,7 @@ go get github.com/loscoala/goforth@latest
 
 - Simply build the project with build.sh
 
-- For C code generation you need a working gcc-12 compiler.
+- For C code generation you need a working GNU C compiler.
 
 ```sh
 git clone https://github.com/loscoala/goforth.git
@@ -168,7 +168,7 @@ The word `test` was defined in the sample file as follows:
   ] html
 ;
 ```
-After the `compile test` statement, a C file `main.c` was generated in the `lib` directory and compiled with the gcc-11 compiler and executed.
+After the `compile test` statement, a C file `main.c` was generated in the `lib` directory and compiled with the GNU C compiler and executed.
 
 The result is also shown as follows:
 

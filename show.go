@@ -410,10 +410,10 @@ func (fc *ForthCompiler) compileToC() {
 		timeheader = "#include <time.h>\n\n"
 	}
 
-	os.WriteFile("lib/main.c", []byte("#include \"vm.c\"\n\n"+timeheader+funcs("")+result.String()), 0644)
+	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+timeheader+funcs("")+result.String()), 0644)
 
-	{
-		cmd := exec.Command("gcc-12", "-o", "main", "main.c", "-O0")
+	if CAutoCompile {
+		cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
 		cmd.Dir = "lib/"
 
 		if err := cmd.Run(); err != nil {
@@ -421,8 +421,8 @@ func (fc *ForthCompiler) compileToC() {
 		}
 	}
 
-	{
-		cmd := exec.Command("lib/main")
+	if CAutoExecute {
+		cmd := exec.Command("lib/" + CBinaryName)
 
 		if out, err := cmd.Output(); err != nil {
 			PrintError(err)

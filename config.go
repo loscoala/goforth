@@ -20,3 +20,21 @@ var ShowByteCode bool
 
 // Show execution time in vm.Run
 var ShowExecutionTime bool
+
+// The name of the C compiler
+var CCompiler = "gcc"
+
+// The optimization flag of the C compiler
+var COptimization = "-O2"
+
+// Compile automatically after C code generation
+var CAutoCompile = true
+
+// Automatically execute the binary after compiling
+var CAutoExecute = true
+
+// The name of the C code file
+var CCodeName = "main.c"
+
+// The name of the binary
+var CBinaryName = "main"
