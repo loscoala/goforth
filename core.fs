@@ -169,6 +169,7 @@
 : fsqrt 2 sys ;
 : factor mod 0= ;
 : even 2 factor ;
+: within ( u ul uh -- t ) >r swap dup rot >= swap r> <= and ;
 
 : min 2dup < if drop else nip then ;
 : max 2dup > if drop else nip then ;
