@@ -164,6 +164,13 @@ static inline void fvm_eqi(void) {
   fvm_push(a == b);
 }
 
+static inline void fvm_xor(void) {
+  long a, b;
+  a = fvm_pop();
+  b = fvm_pop();
+  fvm_push(a ^ b);
+}
+
 static inline void fvm_and(void) {
   long a, b;
   a = fvm_pop();

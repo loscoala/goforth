@@ -280,6 +280,13 @@ func (fvm *ForthVM) Eqi() {
 	fvm.Push(v)
 }
 
+func (fvm *ForthVM) Xor() {
+	a := fvm.Pop()
+	b := fvm.Pop()
+
+	fvm.Push(a ^ b)
+}
+
 func (fvm *ForthVM) And() {
 	var v int64
 
@@ -611,6 +618,7 @@ const (
 	AND
 	NOT
 	EQI
+	XOR
 	LV
 	L
 	LF
@@ -671,6 +679,7 @@ var CellName = map[int]string{
 	AND:  "AND",
 	NOT:  "NOT",
 	EQI:  "EQI",
+	XOR:  "XOR",
 	LV:   "LV",
 	L:    "L",
 	LF:   "LF",
@@ -813,6 +822,8 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: NOT})
 			case "EQI":
 				cells = append(cells, Cell{cmd: EQI})
+			case "XOR":
+				cells = append(cells, Cell{cmd: XOR})
 			case "LV":
 				cells = append(cells, Cell{cmd: LV})
 			case "L":
@@ -987,6 +998,8 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.Not()
 		case EQI:
 			fvm.Eqi()
+		case XOR:
+			fvm.Xor()
 		case LV:
 			fvm.Lv()
 		case L:
@@ -1122,6 +1135,8 @@ func (fvm *ForthVM) RunStep() (bool, error) {
 		fvm.Not()
 	case EQI:
 		fvm.Eqi()
+	case XOR:
+		fvm.Xor()
 	case LV:
 		fvm.Lv()
 	case L:
