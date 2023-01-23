@@ -329,25 +329,27 @@ static inline void fvm_sys(void) {
   sys = fvm_pop();
 
   switch (sys) {
-    case 3:
-      // i>f
-      value = fvm_pop();
-      fvm_fpush((double)value);
-      break;
-    case 4:
-      // f>i
-      dvalue = fvm_fpop();
-      fvm_push((long)dvalue);
-    case 10:
-      // allocate
-      // TODO: not implemented
-      break;
-    case 11:
-      // memsize
-      fvm_push(VM_MEM_SIZE);
-      break;
-    default:
-      printf("ERROR: Unknown sys command\n");
+  case 3:
+    // i>f
+    value = fvm_pop();
+    fvm_fpush((double)value);
+    break;
+  case 4:
+    // f>i
+    dvalue = fvm_fpop();
+    fvm_push((long)dvalue);
+    break;
+  case 10:
+    // allocate
+    // TODO: not implemented
+    break;
+  case 11:
+    // memsize
+    fvm_push(VM_MEM_SIZE);
+    break;
+  default:
+    printf("ERROR: Unknown sys command\n");
+    break;
   }
 }
 
