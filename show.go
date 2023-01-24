@@ -418,16 +418,14 @@ func (fc *ForthCompiler) compileToC() {
 
 		if err := cmd.Run(); err != nil {
 			PrintError(err)
-		}
-	}
+		} else if CAutoExecute {
+			cmd := exec.Command("lib/" + CBinaryName)
 
-	if CAutoExecute {
-		cmd := exec.Command("lib/" + CBinaryName)
-
-		if out, err := cmd.Output(); err != nil {
-			PrintError(err)
-		} else {
-			fmt.Println(string(out))
+			if out, err := cmd.Output(); err != nil {
+				PrintError(err)
+			} else {
+				fmt.Println(string(out))
+			}
 		}
 	}
 }
