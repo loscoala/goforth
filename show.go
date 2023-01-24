@@ -389,7 +389,7 @@ func (fc *ForthCompiler) compileToC() {
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
-				result.WriteString("}\n\n")
+				result.WriteString("  return;\n}\n\n")
 			case "MAIN":
 				result.WriteString("int main(int argc, char** argv) {\n")
 				if ShowExecutionTime {
