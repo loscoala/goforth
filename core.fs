@@ -7,6 +7,9 @@
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
 \ : bi ( n a b -- na nb ) { _bi_b _bi_a } dup _bi_a exec swap _bi_b exec ;
 
+\ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
+: while* { w b } begin b exec while w exec repeat drop ;
+
 : each1 \ a f --
   swap \ f a -
   dup  \ f a a --
