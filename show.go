@@ -386,6 +386,16 @@ func (fc *ForthCompiler) compileToC() {
 					result.WriteString("\n  end = clock();\n  time_spend = (double)(end - begin);\n  printf(\"\\ntime: %fs\\n\", time_spend / CLOCKS_PER_SEC);\n")
 				}
 				result.WriteString("  fvm_stp();\n}\n")
+			case "LCTX":
+				// do nothing
+			case "LCLR":
+				// do nothing
+			case "LDEF":
+				result.WriteString(fmt.Sprintf("  long %s = fvm_pop();\n", scmd[1]))
+			case "LCL":
+				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", scmd[1]))
+			case "LSET":
+				result.WriteString(fmt.Sprintf("  %s = fvm_pop();\n", scmd[1]))
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
