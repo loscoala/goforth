@@ -356,9 +356,25 @@ func initNameCache() func(name string) string {
 	}
 }
 
+func initVarNameCache() func(name string) string {
+	cache := make(map[string]string)
+
+	return func(name string) string {
+		if ret, ok := cache[name]; ok {
+			return ret
+		}
+
+		r := "v_" + randomStringBytes(6)
+
+		cache[name] = r
+		return r
+	}
+}
+
 func (fc *ForthCompiler) compileToC() {
 	var result strings.Builder
 	funcs := initNameCache()
+	locals := initVarNameCache()
 
 	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 		if cmd == "" {
@@ -391,11 +407,11 @@ func (fc *ForthCompiler) compileToC() {
 			case "LCLR":
 				// do nothing
 			case "LDEF":
-				result.WriteString(fmt.Sprintf("  long %s = fvm_pop();\n", scmd[1]))
+				result.WriteString(fmt.Sprintf("  long %s = fvm_pop();\n", locals(scmd[1])))
 			case "LCL":
-				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", scmd[1]))
+				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", locals(scmd[1])))
 			case "LSET":
-				result.WriteString(fmt.Sprintf("  %s = fvm_pop();\n", scmd[1]))
+				result.WriteString(fmt.Sprintf("  %s = fvm_pop();\n", locals(scmd[1])))
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
