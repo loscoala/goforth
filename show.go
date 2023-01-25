@@ -371,10 +371,32 @@ func initVarNameCache() func(name string) string {
 	}
 }
 
+// returns spaces. indent can only be a multible of 2 and between 2 and 20.
+func initSpaceCache() func(indent int) string {
+	spaces := [...]string{
+		"  ",
+		"    ",
+		"      ",
+		"        ",
+		"          ",
+		"            ",
+		"              ",
+		"                ",
+		"                  ",
+		"                    ",
+	}
+
+	return func(indent int) string {
+		return spaces[((indent/2)-1)%10]
+	}
+}
+
 func (fc *ForthCompiler) compileToC() {
 	var result strings.Builder
 	funcs := initNameCache()
 	locals := initVarNameCache()
+	spaces := initSpaceCache()
+	indent := 2
 
 	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 		if cmd == "" {
@@ -389,29 +411,30 @@ func (fc *ForthCompiler) compileToC() {
 		} else {
 			switch scmd[0] {
 			case "JMP":
-				result.WriteString(fmt.Sprintf("  goto l%s;\n", scmd[1][1:]))
+				result.WriteString(fmt.Sprintf("%sgoto l%s;\n", spaces(indent), scmd[1][1:]))
 			case "JIN":
-				result.WriteString(fmt.Sprintf("  if (fvm_jin()) goto l%s;\n", scmd[1][1:]))
+				result.WriteString(fmt.Sprintf("%sif (fvm_jin()) goto l%s;\n", spaces(indent), scmd[1][1:]))
 			case "L":
-				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", scmd[1]))
+				result.WriteString(fmt.Sprintf("%sfvm_push(%s);\n", spaces(indent), scmd[1]))
 			case "LF":
-				// TODO: currently it only works with valied floats in Forth like 1.0 and not 1.
-				result.WriteString(fmt.Sprintf("  fvm_fpush(%s);\n", scmd[1]))
+				result.WriteString(fmt.Sprintf("%sfvm_fpush(%s);\n", spaces(indent), scmd[1]))
 			case "STP":
 				if ShowExecutionTime {
 					result.WriteString("\n  end = clock();\n  time_spend = (double)(end - begin);\n  printf(\"\\ntime: %fs\\n\", time_spend / CLOCKS_PER_SEC);\n")
 				}
 				result.WriteString("  fvm_stp();\n}\n")
 			case "LCTX":
-				// do nothing
+				result.WriteString(fmt.Sprintf("%s{\n", spaces(indent)))
+				indent += 2
 			case "LCLR":
-				// do nothing
+				indent -= 2
+				result.WriteString(fmt.Sprintf("%s}\n", spaces(indent)))
 			case "LDEF":
-				result.WriteString(fmt.Sprintf("  long %s = fvm_pop();\n", locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%slong %s = fvm_pop();\n", spaces(indent), locals(scmd[1])))
 			case "LCL":
-				result.WriteString(fmt.Sprintf("  fvm_push(%s);\n", locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%sfvm_push(%s);\n", spaces(indent), locals(scmd[1])))
 			case "LSET":
-				result.WriteString(fmt.Sprintf("  %s = fvm_pop();\n", locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%s%s = fvm_pop();\n", spaces(indent), locals(scmd[1])))
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
@@ -422,11 +445,11 @@ func (fc *ForthCompiler) compileToC() {
 					result.WriteString("  clock_t begin, end;\n  double time_spend;\n\n  begin = clock();\n\n")
 				}
 			case "CALL":
-				result.WriteString(fmt.Sprintf("  %s(); // %s\n", funcs(scmd[1]), scmd[1]))
+				result.WriteString(fmt.Sprintf("%s%s(); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
 			case "REF":
-				result.WriteString(fmt.Sprintf("  fvm_ref(&%s); // %s\n", funcs(scmd[1]), scmd[1]))
+				result.WriteString(fmt.Sprintf("%sfvm_ref(&%s); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
 			default:
-				result.WriteString(fmt.Sprintf("  fvm_%s();\n", strings.ToLower(scmd[0])))
+				result.WriteString(fmt.Sprintf("%sfvm_%s();\n", spaces(indent), strings.ToLower(scmd[0])))
 			}
 		}
 	}
