@@ -348,7 +348,7 @@ static inline void fvm_sys(void) {
     break;
   case 10:
     // allocate
-    // TODO: not implemented
+    fvm_pop(); // pop argument
     break;
   case 11:
     // memsize
