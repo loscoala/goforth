@@ -11,6 +11,7 @@
 : while* { w b } begin b exec while w exec repeat drop ;
 
 : loop* ( u l b -- ) { b } ?do b exec loop ;
+: i* 2r> over -rot 2>r ;
 
 : each1 \ a f --
   swap \ f a -
