@@ -5,13 +5,17 @@
 
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
-\ : bi ( n a b -- na nb ) { _bi_b _bi_a } dup _bi_a exec swap _bi_b exec ;
+: bi4 ( n a b -- na nb ) { b a } dup a exec swap b exec ;
 
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 
-: loop* ( u l b -- ) { b } ?do b exec loop ;
-: i* 2r> over -rot 2>r ;
+\ 10 0 [ . ] loop*
+: loop* ( u l b -- ) { b } ?do i b exec loop ;
+
+: s2i ( adr -- end begin ) [ @ over + 1+ ] [ 1+ ] bi4 ;
+: each3 swap s2i [ @ over exec ] loop* drop ;
+: map2 swap s2i [ { i* } i* @ over exec i* ! ] loop* drop ;
 
 : each1 \ a f --
   swap \ f a -
@@ -285,6 +289,7 @@
 : .s3 [ emit ] each ;
 : .s4 [ emit ] each1 ;
 : .s5 [ emit ] each2 ;
+: .s6 [ emit ] each3 ;
 
 : +s dup ++ dup @ + ! ;
 : -s -- ;
