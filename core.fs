@@ -10,6 +10,8 @@
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 
+: loop* ( u l b -- ) { b } ?do b exec loop ;
+
 : each1 \ a f --
   swap \ f a -
   dup  \ f a a --
