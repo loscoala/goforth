@@ -10,12 +10,12 @@
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 
-\ 10 0 [ . ] loop*
-: loop* ( u l b -- ) { b } ?do i b exec loop ;
+\ 10 0 [ . ] for
+: for ( u l b -- ) { b } ?do i b exec loop ;
 
 : s2i ( adr -- end begin ) [ @ over + 1+ ] [ 1+ ] bi4 ;
-: each3 swap s2i [ @ over exec ] loop* drop ;
-: map2 swap s2i [ { i* } i* @ over exec i* ! ] loop* drop ;
+: each3 swap s2i [ @ over exec ] for drop ;
+: map2 swap s2i [ { x } x @ over exec x ! ] for drop ;
 
 : each1 \ a f --
   swap \ f a -
