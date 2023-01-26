@@ -430,11 +430,11 @@ func (fc *ForthCompiler) compileToC() {
 				indent -= 2
 				result.WriteString(fmt.Sprintf("%s}\n", spaces(indent)))
 			case "LDEF":
-				result.WriteString(fmt.Sprintf("%slong %s = fvm_pop();\n", spaces(indent), locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%slong %s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
 			case "LCL":
-				result.WriteString(fmt.Sprintf("%sfvm_push(%s);\n", spaces(indent), locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
 			case "LSET":
-				result.WriteString(fmt.Sprintf("%s%s = fvm_pop();\n", spaces(indent), locals(scmd[1])))
+				result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
