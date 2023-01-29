@@ -222,7 +222,12 @@
 : -- 1 negate swap +! ;
 : @+ dup cell+ swap @ ;
 
-: newS 0 swap ! ;
+\ Stack operations
+: stack empty ;
+: empty 0 swap ! ;
+: push { s } s @ cell+ +! s ++ ;
+: pop { s } s s @ + @ s -- ;
+: .stack @+ ?dup if 0 ?do dup ? cell+ cr loop then drop ;
 
 : squared dup * ;
 : cubed dup squared * ;
