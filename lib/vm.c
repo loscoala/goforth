@@ -1,15 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <time.h>
+
+#ifndef DEBUG
+  #define DEBUG 0
+#endif
 
 #define VM_MEM_SIZE 1000
 #define VM_STACK_SIZE 1000
 #define VM_RSTACK_SIZE 1000
 
-static long mem[VM_MEM_SIZE];
-static long stack[VM_STACK_SIZE];
-static long rstack[VM_RSTACK_SIZE];
-static long n = -1;
-static long rn = -1;
+typedef int64_t cell_t;
+typedef double  fcell_t;
+
+static cell_t fvm_mem[VM_MEM_SIZE];
+static cell_t fvm_stack[VM_STACK_SIZE];
+static cell_t fvm_rstack[VM_RSTACK_SIZE];
+static ptrdiff_t fvm_n = -1;
+static ptrdiff_t fvm_rn = -1;
+
+#if DEBUG
+static cell_t fvm_nmax = 0;
+static cell_t fvm_rmax = 0;
+#endif
+
+static clock_t fvm_begin = 0;
 
 // #ifndef inline
 //   #define inline __inline__ __attribute__((always_inline))
@@ -21,57 +38,63 @@ static long rn = -1;
     exit(0); \
   } while(0)
 
-#ifndef DEBUG
-  #define DEBUG 0
-#endif
-
-static inline void fvm_push(long i) {
-  stack[++n] = i;
-}
-
-static inline long fvm_pop(void) {
+static inline void fvm_push(cell_t i) {
+  fvm_stack[++fvm_n] = i;
 #if DEBUG
-  if (n < 0) myerror("D-Stack is empty in fvm_pop()");
+  if (fvm_n > fvm_nmax) {
+    fvm_nmax = fvm_n;
+  }
 #endif
-  return stack[n--];
 }
 
-static inline void fvm_rpush(long i) {
-  rstack[++rn] = i;
-}
-
-static inline long fvm_rpop(void) {
+static inline cell_t fvm_pop(void) {
 #if DEBUG
-  if (rn < 0) myerror("R-Stack is empty in fvm_rpop()");
+  if (fvm_n < 0) myerror("fvm_stack is empty in fvm_pop()");
 #endif
-  return rstack[rn--];
+  return fvm_stack[fvm_n--];
 }
 
-static inline double fvm_fpop(void) {
-  long v;
+static inline void fvm_rpush(cell_t i) {
+  fvm_rstack[++fvm_rn] = i;
+#if DEBUG
+  if (fvm_rn > fvm_rmax) {
+    fvm_rmax = fvm_rn;
+  }
+#endif
+}
+
+static inline cell_t fvm_rpop(void) {
+#if DEBUG
+  if (fvm_rn < 0) myerror("fvm_rstack is empty in fvm_rpop()");
+#endif
+  return fvm_rstack[fvm_rn--];
+}
+
+static inline fcell_t fvm_fpop(void) {
+  cell_t v;
   v = fvm_pop();
-  return *(double*)&v;
+  return *(fcell_t*)&v;
 }
 
-static inline void fvm_fpush(double i) {
-  long v;
-  v = *((long*)&i);
+static inline void fvm_fpush(fcell_t i) {
+  cell_t v;
+  v = *((cell_t*)&i);
   fvm_push(v);
 }
 
 static inline void fvm_lv(void) {
-  fvm_push(mem[fvm_pop()]);
+  fvm_push(fvm_mem[fvm_pop()]);
 }
 
 static inline void fvm_lsi(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a > b);
 }
 
 static inline void fvm_gri(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a < b);
@@ -86,14 +109,14 @@ static inline void fvm_adi(void) {
 }
 
 static inline void fvm_sbi(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(b - a);
 }
 
 static inline void fvm_dvi(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(b / a);
@@ -108,14 +131,14 @@ static inline void fvm_adf(void) {
 }
 
 static inline void fvm_sbf(void) {
-  double a, b;
+  fcell_t a, b;
   a = fvm_fpop();
   b = fvm_fpop();
   fvm_fpush(b - a);
 }
 
 static inline void fvm_dvf(void) {
-  double a, b;
+  fcell_t a, b;
   a = fvm_fpop();
   b = fvm_fpop();
   fvm_fpush(b / a);
@@ -134,14 +157,14 @@ static inline void fvm_prf(void) {
 }
 
 static inline void fvm_lsf(void) {
-  double a, b;
+  fcell_t a, b;
   a = fvm_fpop();
   b = fvm_fpop();
   fvm_push(a > b);
 }
 
 static inline void fvm_grf(void) {
-  double a, b;
+  fcell_t a, b;
   a = fvm_fpop();
   b = fvm_fpop();
   fvm_push(a < b);
@@ -152,34 +175,34 @@ static inline void fvm_pra(void) {
 }
 
 static inline void fvm_rdi(void) {
-  long i;
+  cell_t i;
   scanf("%ld", &i);
   fvm_push(i);
 }
 
 static inline void fvm_eqi(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a == b);
 }
 
 static inline void fvm_xor(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a ^ b);
 }
 
 static inline void fvm_and(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a && b);
 }
 
 static inline void fvm_or(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a || b);
@@ -190,27 +213,27 @@ static inline void fvm_not(void) {
 }
 
 static inline void fvm_str(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
-  mem[a] = b;
+  fvm_mem[a] = b;
 }
 
 static inline void fvm_dup(void) {
-  long value;
+  cell_t value;
   value = fvm_pop();
   fvm_push(value);
   fvm_push(value);
 }
 
 static inline void fvm_pck(void) {
-  long v;
+  cell_t v;
   v = fvm_pop();
-  fvm_push(stack[n-v]);
+  fvm_push(fvm_stack[fvm_n-v]);
 }
 
 static inline void fvm_ovr(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(b);
@@ -219,7 +242,7 @@ static inline void fvm_ovr(void) {
 }
 
 static inline void fvm_tvr(void) {
-  long a, b, c, d;
+  cell_t a, b, c, d;
   a = fvm_pop();
   b = fvm_pop();
   c = fvm_pop();
@@ -233,7 +256,7 @@ static inline void fvm_tvr(void) {
 }
 
 static inline void fvm_twp(void) {
-  long a, b, c, d;
+  cell_t a, b, c, d;
   a = fvm_pop();
   b = fvm_pop();
   c = fvm_pop();
@@ -245,7 +268,7 @@ static inline void fvm_twp(void) {
 }
 
 static inline void fvm_qdp(void) {
-  long a;
+  cell_t a;
   a = fvm_pop();
   fvm_push(a);
 
@@ -255,7 +278,7 @@ static inline void fvm_qdp(void) {
 }
 
 static inline void fvm_rot(void) {
-  long a, b, c;
+  cell_t a, b, c;
   a = fvm_pop();
   b = fvm_pop();
   c = fvm_pop();
@@ -265,7 +288,7 @@ static inline void fvm_rot(void) {
 }
 
 static inline void fvm_nrt(void) {
-  long a, b, c;
+  cell_t a, b, c;
   a = fvm_pop();
   b = fvm_pop();
   c = fvm_pop();
@@ -275,7 +298,7 @@ static inline void fvm_nrt(void) {
 }
 
 static inline void fvm_tdp(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(b);
@@ -289,7 +312,7 @@ static inline void fvm_drp(void) {
 }
 
 static inline void fvm_swp(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_push(a);
@@ -305,11 +328,11 @@ static inline void fvm_fr(void) {
 }
 
 static inline void fvm_rf(void) {
-  fvm_push(rstack[rn]);
+  fvm_push(fvm_rstack[fvm_rn]);
 }
 
 static inline void fvm_ttr(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_pop();
   b = fvm_pop();
   fvm_rpush(b);
@@ -317,7 +340,7 @@ static inline void fvm_ttr(void) {
 }
 
 static inline void fvm_tfr(void) {
-  long a, b;
+  cell_t a, b;
   a = fvm_rpop();
   b = fvm_rpop();
   fvm_push(b);
@@ -325,13 +348,13 @@ static inline void fvm_tfr(void) {
 }
 
 static inline void fvm_trf(void) {
-  fvm_push(rstack[rn-1]);
-  fvm_push(rstack[rn]);
+  fvm_push(fvm_rstack[fvm_rn-1]);
+  fvm_push(fvm_rstack[fvm_rn]);
 }
 
 static inline void fvm_sys(void) {
-  long sys, value;
-  double dvalue;
+  cell_t sys, value;
+  fcell_t dvalue;
 
   sys = fvm_pop();
 
@@ -339,12 +362,12 @@ static inline void fvm_sys(void) {
   case 3:
     // i>f
     value = fvm_pop();
-    fvm_fpush((double)value);
+    fvm_fpush((fcell_t)value);
     break;
   case 4:
     // f>i
     dvalue = fvm_fpop();
-    fvm_push((long)dvalue);
+    fvm_push((cell_t)dvalue);
     break;
   case 10:
     // allocate
@@ -361,7 +384,7 @@ static inline void fvm_sys(void) {
 }
 
 static inline void fvm_ref(void (*f)(void)) {
-  fvm_push((long)f);
+  fvm_push((cell_t)f);
 }
 
 static inline void fvm_exc(void) {
@@ -371,8 +394,18 @@ static inline void fvm_exc(void) {
   (*f)();
 }
 
-#define fvm_stp() \
-  do { \
-    printf("\n"); \
-    return 0; \
-  } while (0)
+static inline void fvm_time(void) {
+  fvm_begin = clock();
+}
+
+static inline void fvm_stp(void) {
+#if DEBUG
+  printf("\nstack max: %ld rstack max: %ld\n", fvm_nmax, fvm_rmax);
+#endif
+  if (fvm_begin != 0) {
+    clock_t fvm_end = clock();
+    double time_spend = (double)(fvm_end - fvm_begin);
+    printf("\ntime: %fs\n", time_spend / CLOCKS_PER_SEC);
+  }
+  exit(0);
+}

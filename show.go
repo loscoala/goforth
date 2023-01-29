@@ -418,11 +418,6 @@ func (fc *ForthCompiler) compileToC() {
 				result.WriteString(fmt.Sprintf("%sfvm_push(%s);\n", spaces(indent), scmd[1]))
 			case "LF":
 				result.WriteString(fmt.Sprintf("%sfvm_fpush(%s);\n", spaces(indent), scmd[1]))
-			case "STP":
-				if ShowExecutionTime {
-					result.WriteString("\n  end = clock();\n  time_spend = (double)(end - begin);\n  printf(\"\\ntime: %fs\\n\", time_spend / CLOCKS_PER_SEC);\n")
-				}
-				result.WriteString("  fvm_stp();\n}\n")
 			case "LCTX":
 				result.WriteString(fmt.Sprintf("%s{\n", spaces(indent)))
 				indent += 2
@@ -430,7 +425,7 @@ func (fc *ForthCompiler) compileToC() {
 				indent -= 2
 				result.WriteString(fmt.Sprintf("%s}\n", spaces(indent)))
 			case "LDEF":
-				result.WriteString(fmt.Sprintf("%slong %s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
+				result.WriteString(fmt.Sprintf("%scell_t %s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
 			case "LCL":
 				result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
 			case "LSET":
@@ -442,7 +437,7 @@ func (fc *ForthCompiler) compileToC() {
 			case "MAIN":
 				result.WriteString("int main(int argc, char** argv) {\n")
 				if ShowExecutionTime {
-					result.WriteString("  clock_t begin, end;\n  double time_spend;\n\n  begin = clock();\n\n")
+					result.WriteString("  fvm_time();\n")
 				}
 			case "CALL":
 				result.WriteString(fmt.Sprintf("%s%s(); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
@@ -454,12 +449,9 @@ func (fc *ForthCompiler) compileToC() {
 		}
 	}
 
-	timeheader := ""
-	if ShowExecutionTime {
-		timeheader = "#include <time.h>\n\n"
-	}
+	result.WriteString("  return 0;\n}\n")
 
-	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+timeheader+funcs("")+result.String()), 0644)
+	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+result.String()), 0644)
 
 	if CAutoCompile {
 		cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
