@@ -13,7 +13,7 @@ In this forth you can define local variables with curley brackets like in other 
 ## Why goforth?
 
 * Goforth can be used as an embeddable programming language. See topic Embedding.
-* Goforth can be used as a metacompiler to produce C-code from Forth. See topic Generate C-Code.
+* Goforth can be used as a compiler to produce C-code from Forth. See topic Generate C-Code.
 
 Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`. Maybe in the future.
 
