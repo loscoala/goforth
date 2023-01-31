@@ -225,8 +225,8 @@
 \ Stack operations
 : stack empty ;
 : empty 0 swap ! ;
-: push { s } s @ cell+ +! s ++ ;
-: pop { s } s s @ + @ s -- ;
+: push dup ++ dup @ + ! ;
+: pop dup dup @ + @ swap -- ;
 : .stack @+ ?dup if 0 ?do dup ? cell+ cr loop then drop ;
 
 : squared dup * ;
@@ -295,9 +295,6 @@
 : .s4 [ emit ] each1 ;
 : .s5 [ emit ] each2 ;
 : .s6 [ emit ] each3 ;
-
-: +s dup ++ dup @ + ! ;
-: -s -- ;
 
 : abs
   dup
