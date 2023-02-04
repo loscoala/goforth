@@ -1,7 +1,7 @@
 
 : ? @ . ;
 : ?? memsize 0 mem ;
-: mem ?do i @ dup if i . colon . space else drop then loop ;
+: mem ?do i @ ?dup if i . colon . space then loop ;
 
 : map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
 : each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
@@ -16,6 +16,9 @@
 : s2i ( adr -- end begin ) [ @ over + 1+ ] [ 1+ ] bi4 ;
 : each3 swap s2i [ @ over exec ] for drop ;
 : map2 swap s2i [ { x } x @ over exec x ! ] for drop ;
+
+\ find indices of bl in a string
+: tok ( stk str -- ) swap { stk } s2i do i @ bl = if i stk push then loop ;
 
 : each1 \ a f --
   swap \ f a -
