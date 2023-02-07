@@ -17,7 +17,7 @@ import (
 var baseSyntax = [...]string{
 	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "-loop", "if", "then",
 	"else", "{", "}", "[", "]", "until", "again", "leave", "to", "done", ":", ";",
-	"case", "of", "endof", "endcase",
+	"case", "of", "?of", "endof", "endcase",
 }
 
 var (

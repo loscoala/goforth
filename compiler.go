@@ -473,11 +473,15 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 		result.Push("REF " + realWord)
 	} else if word == "case" {
 		fc.cases.Push(0)
-	} else if word == "if" || word == "of" {
+	} else if word == "if" || word == "?of" || word == "of" {
+		if word == "of" {
+			result.Push("OVR")
+			result.Push("EQI")
+		}
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JIN #" + lbl)
 		fc.labels.Push(lbl)
-		if word == "of" {
+		if word == "?of" || word == "of" {
 			fc.cases.Push(fc.cases.ExPop() + 1)
 		}
 	} else if word == "else" || word == "endof" {
