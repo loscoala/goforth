@@ -744,7 +744,7 @@ func parseCode(codeStr string) *Code {
 
 	cmds := strings.Split(codeStr, ";")
 	cells := make([]Cell, 0, len(cmds)+1)
-	locals := NewStack()
+	locals := NewStack[string]()
 
 	for pos, cmd := range cmds {
 		if cmd == "" {

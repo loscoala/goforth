@@ -52,7 +52,7 @@ func getWordColored(fc *ForthCompiler, word string) string {
 	}
 }
 
-func printWordColored(fc *ForthCompiler, word string, s *Stack) {
+func printWordColored(fc *ForthCompiler, word string, s *Stack[string]) {
 	fmt.Printf("%s %s ", getWordColored(fc, ":"), getWordColored(fc, word))
 
 	for iter := s.Iter(); iter.Next(); {
@@ -62,7 +62,7 @@ func printWordColored(fc *ForthCompiler, word string, s *Stack) {
 	fmt.Printf("%s\n", getWordColored(fc, ";"))
 }
 
-func printWord(word string, s *Stack) {
+func printWord(word string, s *Stack[string]) {
 	fmt.Printf(": %s ", word)
 
 	for iter := s.Iter(); iter.Next(); {

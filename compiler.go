@@ -19,14 +19,15 @@ type Compiler interface {
 type ForthCompiler struct {
 	label  Label
 	blocks Label
-	labels Stack
-	leaves Stack
-	whiles Stack
-	dos    Stack
-	funcs  map[string]*Stack
-	locals SliceStack
+	labels Stack[string]
+	leaves Stack[string]
+	whiles Stack[string]
+	dos    Stack[string]
+	cases  Stack[int]
+	funcs  map[string]*Stack[string]
+	locals SliceStack[string]
 	data   map[string]string
-	defs   map[string]*Stack
+	defs   map[string]*Stack[string]
 	output strings.Builder
 	Fvm    *ForthVM
 }
@@ -78,7 +79,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2r>":   "TFR",
 		"2r@":   "TRF",
 	}
-	fc.defs = make(map[string]*Stack)
+	fc.defs = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -91,8 +92,8 @@ func (fc *ForthCompiler) ByteCode() string {
 // Compiles the word "main".
 // Side effect: ByteCode() contains the result.
 func (fc *ForthCompiler) Compile() error {
-	result := NewStack()
-	fc.funcs = make(map[string]*Stack)
+	result := NewStack[string]()
+	fc.funcs = make(map[string]*Stack[string])
 	fc.output.Reset()
 
 	if err := fc.compileWord("main", result); err != nil {
@@ -124,7 +125,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 		state   int
 		counter int
 		word    string
-		def     *Stack
+		def     *Stack[string]
 	)
 
 	buffer := make([]rune, 0, 100)
@@ -135,7 +136,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 			switch i {
 			case ':':
 				state = 1
-				def = NewStack()
+				def = NewStack[string]()
 			case '\\':
 				state = 4
 			case '(':
@@ -222,7 +223,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 				buffer = buffer[:len(buffer)-1]
 				state = 7
 			} else if i == '"' {
-				def.handleForthString(buffer)
+				handleForthString(def, buffer)
 				buffer = buffer[:0]
 				state = 1
 			}
@@ -236,7 +237,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 	return nil
 }
 
-func (s *Stack) compile_s(str []rune) {
+func compile_s(s *Stack[string], str []rune) {
 	if len(str) > 9 {
 		s.Push("0")
 
@@ -268,7 +269,7 @@ func reverse(s []rune) []rune {
 	return r
 }
 
-func (s *Stack) compile_m(str []rune) {
+func compile_m(s *Stack[string], str []rune) {
 	s.Push(">r")
 	s.Push("0")
 
@@ -280,12 +281,12 @@ func (s *Stack) compile_m(str []rune) {
 	s.Push("!s")
 }
 
-func (s *Stack) handleForthString(str []rune) {
+func handleForthString(s *Stack[string], str []rune) {
 	switch str[0] {
 	case '.':
-		s.compile_s(str[3 : len(str)-1])
+		compile_s(s, str[3:len(str)-1])
 	case 's':
-		s.compile_m(str[3 : len(str)-1])
+		compile_m(s, str[3:len(str)-1])
 	}
 }
 
@@ -309,8 +310,8 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 	return nil
 }
 
-func (fc *ForthCompiler) compileLocals(iter *StackIter, result *Stack) {
-	localDefs := NewStack()
+func (fc *ForthCompiler) compileLocals(iter *StackIter[string], result *Stack[string]) {
+	localDefs := NewStack[string]()
 	result.Push("LCTX")
 
 	for iter.Next() {
@@ -327,11 +328,11 @@ func (fc *ForthCompiler) compileLocals(iter *StackIter, result *Stack) {
 	fc.locals.Push(localDefs)
 }
 
-func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) error {
+func (fc *ForthCompiler) compileBlock(iter *StackIter[string], result *Stack[string]) error {
 	var blockCounter int
 
 	blockName := fc.blocks.CreateNewWord()
-	fc.defs[blockName] = NewStack()
+	fc.defs[blockName] = NewStack[string]()
 
 	for iter.Next() {
 		word := iter.Get()
@@ -351,7 +352,7 @@ func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) error {
 		fc.defs[blockName].Push(word)
 	}
 
-	blockDef := NewStack()
+	blockDef := NewStack[string]()
 	blockDef.Push("SUB " + blockName)
 	if err := fc.compileWordWithLocals(blockName, fc.defs[blockName], blockDef); err != nil {
 		return err
@@ -363,7 +364,7 @@ func (fc *ForthCompiler) compileBlock(iter *StackIter, result *Stack) error {
 	return nil
 }
 
-func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack, result *Stack) error {
+func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack[string], result *Stack[string]) error {
 	var localCounter int
 
 	for iter := wordDef.Iter(); iter.Next(); {
@@ -427,7 +428,7 @@ func isNumeric(s string) bool {
 	return true
 }
 
-func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
+func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 	if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {
@@ -439,7 +440,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 	} else if wordDef, ok := fc.defs[word]; ok {
 		if word != "main" && wordDef.Len() > 4 {
 			if _, ok := fc.funcs[word]; !ok {
-				funcDef := NewStack()
+				funcDef := NewStack[string]()
 				funcDef.Push("SUB " + word)
 				if err := fc.compileWordWithLocals(word, wordDef, funcDef); err != nil {
 					return err
@@ -458,7 +459,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 		realWord := word[1:]
 		if wordDef, ok := fc.defs[realWord]; ok {
 			if _, ok := fc.funcs[realWord]; !ok {
-				funcDef := NewStack()
+				funcDef := NewStack[string]()
 				funcDef.Push("SUB " + realWord)
 				if err := fc.compileWordWithLocals(realWord, wordDef, funcDef); err != nil {
 					return err
@@ -470,17 +471,27 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack) error {
 			return fmt.Errorf("unable to reference word \"%s\": Unknown word", realWord)
 		}
 		result.Push("REF " + realWord)
-	} else if word == "if" {
+	} else if word == "case" {
+		fc.cases.Push(0)
+	} else if word == "if" || word == "of" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JIN #" + lbl)
 		fc.labels.Push(lbl)
-	} else if word == "else" {
+		if word == "of" {
+			fc.cases.Push(fc.cases.ExPop() + 1)
+		}
+	} else if word == "else" || word == "endof" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JMP #" + lbl)
 		result.Push("#" + fc.labels.ExPop() + " NOP")
 		fc.labels.Push(lbl)
 	} else if word == "then" {
 		result.Push("#" + fc.labels.ExPop() + " NOP")
+	} else if word == "endcase" {
+		num := fc.cases.ExPop()
+		for i := 0; i < num; i++ {
+			result.Push("#" + fc.labels.ExPop() + " NOP")
+		}
 	} else if word == "begin" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("#" + lbl + " NOP")
