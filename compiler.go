@@ -24,6 +24,7 @@ type ForthCompiler struct {
 	whiles Stack[string]
 	dos    Stack[string]
 	cases  Stack[int]
+	vars   Stack[string]
 	funcs  map[string]*Stack[string]
 	locals SliceStack[string]
 	data   map[string]string
@@ -102,19 +103,17 @@ func (fc *ForthCompiler) Compile() error {
 
 	result.Push("STP")
 
+	printVal := func(val string) {
+		fc.output.WriteString(val)
+		fc.output.WriteByte(';')
+	}
+
 	for _, v := range fc.funcs {
-		for iter := v.Iter(); iter.Next(); {
-			fc.output.WriteString(iter.Get())
-			fc.output.WriteByte(';')
-		}
+		v.Each(printVal)
 	}
 
 	fc.output.WriteString("MAIN;")
-
-	for iter := result.Iter(); iter.Next(); {
-		fc.output.WriteString(iter.Get())
-		fc.output.WriteByte(';')
-	}
+	result.Each(printVal)
 
 	return nil
 }
@@ -305,6 +304,10 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 
 	if cmd[0] == "use" {
 		return fc.ParseFile(cmd[1])
+	} else if cmd[0] == "variable" {
+		if !fc.vars.Contains(cmd[1]) {
+			fc.vars.Push(cmd[1])
+		}
 	}
 
 	return nil
@@ -380,6 +383,15 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack[strin
 		} else if word2 == "to" {
 			iter.Next()
 			word2 = iter.Get()
+			if fc.vars.Contains(word2) {
+				if _, ok := fc.funcs[word2]; !ok {
+					gdef := NewStack[string]()
+					gdef.Push("GDEF " + word2)
+					fc.funcs[word2] = gdef
+				}
+				result.Push("GSET " + word2)
+				continue
+			}
 			if !fc.locals.Contains(word2) {
 				return fmt.Errorf("unable to assign word \"%s\": not in local context", word2)
 			}
@@ -433,8 +445,15 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 		result.Push("L " + word)
 	} else if isFloat(word) {
 		result.Push("LF " + word)
-	} else if fc.locals.Len() > 0 && fc.locals.Contains(word) {
+	} else if fc.locals.Contains(word) {
 		result.Push("LCL " + word)
+	} else if fc.vars.Contains(word) {
+		if _, ok := fc.funcs[word]; !ok {
+			gdef := NewStack[string]()
+			gdef.Push("GDEF " + word)
+			fc.funcs[word] = gdef
+		}
+		result.Push("GBL " + word)
 	} else if value, ok := fc.data[word]; ok {
 		result.Push(value)
 	} else if wordDef, ok := fc.defs[word]; ok {

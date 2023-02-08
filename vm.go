@@ -20,6 +20,7 @@ type Local struct {
 }
 
 type ForthVM struct {
+	Vars     map[string]int64
 	Mem      []int64
 	Stack    []int64
 	Rstack   []int64
@@ -451,6 +452,19 @@ func (fvm *ForthVM) Trf() {
 	fvm.Push(fvm.Rstack[rn])
 }
 
+func (fvm *ForthVM) Gdef(name string) {
+	fvm.Vars[name] = 0
+}
+
+func (fvm *ForthVM) Gbl(name string) {
+	fvm.Push(fvm.Vars[name])
+}
+
+func (fvm *ForthVM) Gset(name string) {
+	value := fvm.Pop()
+	fvm.Vars[name] = value
+}
+
 func (fvm *ForthVM) GetString() string {
 	value := fvm.Pop()
 	length := fvm.Mem[value]
@@ -628,6 +642,9 @@ const (
 	SUB
 	END
 	MAIN
+	GDEF
+	GSET
+	GBL
 	LCTX
 	LDEF
 	LSET
@@ -689,6 +706,9 @@ var CellName = map[int]string{
 	SUB:  "SUB",
 	END:  "END",
 	MAIN: "MAIN",
+	GDEF: "GDEF",
+	GSET: "GSET",
+	GBL:  "GBL",
 	LCTX: "LCTX",
 	LDEF: "LDEF",
 	LSET: "LSET",
@@ -719,7 +739,7 @@ func (c Cell) String() string {
 	switch c.cmd {
 	case L:
 		return fmt.Sprintf("%s %d", CellName[c.cmd], c.arg)
-	case LDEF, LSET, CALL, JIN, JMP, NOP, REF, LCL:
+	case LDEF, LSET, CALL, JIN, JMP, NOP, REF, LCL, GDEF, GSET, GBL:
 		return fmt.Sprintf("%s %s", CellName[c.cmd], c.argStr)
 	case LF:
 		return fmt.Sprintf("%s %f", CellName[c.cmd], c.argf)
@@ -852,6 +872,12 @@ func parseCode(codeStr string) *Code {
 			case "MAIN":
 				code.PosMain = pos
 				cells = append(cells, Cell{cmd: MAIN})
+			case "GDEF":
+				cells = append(cells, Cell{cmd: GDEF, argStr: scmd[1]})
+			case "GSET":
+				cells = append(cells, Cell{cmd: GSET, argStr: scmd[1]})
+			case "GBL":
+				cells = append(cells, Cell{cmd: GBL, argStr: scmd[1]})
 			case "LCTX":
 				cells = append(cells, Cell{cmd: LCTX})
 			case "LSET":
@@ -911,6 +937,8 @@ func (fvm *ForthVM) PrepareRun(codeStr string) {
 	fvm.CodeData = parseCode(codeStr)
 	fvm.CodeData.ProgPtr = fvm.CodeData.PosMain
 	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
+
+	fvm.Vars = make(map[string]int64)
 
 	fvm.ln = -1
 	fvm.l_len = fvm.CodeData.numLocals
@@ -1018,6 +1046,12 @@ func (fvm *ForthVM) Run(codeStr string) {
 			progPtr = int(fvm.Rpop())
 		case MAIN:
 			// pass
+		case GDEF:
+			fvm.Gdef(command.argStr)
+		case GSET:
+			fvm.Gset(command.argStr)
+		case GBL:
+			fvm.Gbl(command.argStr)
 		case LCTX:
 			fvm.Lctx()
 		case LSET:
@@ -1155,6 +1189,12 @@ func (fvm *ForthVM) RunStep() (bool, error) {
 		fvm.CodeData.ProgPtr = int(fvm.Rpop())
 	case MAIN:
 		// pass
+	case GDEF:
+		fvm.Gdef(fvm.CodeData.Command.argStr)
+	case GSET:
+		fvm.Gset(fvm.CodeData.Command.argStr)
+	case GBL:
+		fvm.Gbl(fvm.CodeData.Command.argStr)
 	case LCTX:
 		fvm.Lctx()
 	case LSET:

@@ -17,7 +17,7 @@ import (
 var baseSyntax = [...]string{
 	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "-loop", "if", "then",
 	"else", "{", "}", "[", "]", "until", "again", "leave", "to", "done", ":", ";",
-	"case", "of", "?of", "endof", "endcase",
+	"case", "of", "?of", "endof", "endcase", "variable",
 }
 
 var (
@@ -44,6 +44,8 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		return Magenta(word)
 	} else if _, ok := fc.defs[word]; ok {
 		return Cyan(word)
+	} else if fc.vars.Contains(word) {
+		return Red(word)
 	} else if isBaseSytax(word) {
 		return Green(word)
 	} else if isFloat(word) || isNumeric(word) {
@@ -51,6 +53,14 @@ func getWordColored(fc *ForthCompiler, word string) string {
 	} else {
 		return Yellow(word)
 	}
+}
+
+func printVariableColored(fc *ForthCompiler, word string) {
+	fmt.Printf("%s %s\n", getWordColored(fc, "variable"), getWordColored(fc, word))
+}
+
+func printVariable(fc *ForthCompiler, word string) {
+	fmt.Printf("variable %s\n", word)
 }
 
 func printWordColored(fc *ForthCompiler, word string, s *Stack[string]) {
@@ -82,6 +92,15 @@ func PrintError(err error) {
 }
 
 func (fc *ForthCompiler) printDefinition(word string) {
+	if fc.vars.Contains(word) {
+		if Colored {
+			printVariableColored(fc, word)
+		} else {
+			printVariable(fc, word)
+		}
+		return
+	}
+
 	s, ok := fc.defs[word]
 
 	if !ok {
@@ -123,10 +142,16 @@ func (fc *ForthCompiler) printDefinition(word string) {
 
 func (fc *ForthCompiler) printAllDefinitions() {
 	if Colored {
+		fc.vars.Each(func(val string) {
+			printVariableColored(fc, val)
+		})
 		for k, s := range fc.defs {
 			printWordColored(fc, k, s)
 		}
 	} else {
+		fc.vars.Each(func(val string) {
+			printVariable(fc, val)
+		})
 		for k, s := range fc.defs {
 			printWord(k, s)
 		}
@@ -141,7 +166,7 @@ func (fc *ForthCompiler) printByteCode() {
 				continue
 			}
 			fmt.Printf("%s;", Yellow(cmd))
-			if cmd == "END" {
+			if cmd == "END" || strings.Index(cmd, "GDEF ") == 0 {
 				fmt.Println("")
 			}
 		}
@@ -262,6 +287,12 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
+		} else if strings.Index(text, "variable ") == 0 {
+			vname := text[9:]
+			if !fc.vars.Contains(vname) {
+				fc.vars.Push(vname)
+			}
+			continue
 		} else if strings.Index(text, "debug ") == 0 {
 			if err := fc.Parse(": main\n" + text[6:] + "\n;"); err != nil {
 				PrintError(err)
@@ -357,6 +388,33 @@ func initNameCache() func(name string) string {
 	}
 }
 
+func initGlobalNameCache() func(name string) string {
+	cache := make(map[string]string)
+
+	return func(name string) string {
+		if name == "" {
+			// return all names
+			var result strings.Builder
+			for k, v := range cache {
+				result.WriteString(fmt.Sprintf("static cell_t %s = 0; // %s\n", v, k))
+			}
+			if result.Len() > 0 {
+				result.WriteString("\n")
+			}
+			return result.String()
+		}
+
+		if ret, ok := cache[name]; ok {
+			return ret
+		}
+
+		r := "g_" + randomStringBytes(6)
+
+		cache[name] = r
+		return r
+	}
+}
+
 func initVarNameCache() func(name string) string {
 	cache := make(map[string]string)
 
@@ -396,6 +454,7 @@ func (fc *ForthCompiler) compileToC() {
 	var result strings.Builder
 	funcs := initNameCache()
 	locals := initVarNameCache()
+	globals := initGlobalNameCache()
 	spaces := initSpaceCache()
 	indent := 2
 
@@ -411,6 +470,12 @@ func (fc *ForthCompiler) compileToC() {
 			result.WriteString(fmt.Sprintf("l%s:\n", scmd[0][1:]))
 		} else {
 			switch scmd[0] {
+			case "GDEF":
+				globals(scmd[1])
+			case "GSET":
+				result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
+			case "GBL":
+				result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
 			case "JMP":
 				result.WriteString(fmt.Sprintf("%sgoto l%s;\n", spaces(indent), scmd[1][1:]))
 			case "JIN":
@@ -452,7 +517,7 @@ func (fc *ForthCompiler) compileToC() {
 
 	result.WriteString("  return 0;\n}\n")
 
-	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+result.String()), 0644)
+	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644)
 
 	if CAutoCompile {
 		cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
