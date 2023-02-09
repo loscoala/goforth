@@ -35,6 +35,7 @@ type ForthVM struct {
 func NewForthVM() *ForthVM {
 	fvm := new(ForthVM)
 
+	fvm.Vars = make(map[string]int64)
 	fvm.Stack = make([]int64, 0, 100)
 	fvm.Rstack = make([]int64, 0, 100)
 	fvm.Out = os.Stdout
@@ -937,8 +938,6 @@ func (fvm *ForthVM) PrepareRun(codeStr string) {
 	fvm.CodeData = parseCode(codeStr)
 	fvm.CodeData.ProgPtr = fvm.CodeData.PosMain
 	fvm.CodeData.Command = &fvm.CodeData.cells[fvm.CodeData.ProgPtr]
-
-	fvm.Vars = make(map[string]int64)
 
 	fvm.ln = -1
 	fvm.l_len = fvm.CodeData.numLocals
