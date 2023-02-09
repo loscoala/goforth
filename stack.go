@@ -27,12 +27,13 @@ func (s *Stack[T]) Push(val T) {
 }
 
 func (s *Stack[T]) Pop() (T, bool) {
+	var zero T
 	if s.IsEmpty() {
-		var zero T
 		return zero, false
 	} else {
 		index := s.Len() - 1
 		element := s.data[index]
+		s.data[index] = zero
 		s.data = s.data[:index]
 		return element, true
 	}
