@@ -307,6 +307,8 @@
 ;
 
 : fak ( n -- n! ) 1+ 1 swap 1 ?do i * loop ;
+: fakr ( n -- n! ) { x } x 0= if 1 else x x 1- fakr * then ;
+: fakr2 ( n -- n! ) dup 0= if drop 1 else dup 1- fakr2 * then ;
 
 : raise
   1 { s x n }
