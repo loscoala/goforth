@@ -99,7 +99,7 @@ Lets define a variable `xx`. This defines an entry in the global dictionary.
 forth> variable xx
 ```
 
-Now you can set for example the value 15 to vv:
+Now you can set for example the value 15 to xx:
 
 ```forth
 forth> 15 to xx
