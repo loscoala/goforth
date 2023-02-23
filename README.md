@@ -89,6 +89,30 @@ Start `./goforth` and in the REPL you can look what the dictionary contains by t
 
 ## Examples
 
+### Global variables
+
+Globals are defined with the `variable` compiler-builtin keyword.
+
+Lets define a variable `xx`. This defines an entry in the global dictionary.
+
+```forth
+forth> variable xx
+```
+
+Now you can set for example the value 15 to vv:
+
+```forth
+forth> 15 to xx
+forth> xx .  \ prints the value of variable xx
+```
+
+Or lets sum all values from 0 to 100:
+
+```forth
+forth> variable vv
+forth> 101 0 [ vv + to vv ] for vv .
+```
+
 ### Mandelbrot
 
 Start the interpreter:
@@ -335,6 +359,9 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | SUB name | Declares a subroutine. Used only for code generation. Not used by the vm |
 | END | Ends the subroutine. Used only for code generation. Not used by the vm |
 | MAIN | Declares the beginning of the main. Used only for code generation. Not used by the vm |
+| GDEF | Creates a new global variable initialized with zero |
+| GSET | Assigns the top value of the stack to a global variable |
+| GBL | Pushes the global value on top of the stack |
 | LCTX | Creates a new context of local variables  |
 | LDEF | Pops the top value of the stack and copies it to the local definitions |
 | LSET | Assigns the top value of the stack to a local variable  |
