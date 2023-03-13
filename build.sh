@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd cmd/goforth
-go build
+go build -C cmd/goforth
 
 exit 0
