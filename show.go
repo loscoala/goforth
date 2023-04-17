@@ -467,7 +467,7 @@ func (fc *ForthCompiler) compileToC() {
 
 		if len(scmd) == 2 && scmd[0][0] == '#' {
 			// NOP
-			result.WriteString(fmt.Sprintf("l%s:\n", scmd[0][1:]))
+			result.WriteString(fmt.Sprintf("l%s:\n%s;\n", scmd[0][1:], spaces(indent)))
 		} else {
 			switch scmd[0] {
 			case "GDEF":
