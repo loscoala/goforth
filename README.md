@@ -15,11 +15,38 @@ In this forth you can define local variables with curley brackets like in other 
 * Goforth can be used as an embeddable programming language. See topic Embedding.
 * Goforth can be used as a compiler to produce C-code from Forth. See topic Generate C-Code.
 
-Currently there is no parallel ForthVM execution via goroutines. If you want to have it, simply implement it into `sys()`. Maybe in the future.
+Currently there is no parallel ForthVM execution via goroutines.
+
+## Installation
+
+If you do want to get the latest version of `goforth`, change to any directory that is both outside of your `GOPATH` and outside of a module (a temp directory is fine), and run:
+
+```sh
+go install github.com/loscoala/goforth/cmd/goforth@latest
+```
+
+If you do want to add the latest version to your go.mod inside your project run:
+
+```sh
+go get github.com/loscoala/goforth@latest
+```
+
+## Build and Dependencies
+
+- All you need is a golang compiler 1.20.
+
+- Build the project with build.sh or `go build -C cmd/goforth`
+
+- For C code generation you need a working C compiler.
+
+```sh
+git clone https://github.com/loscoala/goforth.git
+./build.sh
+```
 
 ## Usage
 
-Simply execute `goforth`. See "Installation"
+Execute `goforth`. See "Installation"
 
 1. You can also execute forth-scripts:
 
@@ -48,33 +75,6 @@ goforth -script '
 ```
 
 The compiler has `core.fs` automatically included into the binary.
-
-## Installation
-
-If you do want to get the latest version of `goforth`, change to any directory that is both outside of your `GOPATH` and outside of a module (a temp directory is fine), and run:
-
-```sh
-go install github.com/loscoala/goforth/cmd/goforth@latest
-```
-
-If you do want to add the latest version to your go.mod inside your project run:
-
-```sh
-go get github.com/loscoala/goforth@latest
-```
-
-## Build and Dependencies
-
-- All you need is a golang compiler 1.19.
-
-- Simply build the project with build.sh
-
-- For C code generation you need a working GNU C compiler.
-
-```sh
-git clone https://github.com/loscoala/goforth.git
-./build.sh
-```
 
 ## Howto start
 
