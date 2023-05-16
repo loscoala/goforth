@@ -18,7 +18,13 @@
 : map2 swap s2i [ { x } x @ over exec x ! ] for drop ;
 
 \ find indices of bl in a string
-: tok ( stk str -- ) swap { stk } s2i do i @ bl = if i stk push then loop ;
+\ variable code
+\ variable my
+\ 20 to code
+\ my stack
+\ code s" a b bs dsd s"
+\ my code tok
+: tok { adr stk } adr @ 0> if adr @ 1 do adr i + @ bl = if i 1 - stk push then loop then ;
 
 : each1 \ a f --
   swap \ f a -
@@ -111,8 +117,8 @@
   r>   \ na nb
 ;
 
-\ : if* ( n a b -- ) { _if*_b _if*_a } if _if*_a exec else _if*_b exec then ;
-: if* rot if drop else nip then exec ;
+: if* ( n a b -- ) { b a } if a exec else b exec then ;
+\ : if* rot if drop else nip then exec ;
 \ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
 \ : ifb2 { _ifb2_b _ifb2_a } [ 0<> _ifb2_a * ] [ 0= _ifb2_b * ] bi + exec ;
 
