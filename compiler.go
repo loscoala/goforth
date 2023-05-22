@@ -174,6 +174,9 @@ func (fc *ForthCompiler) Parse(str string) error {
 				if len(buffer) == 0 && str[index+1] == '"' {
 					buffer = append(buffer, i)
 					state = 7
+				} else if len(buffer) == 0 && str[index+1] == '(' {
+					buffer = append(buffer, i)
+					state = 9
 				} else {
 					buffer = append(buffer, i)
 				}
@@ -211,7 +214,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 			buffer = append(buffer, i)
 			state = 8
 		case 8:
-			// inside string
+			// inside string with .|s" "
 			if index+1 == len(str) {
 				break
 			}
@@ -222,6 +225,26 @@ func (fc *ForthCompiler) Parse(str string) error {
 				buffer = buffer[:len(buffer)-1]
 				state = 7
 			} else if i == '"' {
+				handleForthString(def, buffer)
+				buffer = buffer[:0]
+				state = 1
+			}
+		case 9:
+			// consume (
+			buffer = append(buffer, i)
+			state = 10
+		case 10:
+			// inside string with .|s( )
+			if index+1 == len(str) {
+				break
+			}
+
+			buffer = append(buffer, i)
+
+			if i == '\\' && str[index+1] == '(' {
+				buffer = buffer[:len(buffer)-1]
+				state = 9
+			} else if i == ')' {
 				handleForthString(def, buffer)
 				buffer = buffer[:0]
 				state = 1
