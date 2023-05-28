@@ -396,7 +396,7 @@ func initGlobalNameCache() func(name string) string {
 			// return all names
 			var result strings.Builder
 			for k, v := range cache {
-				result.WriteString(fmt.Sprintf("static cell_t %s = 0; // %s\n", v, k))
+				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = 0 }; // %s\n", v, k))
 			}
 			if result.Len() > 0 {
 				result.WriteString("\n")
@@ -481,9 +481,9 @@ func (fc *ForthCompiler) compileToC() {
 			case "JIN":
 				result.WriteString(fmt.Sprintf("%sif (fvm_jin()) goto l%s;\n", spaces(indent), scmd[1][1:]))
 			case "L":
-				result.WriteString(fmt.Sprintf("%sfvm_push(%s);\n", spaces(indent), scmd[1]))
+				result.WriteString(fmt.Sprintf("%sfvm_push((cell_t){ .value = %s });\n", spaces(indent), scmd[1]))
 			case "LF":
-				result.WriteString(fmt.Sprintf("%sfvm_fpush(%s);\n", spaces(indent), scmd[1]))
+				result.WriteString(fmt.Sprintf("%sfvm_push((cell_t){ .dvalue = %s });\n", spaces(indent), scmd[1]))
 			case "LCTX":
 				result.WriteString(fmt.Sprintf("%s{\n", spaces(indent)))
 				indent += 2
