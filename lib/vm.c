@@ -41,6 +41,14 @@ static clock_t fvm_begin = 0;
     exit(0); \
   } while(0)
 
+static inline cell_t fvm_cell(int64_t i) {
+  return (cell_t){ .value = i };
+}
+
+static inline cell_t fvm_cell_d(double i) {
+  return (cell_t){ .dvalue = i };
+}
+
 static inline void fvm_push(cell_t i) {
   fvm_stack[++fvm_n] = i;
 #if DEBUG
