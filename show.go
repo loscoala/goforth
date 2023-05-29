@@ -2,6 +2,7 @@ package goforth
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
@@ -520,11 +521,13 @@ func (fc *ForthCompiler) compileToC() {
 	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644)
 
 	if CAutoCompile {
+		var stderr bytes.Buffer
 		cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
 		cmd.Dir = "lib/"
+		cmd.Stderr = &stderr
 
 		if err := cmd.Run(); err != nil {
-			PrintError(err)
+			PrintError(fmt.Errorf("%s\n%s", err.Error(), stderr.String()))
 		} else if CAutoExecute {
 			cmd := exec.Command("lib/" + CBinaryName)
 
