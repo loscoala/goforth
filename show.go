@@ -522,7 +522,9 @@ func (fc *ForthCompiler) CompileToC() error {
 
 	result.WriteString("  return 0;\n}\n")
 
-	os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644)
+	if err := os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644); err != nil {
+		return err
+	}
 
 	if CAutoCompile {
 		var stderr bytes.Buffer
