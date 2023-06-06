@@ -324,7 +324,11 @@ func (fc *ForthCompiler) handleREPL() {
 				fc.printByteCode()
 				fmt.Println("")
 			}
-			fc.compileToC()
+
+			if err := fc.CompileToC(); err != nil {
+				PrintError(err)
+			}
+
 			continue
 		}
 
@@ -451,7 +455,7 @@ func initSpaceCache() func(indent int) string {
 	}
 }
 
-func (fc *ForthCompiler) compileToC() {
+func (fc *ForthCompiler) CompileToC() error {
 	var result strings.Builder
 	funcs := initNameCache()
 	locals := initVarNameCache()
@@ -527,17 +531,19 @@ func (fc *ForthCompiler) compileToC() {
 		cmd.Stderr = &stderr
 
 		if err := cmd.Run(); err != nil {
-			PrintError(fmt.Errorf("%s\n%s", err.Error(), stderr.String()))
+			return fmt.Errorf("%s\n%s", err.Error(), stderr.String())
 		} else if CAutoExecute {
 			cmd := exec.Command("lib/" + CBinaryName)
 
 			if out, err := cmd.Output(); err != nil {
-				PrintError(err)
+				return err
 			} else {
 				fmt.Println(string(out))
 			}
 		}
 	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) printDebug() {
@@ -605,6 +611,30 @@ func (fc *ForthCompiler) RunFile(str string) error {
 	fc.Fvm.Run(fc.ByteCode())
 
 	return nil
+}
+
+func (fc *ForthCompiler) CompileFile(str string) error {
+	if err := fc.ParseFile(str); err != nil {
+		return err
+	}
+
+	if err := fc.Compile(); err != nil {
+		return err
+	}
+
+	return fc.CompileToC()
+}
+
+func (fc *ForthCompiler) CompileScript(script string) error {
+	if err := fc.Parse(script); err != nil {
+		return err
+	}
+
+	if err := fc.Compile(); err != nil {
+		return err
+	}
+
+	return fc.CompileToC()
 }
 
 func (fc *ForthCompiler) Run(prog string) error {

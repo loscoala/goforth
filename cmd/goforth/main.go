@@ -7,14 +7,16 @@ import (
 )
 
 var (
-	fname  string
-	script string
+	fname   string
+	script  string
+	compile bool
 )
 
 func initFlags() {
 	flag.StringVar(&fname, "file", "", "compile file and execute")
 	flag.BoolVar(&goforth.Colored, "color", true, "Use colors")
 	flag.StringVar(&script, "script", "", "program passed in as string")
+	flag.BoolVar(&compile, "compile", false, "compile and run")
 
 	flag.Parse()
 }
@@ -40,12 +42,24 @@ func main() {
 	}
 
 	if len(script) > 0 {
-		if err := fc.Run(script); err != nil {
-			goforth.PrintError(err)
+		if compile {
+			if err := fc.CompileScript(script); err != nil {
+				goforth.PrintError(err)
+			}
+		} else {
+			if err := fc.Run(script); err != nil {
+				goforth.PrintError(err)
+			}
 		}
 	} else if len(fname) > 0 {
-		if err := fc.RunFile(fname); err != nil {
-			goforth.PrintError(err)
+		if compile {
+			if err := fc.CompileFile(fname); err != nil {
+				goforth.PrintError(err)
+			}
+		} else {
+			if err := fc.RunFile(fname); err != nil {
+				goforth.PrintError(err)
+			}
 		}
 	} else {
 		fc.StartREPL()
