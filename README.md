@@ -202,6 +202,21 @@ The result is also shown as follows:
 <html lang="de-DE"><head><meta charset="utf-8"><title>Example Page</title></head><body><h1>Example Page</h1><p>Hello <b>World!</b></p></body></html>
 ```
 
+### Call external programs
+
+The following example shows the usage of the `sh` word to list all the files and directories in the current directory under linux machine.
+
+```forth
+\ note: you have to allocate memory before. Usage: 100 allocate
+: ls [ s" ls -l" ] sh ;
+```
+
+Optional: Now you can compile the word to a native binary.
+
+```forth
+compile ls
+```
+
 ### Debugging
 
 By calling `true debug` you can enable the benchmark mode.
