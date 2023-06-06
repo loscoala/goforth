@@ -214,7 +214,7 @@ The following example shows the usage of the `sh` word to list all the files and
 Optional: Now you can compile the word to a native binary.
 
 ```forth
-compile ls
+forth> compile ls
 ```
 
 ### Debugging
