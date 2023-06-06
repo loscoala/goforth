@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -590,6 +591,36 @@ func (fvm *ForthVM) Sys() {
 			fvm.Push(1)
 		} else {
 			fvm.Push(0)
+		}
+	case 13:
+		// shell
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		str := fvm.GetString()
+		cmd := exec.Command("sh", "-c", str)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			PrintError(fmt.Errorf("%s\n%s", err.Error(), stderr.String()))
+		} else {
+			fmt.Print(stdout.String())
+		}
+	case 14:
+		// system
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		str := fvm.GetString()
+		cmd := exec.Command(str)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			PrintError(fmt.Errorf("%s\n%s", err.Error(), stderr.String()))
+		} else {
+			fmt.Print(stdout.String())
 		}
 	default:
 		if fvm.Sysfunc != nil {

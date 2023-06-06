@@ -150,6 +150,11 @@
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
 : compare ( str1 str2 -- bool ) 12 sys ;
+: shell ( str -- ) 13 sys ;
+: system ( str -- ) 14 sys ;
+
+: sh 0 swap exec 0 shell ;
+: ls [ s" ls -lhA --color=always" ] sh ;
 
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;

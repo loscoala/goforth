@@ -351,8 +351,28 @@ static inline void fvm_trf(void) {
   fvm_push(fvm_rstack[fvm_rn]);
 }
 
+static inline char* fvm_getstring() {
+  cell_t str = fvm_pop();
+  cell_t len = fvm_mem[str.value];
+  char *buffer = (char*)malloc(len.value+1);
+
+  if (buffer == NULL) {
+    printf("ERROR: Unable to allocate memory\n");
+    exit(0);
+  }
+
+  for (int64_t i = 0; i < len.value; i++) {
+    buffer[i] = (char)fvm_mem[str.value+1+i].value;
+  }
+
+  buffer[len.value] = '\0';
+
+  return buffer;
+}
+
 static inline void fvm_sys(void) {
   cell_t sys, c;
+  char *buffer;
 
   sys = fvm_pop();
 
@@ -374,6 +394,18 @@ static inline void fvm_sys(void) {
   case 11:
     // memsize
     fvm_push((cell_t){ .value = VM_MEM_SIZE });
+    break;
+  case 13:
+    // shell
+    buffer = fvm_getstring();
+    system(buffer);
+    free(buffer);
+    break;
+  case 14:
+    // system
+    buffer = fvm_getstring();
+    execl(buffer, buffer, (char*)NULL);
+    free(buffer);
     break;
   default:
     printf("ERROR: Unknown sys command\n");
