@@ -241,7 +241,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 
 			buffer = append(buffer, i)
 
-			if i == '\\' && str[index+1] == '(' {
+			if i == '\\' && str[index+1] == ')' {
 				buffer = buffer[:len(buffer)-1]
 				state = 9
 			} else if i == ')' {
