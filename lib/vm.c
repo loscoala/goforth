@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <time.h>
 
 #ifndef DEBUG
@@ -394,6 +395,19 @@ static inline void fvm_sys(void) {
   case 11:
     // memsize
     fvm_push((cell_t){ .value = VM_MEM_SIZE });
+    break;
+  case 12:
+    // compare
+    {
+      char *str1 = fvm_getstring();
+      char *str2 = fvm_getstring();
+
+      if (strcmp(str1, str2) == 0) {
+        fvm_push(fvm_cell(1));
+      } else {
+        fvm_push(fvm_cell(0));
+      }
+    }
     break;
   case 13:
     // shell
