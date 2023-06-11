@@ -408,6 +408,9 @@ static inline void fvm_sys(void) {
       } else {
         fvm_push(fvm_cell(0));
       }
+
+      free(str1);
+      free(str2);
     }
     break;
   case 13:
