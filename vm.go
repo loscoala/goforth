@@ -622,6 +622,18 @@ func (fvm *ForthVM) Sys() {
 		} else {
 			fmt.Print(stdout.String())
 		}
+	case 15:
+		// file
+		str := fvm.GetString()
+		info, err := os.Stat(str)
+
+		if os.IsNotExist(err) {
+			fvm.Push(0)
+		} else if !info.IsDir() {
+			fvm.Push(1)
+		} else {
+			fvm.Push(0)
+		}
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(fvm, syscall)

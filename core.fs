@@ -152,8 +152,10 @@
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
+: file ( str -- bool ) 15 sys ;
 
 : sh 0 swap exec 0 shell ;
+: file-exist? 0 swap exec 0 file ;
 : ls [ s" ls -lhA --color=always" ] sh ;
 
 \ iend is the upper limit inside a do .. loop

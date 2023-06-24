@@ -425,6 +425,16 @@ static inline void fvm_sys(void) {
     execl(buffer, buffer, (char*)NULL);
     free(buffer);
     break;
+  case 15:
+    // file
+    buffer = fvm_getstring();
+    if (access(buffer, F_OK) == 0) {
+      fvm_push(fvm_cell(1));
+    } else {
+      fvm_push(fvm_cell(0));
+    }
+    free(buffer);
+    break;
   default:
     printf("ERROR: Unknown sys command\n");
     break;
