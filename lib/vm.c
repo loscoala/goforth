@@ -10,9 +10,8 @@
   #define DEBUG 0
 #endif
 
-#define VM_MEM_SIZE 1000
-#define VM_STACK_SIZE 1000
-#define VM_RSTACK_SIZE 1000
+#define VM_STACK_SIZE 200
+#define VM_RSTACK_SIZE 50
 
 typedef union u_cell {
   int64_t value;
@@ -20,7 +19,8 @@ typedef union u_cell {
   void    (*func)(void);
 } cell_t;
 
-static cell_t fvm_mem[VM_MEM_SIZE];
+static int64_t fvm_mem_size = 0;
+static cell_t* fvm_mem = NULL;
 static cell_t fvm_stack[VM_STACK_SIZE];
 static cell_t fvm_rstack[VM_RSTACK_SIZE];
 static ptrdiff_t fvm_n = -1;
@@ -372,30 +372,62 @@ static inline char* fvm_getstring() {
   return buffer;
 }
 
-static inline void fvm_sys(void) {
-  cell_t sys, c;
-  char *buffer;
+static inline void fvm_free(void) {
+  if (fvm_mem_size > 0) {
+    free(fvm_mem);
+    fvm_mem = NULL;
+    fvm_mem_size = 0;
+  }
+}
 
-  sys = fvm_pop();
+static inline void fvm_copy(cell_t *dest, int64_t dest_size, cell_t *src, int64_t src_size) {
+  int64_t n = dest_size < src_size ? dest_size : src_size;
+  if (n == 0) return;
+  memcpy(dest, src, sizeof(cell_t) * n);
+}
+
+static inline void fvm_sys(void) {
+  cell_t sys = fvm_pop();
 
   switch (sys.value) {
   case 3:
     // i>f
-    c.dvalue = fvm_pop().value;
-    fvm_push(c);
+    {
+      cell_t c;
+      c.dvalue = fvm_pop().value;
+      fvm_push(c);
+    }
     break;
   case 4:
     // f>i
-    c.value = fvm_pop().dvalue;
-    fvm_push(c);
+    {
+      cell_t c;
+      c.value = fvm_pop().dvalue;
+      fvm_push(c);
+    }
     break;
   case 10:
     // allocate
-    fvm_pop(); // pop argument
+    {
+      cell_t n = fvm_pop();
+      if (n.value == 0) {
+        fvm_free();
+      } else {
+        cell_t *tmp = (cell_t*)malloc(sizeof(cell_t) * n.value);
+        fvm_copy(tmp, n.value, fvm_mem, fvm_mem_size);
+        fvm_free();
+        fvm_mem_size = n.value;
+        fvm_mem = tmp;
+        if (fvm_mem == NULL) {
+          printf("ERROR: Unable to allocate memory\n");
+          exit(0);
+        }
+      }
+    }
     break;
   case 11:
     // memsize
-    fvm_push((cell_t){ .value = VM_MEM_SIZE });
+    fvm_push((cell_t){ .value = fvm_mem_size });
     break;
   case 12:
     // compare
@@ -415,25 +447,31 @@ static inline void fvm_sys(void) {
     break;
   case 13:
     // shell
-    buffer = fvm_getstring();
-    system(buffer);
-    free(buffer);
+    {
+      char *buffer = fvm_getstring();
+      system(buffer);
+      free(buffer);
+    }
     break;
   case 14:
     // system
-    buffer = fvm_getstring();
-    execl(buffer, buffer, (char*)NULL);
-    free(buffer);
+    {
+      char *buffer = fvm_getstring();
+      execl(buffer, buffer, (char*)NULL);
+      free(buffer);
+    }
     break;
   case 15:
     // file
-    buffer = fvm_getstring();
-    if (access(buffer, F_OK) == 0) {
-      fvm_push(fvm_cell(1));
-    } else {
-      fvm_push(fvm_cell(0));
+    {
+      char *buffer = fvm_getstring();
+      if (access(buffer, F_OK) == 0) {
+        fvm_push(fvm_cell(1));
+      } else {
+        fvm_push(fvm_cell(0));
+      }
+      free(buffer);
     }
-    free(buffer);
     break;
   default:
     printf("ERROR: Unknown sys command\n");
@@ -462,5 +500,7 @@ static inline void fvm_stp(void) {
     double time_spend = (double)(fvm_end - fvm_begin);
     printf("\ntime: %fs\n", time_spend / CLOCKS_PER_SEC);
   }
+
+  fvm_free();
   exit(0);
 }
