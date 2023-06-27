@@ -414,14 +414,14 @@ static inline void fvm_sys(void) {
         fvm_free();
       } else {
         cell_t *tmp = (cell_t*)malloc(sizeof(cell_t) * n.value);
+        if (tmp == NULL) {
+          printf("ERROR: Unable to allocate memory\n");
+          exit(0);
+        }
         fvm_copy(tmp, n.value, fvm_mem, fvm_mem_size);
         fvm_free();
         fvm_mem_size = n.value;
         fvm_mem = tmp;
-        if (fvm_mem == NULL) {
-          printf("ERROR: Unable to allocate memory\n");
-          exit(0);
-        }
       }
     }
     break;
