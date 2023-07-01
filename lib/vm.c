@@ -372,6 +372,17 @@ static inline char* fvm_getstring() {
   return buffer;
 }
 
+static inline void fvm_setstring(const char* str) {
+  cell_t addr = fvm_pop();
+  size_t len = strlen(str);
+
+  fvm_mem[addr.value].value = (int64_t)len;
+
+  for (size_t i = 0; i < len; i++) {
+    fvm_mem[addr.value+1+i].value = (int64_t)str[i];
+  }
+}
+
 static inline void fvm_free(void) {
   if (fvm_mem_size > 0) {
     free(fvm_mem);
@@ -380,7 +391,7 @@ static inline void fvm_free(void) {
   }
 }
 
-static inline void fvm_copy(cell_t *dest, int64_t dest_size, cell_t *src, int64_t src_size) {
+static inline void fvm_copy(cell_t *dest, int64_t dest_size, const cell_t *src, int64_t src_size) {
   int64_t n = dest_size < src_size ? dest_size : src_size;
   if (n == 0) return;
   memcpy(dest, src, sizeof(cell_t) * n);
@@ -413,7 +424,7 @@ static inline void fvm_sys(void) {
       if (n.value == 0) {
         fvm_free();
       } else {
-        cell_t *tmp = (cell_t*)malloc(sizeof(cell_t) * n.value);
+        cell_t *tmp = (cell_t*)calloc((size_t)n.value, sizeof(cell_t));
         if (tmp == NULL) {
           printf("ERROR: Unable to allocate memory\n");
           exit(0);
