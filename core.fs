@@ -153,6 +153,8 @@
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
 : file ( str -- bool ) 15 sys ;
+: argc ( -- n ) 16 sys ;
+: argv ( addr n -- ) 17 sys ;
 
 : sh 0 swap exec 0 shell ;
 : file-exist? 0 swap exec 0 file ;

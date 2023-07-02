@@ -19,6 +19,8 @@ typedef union u_cell {
   void    (*func)(void);
 } cell_t;
 
+static int64_t fvm_argc = 0;
+static char** fvm_argv = NULL;
 static int64_t fvm_mem_size = 0;
 static cell_t* fvm_mem = NULL;
 static cell_t fvm_stack[VM_STACK_SIZE];
@@ -438,7 +440,7 @@ static inline void fvm_sys(void) {
     break;
   case 11:
     // memsize
-    fvm_push((cell_t){ .value = fvm_mem_size });
+    fvm_push(fvm_cell(fvm_mem_size));
     break;
   case 12:
     // compare
@@ -482,6 +484,18 @@ static inline void fvm_sys(void) {
         fvm_push(fvm_cell(0));
       }
       free(buffer);
+    }
+    break;
+  case 16:
+    // argc
+    fvm_push(fvm_cell(fvm_argc));
+    break;
+  case 17:
+    // argv
+    {
+      cell_t n = fvm_pop();
+      char *arg = fvm_argv[(size_t)n.value];
+      fvm_setstring(arg);
     }
     break;
   default:

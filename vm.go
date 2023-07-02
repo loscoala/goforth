@@ -634,6 +634,14 @@ func (fvm *ForthVM) Sys() {
 		} else {
 			fvm.Push(0)
 		}
+	case 16:
+		// argc
+		fvm.Push(int64(len(os.Args)))
+	case 17:
+		// argv
+		n := fvm.Pop()
+		arg := os.Args[n]
+		fvm.SetString(arg)
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(fvm, syscall)

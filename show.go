@@ -506,7 +506,7 @@ func (fc *ForthCompiler) CompileToC() error {
 			case "END":
 				result.WriteString("  return;\n}\n\n")
 			case "MAIN":
-				result.WriteString("int main(int argc, char** argv) {\n")
+				result.WriteString("int main(int argc, char** argv) {\n  fvm_argc = (int64_t)argc;\n  fvm_argv = argv;\n")
 				if ShowExecutionTime {
 					result.WriteString("  fvm_time();\n")
 				}
