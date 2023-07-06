@@ -202,7 +202,11 @@ func (fc *ForthCompiler) Parse(str string) error {
 		case 6:
 			if i == '\n' {
 				state = 0
-				if err := fc.handleMeta(string(buffer)); err != nil {
+				meta := string(buffer)
+				if meta == "__END__" {
+					return nil
+				}
+				if err := fc.handleMeta(meta); err != nil {
 					return err
 				}
 				buffer = buffer[:0]
