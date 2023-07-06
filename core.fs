@@ -149,6 +149,7 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
+: alloc ( size -- adr ) memsize >r r@ + allocate r> ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
