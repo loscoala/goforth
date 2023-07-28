@@ -504,7 +504,7 @@ func (fc *ForthCompiler) CompileToC() error {
 			case "SUB":
 				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
 			case "END":
-				result.WriteString("  return;\n}\n\n")
+				result.WriteString("}\n\n")
 			case "MAIN":
 				result.WriteString("int main(int argc, char** argv) {\n  fvm_argc = (int64_t)argc;\n  fvm_argv = argv;\n")
 				if ShowExecutionTime {
