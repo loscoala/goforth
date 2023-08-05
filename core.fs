@@ -149,7 +149,8 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
-: alloc ( size -- adr ) memsize >r r@ + allocate r> ;
+: allot ( size -- adr ) memsize >r r@ + allocate r> ;
+: alloc ( n a -- ) memsize >r swap allot swap exec drop r> allocate ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
@@ -157,8 +158,13 @@
 : argc ( -- n ) 16 sys ;
 : argv ( addr n -- ) 17 sys ;
 
-: sh 0 swap exec 0 shell ;
-: file-exist? 0 swap exec 0 file ;
+: >> over swap exec dup ;
+: sh >> shell ;
+: file-exist? >> file ;
+
+\ : >> ( n a b -- n ) { b a } dup dup a exec b exec ;
+\ : sh &shell >> ;
+\ : file-exist? &file >> ;
 : ls [ s" ls -lhA --color=always" ] sh ;
 
 \ iend is the upper limit inside a do .. loop
