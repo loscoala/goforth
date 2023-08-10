@@ -254,6 +254,16 @@
 : pop dup dup @ + @ swap -- ;
 : .stack @+ ?dup if 0 ?do dup ? cell+ cr loop then drop ;
 
+\ 100 [
+\   dup s" He"
+\   100 [
+\     dup s" llo" 2dup append
+\   ] alloc
+\   dup .s6
+\ ] alloc
+: append ( t f -- ) s2i ?do dup i @ swap push loop drop ;
+: append2 [ { v } over { adr } v adr push ] each3 drop ;
+
 : squared dup * ;
 : cubed dup squared * ;
 : 4th squared squared ;
