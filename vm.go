@@ -499,12 +499,8 @@ func (fvm *ForthVM) Sys() {
 
 	switch syscall {
 	case 0:
-		for _, v := range fvm.Stack {
-			fvm.Push(v)
-			fvm.Pri()
-			fvm.Push(32)
-			fvm.Pra()
-		}
+		// depth
+		fvm.Push(int64(len(fvm.Stack)))
 	case 1:
 		mod := fvm.Pop()
 		n := fvm.Pop()

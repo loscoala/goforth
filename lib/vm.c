@@ -403,6 +403,12 @@ static inline void fvm_sys(void) {
   cell_t sys = fvm_pop();
 
   switch (sys.value) {
+  case 0:
+    // depth
+    {
+      fvm_push(fvm_cell((int64_t)fvm_n+1));
+    }
+    break;
   case 3:
     // i>f
     {
