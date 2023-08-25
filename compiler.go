@@ -80,6 +80,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2r>":   "TFR",
 		"2r@":   "TRF",
 	}
+	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
@@ -94,7 +95,7 @@ func (fc *ForthCompiler) ByteCode() string {
 // Side effect: ByteCode() contains the result.
 func (fc *ForthCompiler) Compile() error {
 	result := NewStack[string]()
-	fc.funcs = make(map[string]*Stack[string])
+	clear(fc.funcs)
 	fc.output.Reset()
 
 	if err := fc.compileWord("main", result); err != nil {

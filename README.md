@@ -33,7 +33,7 @@ go get github.com/loscoala/goforth@latest
 
 ## Build and Dependencies
 
-- All you need is a golang compiler 1.20.
+- All you need is a golang compiler 1.21.0
 
 - Build the project with build.sh or `go build -C cmd/goforth`
 
@@ -193,7 +193,7 @@ The word `test` was defined in the sample file as follows:
   ] html
 ;
 ```
-After the `compile test` statement, a C file `main.c` was generated in the `lib` directory and compiled with the GNU C compiler and executed.
+After the `compile test` statement, a C file `main.c` was generated in the `lib` directory and compiled with the C compiler and executed.
 
 The result is also shown as follows:
 
@@ -207,8 +207,11 @@ The result is also shown as follows:
 The following example shows the usage of the `sh` word to list all the files and directories in the current directory under linux machine.
 
 ```forth
-\ note: you have to allocate memory before. Usage: 100 allocate
-: ls [ s" ls -l" ] sh ;
+: ls
+  100 [
+    [ s" ls -l" ] sh
+  ] alloc
+;
 ```
 
 Optional: Now you can compile the word to a native binary.

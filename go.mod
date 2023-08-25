@@ -1,6 +1,6 @@
 module github.com/loscoala/goforth
 
-go 1.19
+go 1.21
 
 require (
 	github.com/chzyer/readline v1.5.1
