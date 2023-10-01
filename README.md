@@ -1,6 +1,6 @@
 # goforth
 
-This is a compiler and byte code interpreter for a forth-like language.
+*This is a compiler and byte code interpreter for a forth-like language.*
 
 ![Static Badge](https://img.shields.io/badge/OpenBSD-v0.4.0-green?logo=openbsd&label=OpenBSD&labelColor=gray)
 ![Static Badge](https://img.shields.io/badge/FreeBSD-v0.4.0-green?logo=freebsd&label=FreeBSD&labelColor=gray)
