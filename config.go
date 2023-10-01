@@ -22,7 +22,7 @@ var ShowByteCode bool
 var ShowExecutionTime bool
 
 // The name of the C compiler
-var CCompiler = "gcc"
+var CCompiler = "cc"
 
 // The optimization flag of the C compiler
 var COptimization = "-O2"
