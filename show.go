@@ -92,6 +92,22 @@ func PrintError(err error) {
 	}
 }
 
+func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
+	result := NewStack[string]()
+
+	for k, v := range fc.defs {
+		v.Each(func(value string) {
+			if value == word {
+				if !result.Contains(k) {
+					result.Push(k)
+				}
+			}
+		})
+	}
+
+	return result
+}
+
 func (fc *ForthCompiler) printDefinition(word string) {
 	if fc.vars.Contains(word) {
 		if Colored {
@@ -281,6 +297,12 @@ func (fc *ForthCompiler) handleREPL() {
 		} else if text[0] == '%' && len(text) == 1 {
 			// show all definitions
 			fc.printAllDefinitions()
+			continue
+		} else if strings.Index(text, "find ") == 0 {
+			defs := fc.findDefinitions(text[5:])
+			defs.Each(func(value string) {
+				fc.printDefinition(value)
+			})
 			continue
 		} else if strings.Index(text, "use ") == 0 {
 			if err := fc.ParseFile(text[4:]); err != nil {
