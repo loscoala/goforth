@@ -29,6 +29,7 @@ type ForthCompiler struct {
 	locals SliceStack[string]
 	data   map[string]string
 	defs   map[string]*Stack[string]
+	nsp    *Stack[string]
 	output strings.Builder
 	Fvm    *ForthVM
 }
@@ -83,6 +84,7 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
+	fc.nsp = NewStack[string]()
 	return fc
 }
 
@@ -336,6 +338,10 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		if !fc.vars.Contains(cmd[1]) {
 			fc.vars.Push(cmd[1])
 		}
+	} else if cmd[0] == "using" {
+		if !fc.nsp.Contains(cmd[1]) {
+			fc.nsp.Push(cmd[1])
+		}
 	}
 
 	return nil
@@ -468,7 +474,35 @@ func isNumeric(s string) bool {
 	return true
 }
 
+func (fc *ForthCompiler) allNspDefinitions(word string) []string {
+	result := make([]string, 0, fc.nsp.Len())
+
+	fc.nsp.Each(func(value string) {
+		if strings.Index(word, value) == 0 {
+			result = append(result, word[len(value)+1:])
+		} else {
+			result = append(result, fmt.Sprintf("%s:%s", value, word))
+		}
+	})
+
+	return result
+}
+
 func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
+	err := fc.compileWordInternal(word, result)
+
+	if err != nil && word != "main" {
+		for _, word2 := range fc.allNspDefinitions(word) {
+			if err2 := fc.compileWordInternal(word2, result); err2 == nil {
+				return nil
+			}
+		}
+	}
+
+	return err
+}
+
+func (fc *ForthCompiler) compileWordInternal(word string, result *Stack[string]) error {
 	if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {

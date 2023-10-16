@@ -304,16 +304,20 @@ func (fc *ForthCompiler) handleREPL() {
 				fc.printDefinition(value)
 			})
 			continue
+		} else if strings.Index(text, "using ") == 0 {
+			if err := fc.handleMeta(text); err != nil {
+				PrintError(err)
+			}
+			continue
 		} else if strings.Index(text, "use ") == 0 {
-			if err := fc.ParseFile(text[4:]); err != nil {
+			if err := fc.handleMeta(text); err != nil {
 				PrintError(err)
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
 		} else if strings.Index(text, "variable ") == 0 {
-			vname := text[9:]
-			if !fc.vars.Contains(vname) {
-				fc.vars.Push(vname)
+			if err := fc.handleMeta(text); err != nil {
+				PrintError(err)
 			}
 			continue
 		} else if strings.Index(text, "debug ") == 0 {
