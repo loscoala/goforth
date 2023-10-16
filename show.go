@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -158,22 +159,31 @@ func (fc *ForthCompiler) printDefinition(word string) {
 }
 
 func (fc *ForthCompiler) printAllDefinitions() {
+	keys := make([]string, 0, len(fc.defs))
+
+	for k := range fc.defs {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
 	if Colored {
 		fc.vars.Each(func(val string) {
 			printVariableColored(fc, val)
 		})
-		for k, s := range fc.defs {
-			printWordColored(fc, k, s)
+
+		for _, k := range keys {
+			printWordColored(fc, k, fc.defs[k])
 		}
 	} else {
 		fc.vars.Each(func(val string) {
 			printVariable(fc, val)
 		})
-		for k, s := range fc.defs {
-			printWord(k, s)
+
+		for _, k := range keys {
+			printWord(k, fc.defs[k])
 		}
 	}
-	fmt.Println("")
 }
 
 func (fc *ForthCompiler) printByteCode() {
@@ -292,7 +302,15 @@ func (fc *ForthCompiler) handleREPL() {
 
 		if text[0] == '%' && len(text) > 1 {
 			// show just one definition
-			fc.printDefinition(text[2:])
+			def := text[2:]
+			defs := fc.allNspDefinitions(def)
+			if len(defs) > 0 {
+				for _, v := range defs {
+					fc.printDefinition(v)
+				}
+			} else {
+				fc.printDefinition(def)
+			}
 			continue
 		} else if text[0] == '%' && len(text) == 1 {
 			// show all definitions
