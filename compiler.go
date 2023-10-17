@@ -29,7 +29,7 @@ type ForthCompiler struct {
 	locals SliceStack[string]
 	data   map[string]string
 	defs   map[string]*Stack[string]
-	nsp    *Stack[string]
+	nsp    Stack[string]
 	output strings.Builder
 	Fvm    *ForthVM
 }
@@ -84,7 +84,6 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
-	fc.nsp = NewStack[string]()
 	return fc
 }
 
