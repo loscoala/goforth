@@ -300,16 +300,27 @@ func (fc *ForthCompiler) handleREPL() {
 		}
 
 		if text[0] == '%' && len(text) > 1 {
-			// show just one definition
 			def := text[2:]
-			defs := fc.allNspDefinitions(def)
-			if len(defs) > 0 {
-				for _, v := range defs {
-					fc.printDefinition(v)
-				}
-			} else {
+
+			check := func(w string) bool {
+				_, ok1 := fc.data[w]
+				_, ok2 := fc.defs[w]
+
+				return ok1 || ok2
+			}
+
+			if check(def) {
 				fc.printDefinition(def)
 			}
+
+			defs := fc.allNspDefinitions(def)
+
+			for _, v := range defs {
+				if check(v) {
+					fc.printDefinition(v)
+				}
+			}
+
 			continue
 		} else if text[0] == '%' && len(text) == 1 {
 			// show all definitions
