@@ -487,18 +487,56 @@ func (fc *ForthCompiler) allNspDefinitions(word string) []string {
 	return result
 }
 
-func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
-	err := fc.compileWordInternal(word, result)
+func (fc *ForthCompiler) appendNspDefinitions(word string) []string {
+	result := make([]string, 0, fc.nsp.Len())
 
-	if err != nil && word != "main" {
-		for _, word2 := range fc.allNspDefinitions(word) {
-			if err2 := fc.compileWordInternal(word2, result); err2 == nil {
-				return nil
-			}
+	fc.nsp.Each(func(value string) {
+		if strings.Index(word, value) != 0 {
+			result = append(result, fmt.Sprintf("%s:%s", value, word))
+		}
+	})
+
+	return result
+}
+
+func (fc *ForthCompiler) hasDefinition(word string) bool {
+	_, ok1 := fc.data[word]
+	_, ok2 := fc.defs[word]
+
+	return ok1 || ok2
+}
+
+func (fc *ForthCompiler) wordHasMultipleDefinitions(word string) bool {
+	var (
+		hasDef    bool
+		hasNspDef int
+	)
+
+	if fc.hasDefinition(word) {
+		hasDef = true
+	} else if strings.Index(word, "_:") == 0 {
+		hasDef = fc.hasDefinition(word[2:])
+	}
+
+	defs := fc.appendNspDefinitions(word)
+
+	for _, v := range defs {
+		if fc.hasDefinition(v) {
+			hasNspDef++
 		}
 	}
 
-	return err
+	return (!hasDef && hasNspDef > 1) || (hasDef && hasNspDef > 0)
+}
+
+func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
+	if fc.wordHasMultipleDefinitions(word) {
+		return fmt.Errorf("%s has multiple definitions, try using _:%s", word, word)
+	} else if strings.Index(word, "_:") == 0 {
+		word = word[2:]
+	}
+
+	return fc.compileWordInternal(word, result)
 }
 
 func (fc *ForthCompiler) compileWordInternal(word string, result *Stack[string]) error {

@@ -258,13 +258,6 @@ func (fc *ForthCompiler) initReadline() *readline.Instance {
 	return instance
 }
 
-func (fc *ForthCompiler) hasDefinition(word string) bool {
-	_, ok1 := fc.data[word]
-	_, ok2 := fc.defs[word]
-
-	return ok1 || ok2
-}
-
 func (fc *ForthCompiler) handleREPL() {
 	var text string
 
@@ -311,6 +304,9 @@ func (fc *ForthCompiler) handleREPL() {
 
 			if fc.hasDefinition(def) {
 				fc.printDefinition(def)
+			} else if strings.Index(def, "_:") == 0 && fc.hasDefinition(def[2:]) {
+				fc.printDefinition(def[2:])
+				continue
 			}
 
 			defs := fc.allNspDefinitions(def)
