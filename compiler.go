@@ -29,7 +29,6 @@ type ForthCompiler struct {
 	locals SliceStack[string]
 	data   map[string]string
 	defs   map[string]*Stack[string]
-	nsp    Stack[string]
 	output strings.Builder
 	Fvm    *ForthVM
 }
@@ -337,10 +336,6 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		if !fc.vars.Contains(cmd[1]) {
 			fc.vars.Push(cmd[1])
 		}
-	} else if cmd[0] == "using" {
-		if !fc.nsp.Contains(cmd[1]) {
-			fc.nsp.Push(cmd[1])
-		}
 	}
 
 	return nil
@@ -473,73 +468,7 @@ func isNumeric(s string) bool {
 	return true
 }
 
-func (fc *ForthCompiler) allNspDefinitions(word string) []string {
-	result := make([]string, 0, fc.nsp.Len())
-
-	fc.nsp.Each(func(value string) {
-		if strings.Index(word, value) == 0 {
-			result = append(result, word[len(value)+1:])
-		} else {
-			result = append(result, fmt.Sprintf("%s:%s", value, word))
-		}
-	})
-
-	return result
-}
-
-func (fc *ForthCompiler) appendNspDefinitions(word string) []string {
-	result := make([]string, 0, fc.nsp.Len())
-
-	fc.nsp.Each(func(value string) {
-		if strings.Index(word, value) != 0 {
-			result = append(result, fmt.Sprintf("%s:%s", value, word))
-		}
-	})
-
-	return result
-}
-
-func (fc *ForthCompiler) hasDefinition(word string) bool {
-	_, ok1 := fc.data[word]
-	_, ok2 := fc.defs[word]
-
-	return ok1 || ok2
-}
-
-func (fc *ForthCompiler) wordHasMultipleDefinitions(word string) bool {
-	var (
-		hasDef    bool
-		hasNspDef int
-	)
-
-	if fc.hasDefinition(word) {
-		hasDef = true
-	} else if strings.Index(word, "_:") == 0 {
-		hasDef = fc.hasDefinition(word[2:])
-	}
-
-	defs := fc.appendNspDefinitions(word)
-
-	for _, v := range defs {
-		if fc.hasDefinition(v) {
-			hasNspDef++
-		}
-	}
-
-	return (!hasDef && hasNspDef > 1) || (hasDef && hasNspDef > 0)
-}
-
 func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
-	if fc.wordHasMultipleDefinitions(word) {
-		return fmt.Errorf("%s has multiple definitions, try using _:%s", word, word)
-	} else if strings.Index(word, "_:") == 0 {
-		word = word[2:]
-	}
-
-	return fc.compileWordInternal(word, result)
-}
-
-func (fc *ForthCompiler) compileWordInternal(word string, result *Stack[string]) error {
 	if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {

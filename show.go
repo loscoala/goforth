@@ -300,26 +300,9 @@ func (fc *ForthCompiler) handleREPL() {
 		}
 
 		if text[0] == '%' && len(text) > 1 {
-			def := text[2:]
-
-			if fc.hasDefinition(def) {
-				fc.printDefinition(def)
-			} else if strings.Index(def, "_:") == 0 && fc.hasDefinition(def[2:]) {
-				fc.printDefinition(def[2:])
-				continue
-			}
-
-			defs := fc.allNspDefinitions(def)
-
-			for _, v := range defs {
-				if fc.hasDefinition(v) {
-					fc.printDefinition(v)
-				}
-			}
-
+			fc.printDefinition(text[2:])
 			continue
 		} else if text[0] == '%' && len(text) == 1 {
-			// show all definitions
 			fc.printAllDefinitions()
 			continue
 		} else if strings.Index(text, "find ") == 0 {
@@ -327,11 +310,6 @@ func (fc *ForthCompiler) handleREPL() {
 			defs.Each(func(value string) {
 				fc.printDefinition(value)
 			})
-			continue
-		} else if strings.Index(text, "using ") == 0 {
-			if err := fc.handleMeta(text); err != nil {
-				PrintError(err)
-			}
 			continue
 		} else if strings.Index(text, "use ") == 0 {
 			if err := fc.handleMeta(text); err != nil {
