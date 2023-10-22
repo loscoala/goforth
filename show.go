@@ -105,6 +105,7 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 		})
 	}
 
+	sort.Strings(result.data)
 	return result
 }
 
