@@ -355,6 +355,10 @@ static inline void fvm_trf(void) {
   fvm_push(fvm_rstack[fvm_rn]);
 }
 
+static inline void fvm_inc(void) {
+  fvm_stack[fvm_n].value++;
+}
+
 static inline char* fvm_getstring() {
   cell_t str = fvm_pop();
   cell_t len = fvm_mem[str.value];

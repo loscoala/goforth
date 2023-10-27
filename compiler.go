@@ -79,6 +79,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2>r":   "TTR",
 		"2r>":   "TFR",
 		"2r@":   "TRF",
+		"inc":   "INC",
 	}
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
@@ -571,9 +572,10 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 			result.Push("SBI")
 		} else {
 			if word == "loop" {
-				result.Push("L 1")
+				result.Push("INC")
+			} else {
+				result.Push("ADI")
 			}
-			result.Push("ADI")
 		}
 		result.Push("RF")  // i end
 		result.Push("SWP") // end i
