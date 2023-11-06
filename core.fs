@@ -319,6 +319,14 @@
   !
 ;
 
+: !a ( 0 nx .. na n -- adr )
+  allot
+  dup
+  >r
+  !s
+  r>
+;
+
 : .s2 { pos }
   pos @
   pos 1+ to pos

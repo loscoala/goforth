@@ -168,7 +168,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 					counter++
 					buffer = buffer[:0]
 				}
-			case '.', 's':
+			case '.', 's', 'a':
 				if index+1 == len(str) {
 					break
 				}
@@ -297,6 +297,17 @@ func reverse(s []rune) []rune {
 	return r
 }
 
+func compile_a(s *Stack[string], str []rune) {
+	s.Push("0")
+
+	for _, i := range reverse(str) {
+		s.Push(fmt.Sprintf("%d", int(i)))
+	}
+
+	s.Push(fmt.Sprintf("%d", len(str)+1))
+	s.Push("!a")
+}
+
 func compile_m(s *Stack[string], str []rune) {
 	s.Push(">r")
 	s.Push("0")
@@ -315,6 +326,8 @@ func handleForthString(s *Stack[string], str []rune) {
 		compile_s(s, str[3:len(str)-1])
 	case 's':
 		compile_m(s, str[3:len(str)-1])
+	case 'a':
+		compile_a(s, str[3:len(str)-1])
 	}
 }
 
