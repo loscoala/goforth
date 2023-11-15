@@ -312,7 +312,8 @@ func (fc *ForthCompiler) handleREPL() {
 				fc.printDefinition(value)
 			})
 			continue
-		} else if strings.Index(text, "use ") == 0 {
+		} else if strings.Index(text, "use ") == 0 ||
+			strings.Index(text, "template ") == 0 {
 			if err := fc.handleMeta(text); err != nil {
 				PrintError(err)
 			}

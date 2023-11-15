@@ -1,0 +1,20 @@
+<?fs
+variable title
+: test
+  a" Test page" to title
+?>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title><?fs title .s ?></title>
+  </head>
+  <body>
+<?fs 10 0 do ?>
+    <p>(<?fs i . ?>)<br></p>
+<?fs loop ?>
+  </body>
+</html>
+<?fs
+;
+: main test ;

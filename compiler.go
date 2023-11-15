@@ -265,6 +265,50 @@ func (fc *ForthCompiler) Parse(str string) error {
 	return nil
 }
 
+func (fc *ForthCompiler) ParseTemplate(str string) error {
+	state := 0
+	buffer := make([]byte, 0, 100)
+
+	buffer = append(buffer, '.')
+	buffer = append(buffer, '(')
+	buffer = append(buffer, ' ')
+
+	for i := 0; i < len(str); i++ {
+		switch state {
+		case 0:
+			if str[i] == '<' &&
+				str[i+1] == '?' &&
+				str[i+2] == 'f' &&
+				str[i+3] == 's' {
+				i += 3
+				state = 1
+				buffer = append(buffer, ')')
+				continue
+			}
+
+			if str[i] == ')' {
+				buffer = append(buffer, '\\')
+			}
+
+			buffer = append(buffer, str[i])
+		case 1:
+			if str[i] == '?' &&
+				str[i+1] == '>' {
+				i += 1
+				state = 0
+				buffer = append(buffer, '.')
+				buffer = append(buffer, '(')
+				buffer = append(buffer, ' ')
+				continue
+			}
+
+			buffer = append(buffer, str[i])
+		}
+	}
+
+	return fc.Parse(string(buffer))
+}
+
 func compile_s(s *Stack[string], str []rune) {
 	if len(str) > 9 {
 		s.Push("0")
@@ -341,6 +385,16 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 	return fc.Parse(string(data))
 }
 
+func (fc *ForthCompiler) ParseTemplateFile(filename string) error {
+	data, err := os.ReadFile(filename)
+
+	if err != nil {
+		return err
+	}
+
+	return fc.ParseTemplate(string(data))
+}
+
 func (fc *ForthCompiler) handleMeta(meta string) error {
 	cmd := strings.Split(meta, " ")
 
@@ -350,6 +404,8 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		if !fc.vars.Contains(cmd[1]) {
 			fc.vars.Push(cmd[1])
 		}
+	} else if cmd[0] == "template" {
+		return fc.ParseTemplateFile(cmd[1])
 	}
 
 	return nil
