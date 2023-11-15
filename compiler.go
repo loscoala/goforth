@@ -265,10 +265,18 @@ func (fc *ForthCompiler) Parse(str string) error {
 	return nil
 }
 
-func (fc *ForthCompiler) ParseTemplate(str string) error {
+func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	state := 0
 	buffer := make([]byte, 0, 100)
 
+	buffer = append(buffer, ':')
+	buffer = append(buffer, ' ')
+
+	for i := 0; i < len(entry); i++ {
+		buffer = append(buffer, entry[i])
+	}
+
+	buffer = append(buffer, ' ')
 	buffer = append(buffer, '.')
 	buffer = append(buffer, '(')
 	buffer = append(buffer, ' ')
@@ -295,6 +303,9 @@ func (fc *ForthCompiler) ParseTemplate(str string) error {
 			if str[i] == '?' &&
 				str[i+1] == '>' {
 				i += 1
+				if str[i+1] == '\n' {
+					i += 1
+				}
 				state = 0
 				buffer = append(buffer, '.')
 				buffer = append(buffer, '(')
@@ -305,6 +316,10 @@ func (fc *ForthCompiler) ParseTemplate(str string) error {
 			buffer = append(buffer, str[i])
 		}
 	}
+
+	buffer = append(buffer, ')')
+	buffer = append(buffer, '\n')
+	buffer = append(buffer, ';')
 
 	return fc.Parse(string(buffer))
 }
@@ -385,14 +400,14 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 	return fc.Parse(string(data))
 }
 
-func (fc *ForthCompiler) ParseTemplateFile(filename string) error {
+func (fc *ForthCompiler) ParseTemplateFile(entry, filename string) error {
 	data, err := os.ReadFile(filename)
 
 	if err != nil {
 		return err
 	}
 
-	return fc.ParseTemplate(string(data))
+	return fc.ParseTemplate(entry, string(data))
 }
 
 func (fc *ForthCompiler) handleMeta(meta string) error {
@@ -405,7 +420,7 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 			fc.vars.Push(cmd[1])
 		}
 	} else if cmd[0] == "template" {
-		return fc.ParseTemplateFile(cmd[1])
+		return fc.ParseTemplateFile(cmd[1], cmd[2])
 	}
 
 	return nil

@@ -1,8 +1,4 @@
-<?fs
-variable title
-: test
-  a" Test page" to title
-?>
+<?fs a" Test page" to title ?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -15,6 +11,3 @@ variable title
 <?fs loop ?>
   </body>
 </html>
-<?fs
-;
-: main test ;
