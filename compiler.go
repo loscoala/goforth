@@ -271,11 +271,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 
 	buffer = append(buffer, ':')
 	buffer = append(buffer, ' ')
-
-	for i := 0; i < len(entry); i++ {
-		buffer = append(buffer, entry[i])
-	}
-
+	buffer = append(buffer, entry...)
 	buffer = append(buffer, ' ')
 	buffer = append(buffer, '.')
 	buffer = append(buffer, '(')
@@ -317,7 +313,10 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 		}
 	}
 
-	buffer = append(buffer, ')')
+	if state == 0 {
+		buffer = append(buffer, ')')
+	}
+
 	buffer = append(buffer, '\n')
 	buffer = append(buffer, ';')
 
