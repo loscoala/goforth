@@ -17,8 +17,9 @@ In this forth you can define local variables with curley brackets like in other 
 
 ## Why goforth?
 
-* Goforth can be used as an embeddable programming language. See topic Embedding.
-* Goforth can be used as a compiler to produce C-code from Forth. See topic Generate C-Code.
+* Goforth can be used as an embeddable programming language. See topic embedding.
+* Goforth can be used as a compiler to produce C-code from forth. See topic Generate C-code.
+* Goforth can be embedded in all sorts of different documents using the template sytax. See topic templating.
 
 Currently there is no parallel ForthVM execution via goroutines.
 
@@ -321,6 +322,38 @@ if err := fc.Run(": main .\" Hello World!\" ;"); err != nil {
 if err := fc.Run(": customcall 999 sys ; : main 10 customcall . ;"); err != nil {
   goforth.PrintError(err)
 }
+```
+
+## Templates
+
+Goforth has a meta command called `template <name> <filename>`. When goforth parses a template file, it looks for opening and closing tags, which are `<?fs` and `?>` which
+tell goforth to start and stop embedding the code between them. Parsing in this manner allows goforth to be embedded in all sorts of different documents, as everything
+outside of a pair of opening and closing tags is ignored by the goforth parser.
+
+### Example #1 Goforth opening and closing tags
+
+Example file `html.tfs`:
+
+```
+<html>
+  <head>
+    <title><?fs title .s ?></title>
+  </head>
+  <body>
+<?fs 10 0 do ?>
+    <p><?fs i . ?></p>
+<?fs loop ?>
+  </body>
+</html>
+```
+
+Now you can load the template named `test`:
+
+```forth
+forth> template test html.tfs
+forth> variable title
+forth> a" Example title" to title
+forth> test
 ```
 
 ## Description of the files
