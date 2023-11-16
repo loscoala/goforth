@@ -266,16 +266,15 @@ func (fc *ForthCompiler) Parse(str string) error {
 }
 
 func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
-	state := 0
-	buffer := make([]byte, 0, 100)
+	var (
+		state  int
+		buffer strings.Builder
+	)
 
-	buffer = append(buffer, ':')
-	buffer = append(buffer, ' ')
-	buffer = append(buffer, entry...)
-	buffer = append(buffer, ' ')
-	buffer = append(buffer, '.')
-	buffer = append(buffer, '(')
-	buffer = append(buffer, ' ')
+	buffer.Grow(len(str) + len(entry) + 50)
+	buffer.WriteString(": ")
+	buffer.WriteString(entry)
+	buffer.WriteString(" .( ")
 
 	for i := 0; i < len(str); i++ {
 		switch state {
@@ -286,15 +285,15 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 				str[i+3] == 's' {
 				i += 3
 				state = 1
-				buffer = append(buffer, ')')
+				buffer.WriteByte(')')
 				continue
 			}
 
 			if str[i] == ')' {
-				buffer = append(buffer, '\\')
+				buffer.WriteByte('\\')
 			}
 
-			buffer = append(buffer, str[i])
+			buffer.WriteByte(str[i])
 		case 1:
 			if str[i] == '?' &&
 				str[i+1] == '>' {
@@ -303,24 +302,21 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 					i += 1
 				}
 				state = 0
-				buffer = append(buffer, '.')
-				buffer = append(buffer, '(')
-				buffer = append(buffer, ' ')
+				buffer.WriteString(".( ")
 				continue
 			}
 
-			buffer = append(buffer, str[i])
+			buffer.WriteByte(str[i])
 		}
 	}
 
 	if state == 0 {
-		buffer = append(buffer, ')')
+		buffer.WriteByte(')')
 	}
 
-	buffer = append(buffer, '\n')
-	buffer = append(buffer, ';')
+	buffer.WriteString("\n;")
 
-	return fc.Parse(string(buffer))
+	return fc.Parse(buffer.String())
 }
 
 func compile_s(s *Stack[string], str []rune) {
