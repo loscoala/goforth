@@ -504,6 +504,13 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack[strin
 				return fmt.Errorf("unable to assign word \"%s\": not in local context", word2)
 			}
 			result.Push("LSET " + word2)
+		} else if word2 == "char" {
+			iter.Next()
+			word2 = iter.Get()
+			if len(word2) > 1 {
+				return fmt.Errorf("unable to get code point: \"%s\" is not a one-character", word2)
+			}
+			result.Push(fmt.Sprintf("L %d", int(word2[0])))
 		} else if word2 == "done" {
 			localCounter--
 			fc.locals.ExPop()
