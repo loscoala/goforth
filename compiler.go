@@ -2,6 +2,8 @@ package goforth
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -385,8 +387,22 @@ func handleForthString(s *Stack[string], str []rune) {
 	}
 }
 
+func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
+	if strings.Index(filename, "http://") == 0 ||
+		strings.Index(filename, "https://") == 0 {
+		resp, err := http.Get(filename)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		return io.ReadAll(resp.Body)
+	} else {
+		return os.ReadFile(filename)
+	}
+}
+
 func (fc *ForthCompiler) ParseFile(filename string) error {
-	data, err := os.ReadFile(filename)
+	data, err := fc.ReadFile(filename)
 
 	if err != nil {
 		return err
