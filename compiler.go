@@ -396,9 +396,9 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 		}
 		defer resp.Body.Close()
 		return io.ReadAll(resp.Body)
-	} else {
-		return os.ReadFile(filename)
 	}
+
+	return os.ReadFile(filename)
 }
 
 func (fc *ForthCompiler) ParseFile(filename string) error {
