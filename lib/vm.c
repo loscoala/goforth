@@ -34,6 +34,7 @@ static int64_t fvm_rmax = 0;
 #endif
 
 static clock_t fvm_begin = 0;
+void (*fvm_sys_custom)(int64_t) = NULL;
 
 // #ifndef inline
 //   #define inline __inline__ __attribute__((always_inline))
@@ -509,7 +510,11 @@ static inline void fvm_sys(void) {
     }
     break;
   default:
-    printf("ERROR: Unknown sys command\n");
+    if (fvm_sys_custom != NULL) {
+      fvm_sys_custom(sys.value);
+    } else {
+      printf("ERROR: Unknown sys command\n");
+    }
     break;
   }
 }
