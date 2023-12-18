@@ -566,11 +566,12 @@ func (fc *ForthCompiler) CompileToC() error {
 			return fmt.Errorf("%s\n%s", err.Error(), stderr.String())
 		} else if CAutoExecute {
 			cmd := exec.Command("lib/" + CBinaryName)
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
 
-			if out, err := cmd.Output(); err != nil {
+			if err := cmd.Run(); err != nil {
 				return err
-			} else {
-				fmt.Println(string(out))
 			}
 		}
 	}
