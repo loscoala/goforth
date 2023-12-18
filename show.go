@@ -586,7 +586,15 @@ func (fc *ForthCompiler) runBinary() error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	if _, err := os.Stdout.WriteString("\n"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) printDebug() {
