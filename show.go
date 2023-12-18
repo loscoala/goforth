@@ -2,7 +2,6 @@ package goforth
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
@@ -556,27 +555,38 @@ func (fc *ForthCompiler) CompileToC() error {
 		return err
 	}
 
+	result.Reset()
+
 	if CAutoCompile {
-		var stderr bytes.Buffer
-		cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
-		cmd.Dir = "lib/"
-		cmd.Stderr = &stderr
+		if err := fc.compileToBinary(); err != nil {
+			return err
+		}
 
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%s\n%s", err.Error(), stderr.String())
-		} else if CAutoExecute {
-			cmd := exec.Command("lib/" + CBinaryName)
-			cmd.Stdin = os.Stdin
-			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
-
-			if err := cmd.Run(); err != nil {
+		if CAutoExecute {
+			if err := fc.runBinary(); err != nil {
 				return err
 			}
 		}
 	}
 
 	return nil
+}
+
+func (fc *ForthCompiler) compileToBinary() error {
+	cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
+	cmd.Dir = "lib/"
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+func (fc *ForthCompiler) runBinary() error {
+	cmd := exec.Command("lib/" + CBinaryName)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	return cmd.Run()
 }
 
 func (fc *ForthCompiler) printDebug() {
