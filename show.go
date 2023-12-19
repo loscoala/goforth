@@ -91,6 +91,14 @@ func PrintError(err error) {
 	}
 }
 
+func PrintWarning(warning string) {
+	if Colored {
+		fmt.Printf("%s: %s\n", Yellow("[Warning]"), warning)
+	} else {
+		fmt.Printf("[Warning]: %s\n", warning)
+	}
+}
+
 func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 	result := NewStack[string]()
 

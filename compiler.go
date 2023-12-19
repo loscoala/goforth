@@ -448,6 +448,10 @@ func (fc *ForthCompiler) compileLocals(iter *StackIter[string], result *Stack[st
 			break
 		}
 
+		if _, ok := fc.defs[word]; ok {
+			PrintWarning(fmt.Sprintf("local %s shadows word with the same name", word))
+		}
+
 		localDefs.Push(word)
 		result.Push("LDEF " + word)
 	}
