@@ -2,10 +2,10 @@
 
 *This is a compiler and byte code interpreter for a forth-like language.*
 
-![Static Badge](https://img.shields.io/badge/OpenBSD-v0.4.0-green?logo=openbsd&label=OpenBSD&labelColor=gray)
-![Static Badge](https://img.shields.io/badge/FreeBSD-v0.4.0-green?logo=freebsd&label=FreeBSD&labelColor=gray)
-![Static Badge](https://img.shields.io/badge/Linux-v0.4.0-green?logo=linux&label=Linux&labelColor=gray)
-![Static Badge](https://img.shields.io/badge/Windows-not_ready-red?logo=windows&label=WIndows&labelColor=gray)
+![Static Badge](https://img.shields.io/badge/OpenBSD-v0.5.0-green?logo=openbsd&label=OpenBSD&labelColor=gray)
+![Static Badge](https://img.shields.io/badge/FreeBSD-v0.5.0-green?logo=freebsd&label=FreeBSD&labelColor=gray)
+![Static Badge](https://img.shields.io/badge/Linux-v0.5.0-green?logo=linux&label=Linux&labelColor=gray)
+![Static Badge](https://img.shields.io/badge/Windows-not_ready-red?logo=windows&label=Windows&labelColor=gray)
 
 In general, Forth is, among other things, a programming language whose ideals are freedom and simplicity. Freedom requires knowledge and responsibility, and simplicity is yet more demanding. But "simple" can also mean rudimentary. This Forth attempts to be simple as possible and also fast as possible.
 
