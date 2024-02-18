@@ -39,7 +39,7 @@ go get github.com/loscoala/goforth@latest
 
 ## Build and Dependencies
 
-- All you need is a golang compiler 1.21.0
+- All you need is a golang compiler 1.22
 
 - Build the project with build.sh or `go build -C cmd/goforth`
 
