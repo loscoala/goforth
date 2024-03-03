@@ -59,7 +59,7 @@ func printVariableColored(fc *ForthCompiler, word string) {
 	fmt.Printf("%s %s\n", getWordColored(fc, "variable"), getWordColored(fc, word))
 }
 
-func printVariable(fc *ForthCompiler, word string) {
+func printVariable(word string) {
 	fmt.Printf("variable %s\n", word)
 }
 
@@ -121,7 +121,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 		if Colored {
 			printVariableColored(fc, word)
 		} else {
-			printVariable(fc, word)
+			printVariable(word)
 		}
 		return
 	}
@@ -184,7 +184,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 		}
 	} else {
 		fc.vars.Each(func(val string) {
-			printVariable(fc, val)
+			printVariable(val)
 		})
 
 		for _, k := range keys {
