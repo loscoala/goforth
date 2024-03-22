@@ -100,6 +100,8 @@ func (fc *ForthCompiler) Compile() error {
 	result := NewStack[string]()
 	clear(fc.funcs)
 	fc.output.Reset()
+	fc.label.Reset()
+	fc.blocks.Reset()
 
 	if err := fc.compileWord("main", result); err != nil {
 		return err

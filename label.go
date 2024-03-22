@@ -8,6 +8,10 @@ type Label struct {
 	label int
 }
 
+func (l *Label) Reset() {
+	l.label = 0
+}
+
 func (l *Label) CreateNewLabel() string {
 	lbl := fmt.Sprintf("%d", l.label)
 	l.label++
