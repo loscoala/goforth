@@ -366,7 +366,7 @@ static inline char* fvm_getstring() {
   char *buffer = (char*)malloc(len.value+1);
 
   if (buffer == NULL) {
-    myerror("ERROR: Unable to allocate memory");
+    myerror("Unable to allocate memory");
   }
 
   for (int64_t i = 0; i < len.value; i++) {
@@ -438,7 +438,7 @@ static inline void fvm_sys(void) {
       } else {
         cell_t *tmp = (cell_t*)calloc((size_t)n.value, sizeof(cell_t));
         if (tmp == NULL) {
-          myerror("ERROR: Unable to allocate memory");
+          myerror("Unable to allocate memory");
         }
         fvm_copy(tmp, n.value, fvm_mem, fvm_mem_size);
         fvm_free();
@@ -511,7 +511,7 @@ static inline void fvm_sys(void) {
     if (fvm_sys_custom != NULL) {
       fvm_sys_custom(sys.value);
     } else {
-      myerror("ERROR: Unknown sys command");
+      myerror("Unknown sys command");
     }
     break;
   }
