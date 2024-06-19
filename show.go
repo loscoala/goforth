@@ -559,6 +559,16 @@ func (fc *ForthCompiler) CompileToC() error {
 
 	result.WriteString("  return 0;\n}\n")
 
+	if _, err := os.Stat("lib"); os.IsNotExist(err) {
+		if err := os.Mkdir("lib", 0750); err != nil {
+			return err
+		} else {
+			if err := os.WriteFile("lib/vm.c", CVM, 0644); err != nil {
+				return err
+			}
+		}
+	}
+
 	if err := os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644); err != nil {
 		return err
 	}

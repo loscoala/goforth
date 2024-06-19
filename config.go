@@ -38,3 +38,8 @@ var CCodeName = "main.c"
 
 // The name of the binary
 var CBinaryName = "main"
+
+// The vm in C
+//
+//go:embed lib/vm.c
+var CVM []byte
