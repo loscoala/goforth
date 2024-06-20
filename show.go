@@ -559,17 +559,17 @@ func (fc *ForthCompiler) CompileToC() error {
 
 	result.WriteString("  return 0;\n}\n")
 
-	if _, err := os.Stat("lib"); os.IsNotExist(err) {
-		if err := os.Mkdir("lib", 0750); err != nil {
+	if _, err := os.Stat(ConfigPath()); os.IsNotExist(err) {
+		if err := os.Mkdir(ConfigPath(), 0750); err != nil {
 			return err
 		} else {
-			if err := os.WriteFile("lib/vm.c", CVM, 0644); err != nil {
+			if err := os.WriteFile(ConfigPath()+"vm.c", CVM, 0644); err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := os.WriteFile("lib/"+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644); err != nil {
+	if err := os.WriteFile(ConfigPath()+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644); err != nil {
 		return err
 	}
 
@@ -592,14 +592,14 @@ func (fc *ForthCompiler) CompileToC() error {
 
 func (fc *ForthCompiler) compileToBinary() error {
 	cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
-	cmd.Dir = "lib/"
+	cmd.Dir = ConfigPath()
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
 
 func (fc *ForthCompiler) runBinary() error {
-	cmd := exec.Command("lib/" + CBinaryName)
+	cmd := exec.Command(ConfigPath() + CBinaryName)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

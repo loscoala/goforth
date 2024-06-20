@@ -2,6 +2,8 @@ package goforth
 
 import (
 	_ "embed"
+	"log"
+	"os"
 )
 
 // The core words dictionary
@@ -43,3 +45,13 @@ var CBinaryName = "main"
 //
 //go:embed lib/vm.c
 var CVM []byte
+
+func ConfigPath() string {
+	dir, err := os.UserConfigDir()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dir + "/goforth/"
+}
