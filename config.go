@@ -46,12 +46,19 @@ var CBinaryName = "main"
 //go:embed lib/vm.c
 var CVM []byte
 
+var cachedConfigPath string
+
 func ConfigPath() string {
+	if cachedConfigPath != "" {
+		return cachedConfigPath
+	}
+
 	dir, err := os.UserConfigDir()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return dir + "/goforth/"
+	cachedConfigPath = dir + "/goforth/"
+	return cachedConfigPath
 }
