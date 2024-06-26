@@ -28,15 +28,16 @@ func (s *Stack[T]) Push(val T) {
 
 func (s *Stack[T]) Pop() (T, bool) {
 	var zero T
+
 	if s.IsEmpty() {
 		return zero, false
-	} else {
-		index := s.Len() - 1
-		element := s.data[index]
-		s.data[index] = zero
-		s.data = s.data[:index]
-		return element, true
 	}
+
+	index := s.Len() - 1
+	element := s.data[index]
+	s.data[index] = zero
+	s.data = s.data[:index]
+	return element, true
 }
 
 func (s *Stack[T]) ExPop() T {
@@ -167,13 +168,13 @@ func (ss *SliceStack[T]) Push(stk *Stack[T]) {
 func (ss *SliceStack[T]) Pop() (*Stack[T], bool) {
 	if ss.IsEmpty() {
 		return nil, false
-	} else {
-		index := ss.Len() - 1
-		element := (*ss)[index]
-		(*ss)[index] = nil
-		*ss = (*ss)[:index]
-		return element, true
 	}
+
+	index := ss.Len() - 1
+	element := (*ss)[index]
+	(*ss)[index] = nil
+	*ss = (*ss)[:index]
+	return element, true
 }
 
 func (ss *SliceStack[T]) ExPop() *Stack[T] {
