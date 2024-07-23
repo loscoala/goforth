@@ -82,6 +82,7 @@ func NewForthCompiler() *ForthCompiler {
 		"2r>":   "TFR",
 		"2r@":   "TRF",
 		"inc":   "INC",
+		"dec":   "DEC",
 	}
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])

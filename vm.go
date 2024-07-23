@@ -459,6 +459,11 @@ func (fvm *ForthVM) Inc() {
 	fvm.Stack[n]++
 }
 
+func (fvm *ForthVM) Dec() {
+	n := len(fvm.Stack) - 1
+	fvm.Stack[n]--
+}
+
 func (fvm *ForthVM) Gdef(name string) {
 	fvm.Vars[name] = 0
 }
@@ -707,6 +712,7 @@ const (
 	TFR // 2 from r
 	TRF // 2 r fetch
 	INC
+	DEC
 )
 
 var CellName = map[int]string{
@@ -772,6 +778,7 @@ var CellName = map[int]string{
 	TFR:  "TFR",
 	TRF:  "TRF",
 	INC:  "INC",
+	DEC:  "DEC",
 }
 
 type Cell struct {
@@ -968,6 +975,8 @@ func parseCode(codeStr string) *Code {
 				cells = append(cells, Cell{cmd: TRF})
 			case "INC":
 				cells = append(cells, Cell{cmd: INC})
+			case "DEC":
+				cells = append(cells, Cell{cmd: DEC})
 			default:
 				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 			}
@@ -1135,6 +1144,8 @@ func (fvm *ForthVM) Run(codeStr string) {
 			fvm.Trf()
 		case INC:
 			fvm.Inc()
+		case DEC:
+			fvm.Dec()
 		default:
 			log.Fatalf("ERROR: Unknown command %v\n", command)
 		}
@@ -1280,6 +1291,8 @@ func (fvm *ForthVM) RunStep() (bool, error) {
 		fvm.Trf()
 	case INC:
 		fvm.Inc()
+	case DEC:
+		fvm.Dec()
 	default:
 		return true, fmt.Errorf("ERROR: Unknown command %v", fvm.CodeData.Command)
 	}

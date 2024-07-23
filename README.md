@@ -435,3 +435,4 @@ The stack machine consists of a single LIFO stack and memory. Memory is adressed
 | TFR | 2 from r |
 | TRF | 2 r fetch |
 | INC | Increments the top value of the stack by 1 |
+| DEC | Decrements the top value of the stack by 1 |
