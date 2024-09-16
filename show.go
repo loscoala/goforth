@@ -430,7 +430,7 @@ func initNameCache() func(name string) string {
 	}
 }
 
-func initGlobalNameCache() func(name string) string {
+func (fc *ForthCompiler) initGlobalNameCache() func(name string) string {
 	cache := make(map[string]string)
 
 	return func(name string) string {
@@ -438,7 +438,7 @@ func initGlobalNameCache() func(name string) string {
 			// return all names
 			var result strings.Builder
 			for k, v := range cache {
-				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = 0 }; // %s\n", v, k))
+				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = %d }; // %s\n", v, fc.Fvm.Vars[k], k))
 			}
 			if result.Len() > 0 {
 				result.WriteString("\n")
@@ -496,7 +496,7 @@ func (fc *ForthCompiler) CompileToC() error {
 	var result strings.Builder
 	funcs := initNameCache()
 	locals := initVarNameCache()
-	globals := initGlobalNameCache()
+	globals := fc.initGlobalNameCache()
 	spaces := initSpaceCache()
 	indent := 2
 
