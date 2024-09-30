@@ -433,6 +433,20 @@ static inline void fvm_sys(void) {
       fvm_push(c);
     }
     break;
+  case 8:
+    // read
+    {
+      cell_t c = fvm_pop();
+      char buf[(size_t)c.value];
+      ssize_t n = read(STDIN_FILENO, &buf, (size_t)c.value);
+      if (n <= 0) {
+        fvm_setstring("");
+      } else {
+        buf[n] = '\0';
+        fvm_setstring(buf);
+      }
+    }
+    break;
   case 10:
     // allocate
     {
