@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -431,6 +432,24 @@ static inline void fvm_sys(void) {
       cell_t c;
       c.value = fvm_pop().dvalue;
       fvm_push(c);
+    }
+    break;
+  case 5:
+    // readfile
+    {
+      char *name = fvm_getstring();
+      struct stat st;
+      if (stat(name, &st) == -1) {
+        free(name);
+        break;
+      }
+      char buf[(size_t)st.st_size];
+      FILE *fp = fopen(name, "r");
+      size_t n = fread(buf, sizeof(char), sizeof(buf), fp);
+      buf[n] = '\0';
+      fclose(fp);
+      free(name);
+      if (n > 0) fvm_setstring(buf);
     }
     break;
   case 8:
