@@ -110,6 +110,10 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 				}
 			}
 		})
+
+		if strings.Index(k, word) != -1 {
+			result.Push(k)
+		}
 	}
 
 	sort.Strings(result.data)
