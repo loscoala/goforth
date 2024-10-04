@@ -438,27 +438,28 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
 	} else if cmd[0] == "struct" {
 		var builder strings.Builder
-
 		values := cmd[2:]
 		offset := int64(0)
 
 		for i := 0; i < len(values); i += 2 {
 			length := values[i]
 			name := values[i+1]
-
 			size, err := strconv.ParseInt(length, 10, 64)
 
 			if err != nil {
 				return err
 			}
-			builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
 
+			if offset > 0 {
+				builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
+			} else {
+				builder.WriteString(fmt.Sprintf(": %s:%s ;\n", cmd[1], name))
+			}
 			offset += size
 		}
 
 		builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", cmd[1], offset))
 		builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", cmd[1], cmd[1]))
-
 		return fc.Parse(builder.String())
 	}
 
