@@ -450,6 +450,10 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 				return err
 			}
 
+			if size < 1 {
+				return fmt.Errorf("struct member size must be greater than 0. Size was: %d at member: %s", size, name)
+			}
+
 			if offset > 0 {
 				builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
 			} else {
