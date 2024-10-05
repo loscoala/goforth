@@ -1,9 +1,10 @@
 \ To define a struct use:
-\ struct <prefix:name> <size> <name>
+\ struct <name> <size> <name> ...
 
 struct foo 1 a 1 b 1 c
 
 \ This generates the following words
+\ foo:allot ( n -- adr )
 \ foo:sizeof ( -- n )
 \ foo:a ( adr -- adr2 )
 \ foo:b ( adr -- adr2 )

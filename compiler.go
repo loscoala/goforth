@@ -442,9 +442,8 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		offset := int64(0)
 
 		for i := 0; i < len(values); i += 2 {
-			length := values[i]
 			name := values[i+1]
-			size, err := strconv.ParseInt(length, 10, 64)
+			size, err := strconv.ParseInt(values[i], 10, 64)
 
 			if err != nil {
 				return err
@@ -459,10 +458,12 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 			} else {
 				builder.WriteString(fmt.Sprintf(": %s:%s ;\n", cmd[1], name))
 			}
+
 			offset += size
 		}
 
 		builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", cmd[1], offset))
+		builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", cmd[1], cmd[1]))
 		builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", cmd[1], cmd[1]))
 		return fc.Parse(builder.String())
 	}
