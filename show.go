@@ -398,7 +398,12 @@ func (fc *ForthCompiler) handleREPL() {
 		}
 
 		fc.Fvm.Run(fc.ByteCode())
-		fmt.Println("")
+
+		if fc.Fvm.ExitStatus != 0 {
+			PrintError(fmt.Errorf("exit status: %d", fc.Fvm.ExitStatus))
+		} else {
+			fmt.Println("")
+		}
 	}
 }
 
