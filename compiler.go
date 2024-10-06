@@ -109,6 +109,7 @@ func (fc *ForthCompiler) Compile() error {
 		return err
 	}
 
+	result.Push("L 0")
 	result.Push("STP")
 
 	printVal := func(val string) {

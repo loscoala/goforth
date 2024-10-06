@@ -111,7 +111,7 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 			}
 		})
 
-		if strings.Index(k, word) != -1 {
+		if strings.Contains(k, word) {
 			result.Push(k)
 		}
 	}
@@ -635,6 +635,7 @@ func (fc *ForthCompiler) printDebug() {
 	fc.Fvm.Out = &out
 
 	fc.Fvm.PrepareRun(fc.ByteCode())
+	fmt.Printf("    %-15s | %-25s | %-25s | %s\n", "LINE, OP", "STACK", "RSTACK", "OUTPUT")
 
 	for !ok {
 		fmt.Printf("%3d ", fc.Fvm.CodeData.ProgPtr)
@@ -657,6 +658,10 @@ func (fc *ForthCompiler) printDebug() {
 				output)
 			out.Reset()
 		}
+	}
+
+	if fc.Fvm.ExitStatus != 0 {
+		fmt.Printf("Exit status: %d\n", fc.Fvm.ExitStatus)
 	}
 
 	fc.Fvm.Out = oldOut

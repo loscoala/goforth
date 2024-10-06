@@ -577,5 +577,5 @@ static inline void fvm_stp(void) {
   }
 
   fvm_free();
-  exit(0);
+  exit((int)fvm_pop().value);
 }

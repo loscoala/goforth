@@ -21,16 +21,17 @@ type Local struct {
 }
 
 type ForthVM struct {
-	Vars     map[string]int64
-	Mem      []int64
-	Stack    []int64
-	Rstack   []int64
-	lstack   []Local
-	ln       int
-	l_len    int
-	Sysfunc  func(*ForthVM, int64)
-	Out      io.Writer
-	CodeData *Code
+	Vars       map[string]int64
+	Mem        []int64
+	Stack      []int64
+	Rstack     []int64
+	lstack     []Local
+	ln         int
+	l_len      int
+	Sysfunc    func(*ForthVM, int64)
+	Out        io.Writer
+	CodeData   *Code
+	ExitStatus int
 }
 
 func NewForthVM() *ForthVM {
@@ -1095,6 +1096,7 @@ func (fvm *ForthVM) Run(codeStr string) {
 		case SYS:
 			fvm.Sys()
 		case STP:
+			fvm.ExitStatus = int(fvm.Pop())
 			done = true
 		case SUB:
 			// pass
@@ -1242,6 +1244,7 @@ func (fvm *ForthVM) RunStep() (bool, error) {
 	case SYS:
 		fvm.Sys()
 	case STP:
+		fvm.ExitStatus = int(fvm.Pop())
 		return true, nil
 	case SUB:
 		// pass
