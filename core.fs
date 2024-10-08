@@ -149,7 +149,18 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
-: allot ( size -- adr ) memsize >r r@ + allocate r> ;
+\ : allot ( size -- adr ) memsize >r r@ + allocate r> ;
+
+variable used
+: allot ( size -- adr )
+  used >r
+  used + to used
+  used memsize > if
+    used 2* allocate
+  then
+  r>
+;
+
 : alloc ( n a -- ) memsize >r swap allot swap exec drop r> allocate ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
