@@ -452,7 +452,7 @@ func (fc *ForthCompiler) initGlobalNameCache() func(name string) string {
 			// return all names
 			var result strings.Builder
 			for k, v := range cache {
-				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = %d }; // %s\n", v, fc.Fvm.Vars[k], k))
+				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = %d }; // %s\n", v, 0, k))
 			}
 			if result.Len() > 0 {
 				result.WriteString("\n")
