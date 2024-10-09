@@ -149,16 +149,16 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
-variable used
+variable here
 : allot ( size -- adr )
-  used >r
-  used + to used
-  used memsize > if
-    used 2* allocate
+  here >r
+  here + to here
+  here memsize > if
+    here 2* allocate
   then
   r>
 ;
-: alloc ( n adr -- ) used >r >r allot r> exec drop r> to used ;
+: alloc ( n adr -- ) here >r >r allot r> exec drop r> to here ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
