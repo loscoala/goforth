@@ -438,38 +438,65 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 	} else if cmd[0] == "template" {
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
 	} else if cmd[0] == "struct" {
-		var builder strings.Builder
-		values := cmd[2:]
-		offset := int64(0)
-
-		for i := 0; i < len(values); i += 2 {
-			name := values[i+1]
-			size, err := strconv.ParseInt(values[i], 10, 64)
-
-			if err != nil {
-				return err
-			}
-
-			if size < 1 {
-				return fmt.Errorf("struct member size must be greater than 0. Size was: %d at member: %s", size, name)
-			}
-
-			if offset > 0 {
-				builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
-			} else {
-				builder.WriteString(fmt.Sprintf(": %s:%s ;\n", cmd[1], name))
-			}
-
-			offset += size
+		if cmd[2] == "extends" {
+			return fc.compileExtendStruct(cmd)
 		}
 
-		builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", cmd[1], offset))
-		builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", cmd[1], cmd[1]))
-		builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", cmd[1], cmd[1]))
-		return fc.Parse(builder.String())
+		return fc.compileStruct(cmd)
 	}
 
 	return nil
+}
+
+// struct moo extends foo
+func (fc *ForthCompiler) compileExtendStruct(cmd []string) error {
+	var builder strings.Builder
+	substr := cmd[3] + ":"
+
+	for k := range fc.defs {
+		if strings.Index(k, substr) == 0 {
+			after, found := strings.CutPrefix(k, substr)
+			if !found {
+				return fmt.Errorf("no semicolon found in method")
+			}
+			builder.WriteString(fmt.Sprintf(": %s:%s %s ;\n", cmd[1], after, k))
+		}
+	}
+
+	return fc.Parse(builder.String())
+}
+
+// struct foo 1 a 1 b 5 c
+func (fc *ForthCompiler) compileStruct(cmd []string) error {
+	var builder strings.Builder
+	values := cmd[2:]
+	offset := int64(0)
+
+	for i := 0; i < len(values); i += 2 {
+		name := values[i+1]
+		size, err := strconv.ParseInt(values[i], 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		if size < 1 {
+			return fmt.Errorf("struct member size must be greater than 0. Size was: %d at member: %s", size, name)
+		}
+
+		if offset > 0 {
+			builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
+		} else {
+			builder.WriteString(fmt.Sprintf(": %s:%s ;\n", cmd[1], name))
+		}
+
+		offset += size
+	}
+
+	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", cmd[1], offset))
+	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", cmd[1], cmd[1]))
+	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", cmd[1], cmd[1]))
+	return fc.Parse(builder.String())
 }
 
 func (fc *ForthCompiler) compileLocals(iter *StackIter[string], result *Stack[string]) {
