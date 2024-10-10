@@ -176,7 +176,7 @@ static inline void fvm_grf(void) {
 }
 
 static inline void fvm_pra(void) {
-  printf("%c", (int)(fvm_pop().value));
+  putchar((int)fvm_pop().value);
 }
 
 static inline void fvm_rdi(void) {
