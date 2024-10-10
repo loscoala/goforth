@@ -14,3 +14,4 @@ struct kv 1 key 1 value
   kv self list:append
 ;
 
+: dict:print ( self -- ) [ { kv } kv kv:key @ .s space colon space kv kv:value @ .s cr ] swap list:each ;
