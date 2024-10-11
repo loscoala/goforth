@@ -439,19 +439,19 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
 	} else if cmd[0] == "struct" {
 		if cmd[2] == "extends" {
-			return fc.compileExtendStruct(cmd)
+			return fc.compileExtendStruct(cmd[1], cmd[3])
 		}
 
-		return fc.compileStruct(cmd)
+		return fc.compileStruct(cmd[1], cmd[2:])
 	}
 
 	return nil
 }
 
 // struct moo extends foo
-func (fc *ForthCompiler) compileExtendStruct(cmd []string) error {
+func (fc *ForthCompiler) compileExtendStruct(clazz, base string) error {
 	var builder strings.Builder
-	substr := cmd[3] + ":"
+	substr := base + ":"
 
 	for k := range fc.defs {
 		if strings.Index(k, substr) == 0 {
@@ -459,7 +459,7 @@ func (fc *ForthCompiler) compileExtendStruct(cmd []string) error {
 			if !found {
 				return fmt.Errorf("no semicolon found in method")
 			}
-			builder.WriteString(fmt.Sprintf(": %s:%s %s ;\n", cmd[1], after, k))
+			builder.WriteString(fmt.Sprintf(": %s:%s %s ;\n", clazz, after, k))
 		}
 	}
 
@@ -467,9 +467,8 @@ func (fc *ForthCompiler) compileExtendStruct(cmd []string) error {
 }
 
 // struct foo 1 a 1 b 5 c
-func (fc *ForthCompiler) compileStruct(cmd []string) error {
+func (fc *ForthCompiler) compileStruct(clazz string, values []string) error {
 	var builder strings.Builder
-	values := cmd[2:]
 	offset := int64(0)
 
 	for i := 0; i < len(values); i += 2 {
@@ -485,17 +484,17 @@ func (fc *ForthCompiler) compileStruct(cmd []string) error {
 		}
 
 		if offset > 0 {
-			builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", cmd[1], name, offset))
+			builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", clazz, name, offset))
 		} else {
-			builder.WriteString(fmt.Sprintf(": %s:%s ;\n", cmd[1], name))
+			builder.WriteString(fmt.Sprintf(": %s:%s ;\n", clazz, name))
 		}
 
 		offset += size
 	}
 
-	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", cmd[1], offset))
-	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", cmd[1], cmd[1]))
-	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", cmd[1], cmd[1]))
+	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", clazz, offset))
+	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", clazz, clazz))
+	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", clazz, clazz))
 	return fc.Parse(builder.String())
 }
 
