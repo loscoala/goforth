@@ -439,10 +439,18 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
 	} else if cmd[0] == "struct" {
 		if cmd[2] == "extends" {
-			return fc.compileExtendStruct(cmd[1], cmd[3])
+			if err := fc.compileExtendStruct(cmd[1], cmd[3]); err != nil {
+				return err
+			}
+
+			if len(cmd) > 4 {
+				return fc.compileStruct(cmd[1], cmd[3], cmd[4:])
+			}
+
+			return nil
 		}
 
-		return fc.compileStruct(cmd[1], cmd[2:])
+		return fc.compileStruct(cmd[1], "", cmd[2:])
 	}
 
 	return nil
@@ -467,9 +475,19 @@ func (fc *ForthCompiler) compileExtendStruct(clazz, base string) error {
 }
 
 // struct foo 1 a 1 b 5 c
-func (fc *ForthCompiler) compileStruct(clazz string, values []string) error {
-	var builder strings.Builder
-	offset := int64(0)
+func (fc *ForthCompiler) compileStruct(clazz, base string, values []string) error {
+	var (
+		builder strings.Builder
+		offset  int64
+	)
+
+	if def, ok := fc.defs[base+":sizeof"]; len(base) > 0 && ok {
+		var err error
+
+		if offset, err = strconv.ParseInt(def.data[0], 10, 64); err != nil {
+			return err
+		}
+	}
 
 	for i := 0; i < len(values); i += 2 {
 		name := values[i+1]
