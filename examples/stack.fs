@@ -1,4 +1,6 @@
-struct stack 1 len 200 items
+use list.fs
+
+struct stack extends list
 
 : stack:push { self }
   \ push value
@@ -14,10 +16,3 @@ struct stack 1 len 200 items
   self stack:len @ self stack:items th @
 ;
 
-: stack:clear
-  0 swap stack:len !
-;
-
-: stack:print { self }
-  self stack:len @ 0 ?do self stack:items i + ? cr loop
-;
