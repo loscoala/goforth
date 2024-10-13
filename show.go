@@ -335,11 +335,6 @@ func (fc *ForthCompiler) handleREPL() {
 				PrintError(err)
 			}
 			continue
-		} else if strings.Index(text, "struct ") == 0 {
-			if err := fc.handleMeta(text); err != nil {
-				PrintError(err)
-			}
-			continue
 		} else if strings.Index(text, "debug ") == 0 {
 			if err := fc.Parse(": main\n" + text[6:] + "\n;"); err != nil {
 				PrintError(err)
