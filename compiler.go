@@ -32,6 +32,7 @@ type ForthCompiler struct {
 	locals SliceStack[string]
 	data   map[string]string
 	defs   map[string]*Stack[string]
+	macros map[string]*Stack[string]
 	output strings.Builder
 	Fvm    *ForthVM
 }
@@ -87,6 +88,7 @@ func NewForthCompiler() *ForthCompiler {
 	}
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
+	fc.macros = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -165,7 +167,18 @@ func (fc *ForthCompiler) Parse(str string) error {
 					if err := fc.compileClass(def); err != nil {
 						return err
 					}
+				} else if word == "macro" {
+					word = def.data[0]
+					if _, ok := fc.defs[word]; ok {
+						return fmt.Errorf("Unable to define macro. \"%s\" is already defined as word.", word)
+					}
+					tmp := new(Stack[string])
+					tmp.data = def.data[1:]
+					fc.macros[word] = tmp
 				} else {
+					if _, ok := fc.macros[word]; ok {
+						return fmt.Errorf("Unable to define word. \"%s\" is already defined as macro.", word)
+					}
 					fc.defs[word] = def
 				}
 				counter = 0
@@ -175,7 +188,14 @@ func (fc *ForthCompiler) Parse(str string) error {
 					if counter == 0 {
 						word = string(buffer)
 					} else {
-						def.Push(string(buffer))
+						tmp := string(buffer)
+						if macro, ok := fc.macros[tmp]; ok {
+							macro.Each(func(value string) {
+								def.Push(value)
+							})
+						} else {
+							def.Push(tmp)
+						}
 					}
 
 					counter++

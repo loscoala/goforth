@@ -45,6 +45,8 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		return Magenta(word)
 	} else if _, ok := fc.defs[word]; ok {
 		return Cyan(word)
+	} else if _, ok := fc.macros[word]; ok {
+		return Red(word)
 	} else if fc.vars.Contains(word) {
 		return Red(word)
 	} else if isBaseSytax(word) {
@@ -102,19 +104,24 @@ func PrintWarning(warning string) {
 func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 	result := NewStack[string]()
 
-	for k, v := range fc.defs {
-		v.Each(func(value string) {
-			if value == word {
-				if !result.Contains(k) {
-					result.Push(k)
+	f := func(data map[string]*Stack[string], word string, result *Stack[string]) {
+		for k, v := range data {
+			v.Each(func(value string) {
+				if value == word {
+					if !result.Contains(k) {
+						result.Push(k)
+					}
 				}
-			}
-		})
+			})
 
-		if strings.Contains(k, word) {
-			result.Push(k)
+			if strings.Contains(k, word) {
+				result.Push(k)
+			}
 		}
 	}
+
+	f(fc.defs, word, result)
+	f(fc.macros, word, result)
 
 	sort.Strings(result.data)
 	return result
@@ -131,6 +138,10 @@ func (fc *ForthCompiler) printDefinition(word string) {
 	}
 
 	s, ok := fc.defs[word]
+
+	if !ok {
+		s, ok = fc.macros[word]
+	}
 
 	if !ok {
 		// primitive
@@ -171,9 +182,18 @@ func (fc *ForthCompiler) printDefinition(word string) {
 
 func (fc *ForthCompiler) printAllDefinitions() {
 	keys := make([]string, 0, len(fc.defs))
+	mkeys := make([]string, 0, len(fc.macros))
+
+	// TODO make it in parallel
 
 	for k := range fc.defs {
 		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for k := range fc.macros {
+		mkeys = append(mkeys, k)
 	}
 
 	sort.Strings(keys)
@@ -186,6 +206,10 @@ func (fc *ForthCompiler) printAllDefinitions() {
 		for _, k := range keys {
 			printWordColored(fc, k, fc.defs[k])
 		}
+
+		for _, k := range mkeys {
+			printWordColored(fc, k, fc.macros[k])
+		}
 	} else {
 		fc.vars.Each(func(val string) {
 			printVariable(val)
@@ -193,6 +217,10 @@ func (fc *ForthCompiler) printAllDefinitions() {
 
 		for _, k := range keys {
 			printWord(k, fc.defs[k])
+		}
+
+		for _, k := range mkeys {
+			printWord(k, fc.macros[k])
 		}
 	}
 }
