@@ -1,4 +1,4 @@
-struct string 1 len 1 items
+: class string 1 len 1 items ;
 
 : string:each ( block self -- )
   { self block }

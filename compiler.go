@@ -161,7 +161,13 @@ func (fc *ForthCompiler) Parse(str string) error {
 			case '\\':
 				state = 2
 			case ';':
-				fc.defs[word] = def
+				if word == "class" {
+					if err := fc.compileClass(def); err != nil {
+						return err
+					}
+				} else {
+					fc.defs[word] = def
+				}
 				counter = 0
 				state = 0
 			case '\n', '\r', '\t', ' ':
@@ -437,27 +443,41 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 		}
 	} else if cmd[0] == "template" {
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
-	} else if cmd[0] == "struct" {
-		if cmd[2] == "extends" {
-			if err := fc.compileExtendStruct(cmd[1], cmd[3]); err != nil {
-				return err
-			}
-
-			if len(cmd) > 4 {
-				return fc.compileStruct(cmd[1], cmd[3], cmd[4:])
-			}
-
-			return nil
-		}
-
-		return fc.compileStruct(cmd[1], "", cmd[2:])
 	}
 
 	return nil
 }
 
-// struct moo extends foo
-func (fc *ForthCompiler) compileExtendStruct(clazz, base string) error {
+func (fc *ForthCompiler) compileClass(def *Stack[string]) error {
+	if len(def.data) < 3 {
+		return fmt.Errorf("A class must have at least one property.")
+	}
+
+	clazz := def.data[0]
+
+	if def.data[1] == "extends" {
+		base := def.data[2]
+
+		if _, ok := fc.defs[base+":sizeof"]; !ok {
+			return fmt.Errorf("No base class \"%s\" found", base)
+		}
+
+		if err := fc.compileExtendedClass(clazz, base); err != nil {
+			return err
+		}
+
+		if len(def.data) > 3 {
+			return fc.compileBasicClass(clazz, base, def.data[3:])
+		}
+
+		return nil
+	}
+
+	return fc.compileBasicClass(clazz, "", def.data[1:])
+}
+
+// class moo extends foo <1 a 1 b ...>
+func (fc *ForthCompiler) compileExtendedClass(clazz, base string) error {
 	var builder strings.Builder
 	substr := base + ":"
 
@@ -474,8 +494,8 @@ func (fc *ForthCompiler) compileExtendStruct(clazz, base string) error {
 	return fc.Parse(builder.String())
 }
 
-// struct foo 1 a 1 b 5 c
-func (fc *ForthCompiler) compileStruct(clazz, base string, values []string) error {
+// class foo 1 a <1 b 5 c>
+func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) error {
 	var (
 		builder strings.Builder
 		offset  int64

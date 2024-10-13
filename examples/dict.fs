@@ -4,8 +4,8 @@ use list.fs
   * A dict is a list of pointers to kv structs to key, value of strings
   * )
 
-struct dict extends list
-struct kv 1 key 1 value
+: class dict extends list ;
+: class kv 1 key 1 value ;
 
 : kv:print ( self -- )
   dup kv:key @ .s ."  : " kv:value @ .s

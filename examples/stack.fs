@@ -1,6 +1,6 @@
 use list.fs
 
-struct stack extends list
+: class stack extends list ;
 
 : stack:push { self }
   \ push value

@@ -1,4 +1,7 @@
-struct list 1 len 200 items
+: class list
+  1   len
+  200 items
+;
 
 : list:append { self }
   \ push value
