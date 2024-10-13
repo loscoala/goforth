@@ -483,10 +483,7 @@ func (fc *ForthCompiler) compileExtendedClass(clazz, base string) error {
 
 	for k := range fc.defs {
 		if strings.Index(k, substr) == 0 {
-			after, found := strings.CutPrefix(k, substr)
-			if !found {
-				return fmt.Errorf("no semicolon found in method")
-			}
+			after, _ := strings.CutPrefix(k, substr) // ignore found, strings.index(k, substr) == 0
 			builder.WriteString(fmt.Sprintf(": %s:%s %s ;\n", clazz, after, k))
 		}
 	}
