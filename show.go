@@ -45,7 +45,7 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		return Magenta(word)
 	} else if _, ok := fc.defs[word]; ok {
 		return Cyan(word)
-	} else if _, ok := fc.macros[word]; ok {
+	} else if _, ok := fc.inlines[word]; ok {
 		return Red(word)
 	} else if fc.vars.Contains(word) {
 		return Red(word)
@@ -121,7 +121,7 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 	}
 
 	f(fc.defs, word, result)
-	f(fc.macros, word, result)
+	f(fc.inlines, word, result)
 
 	sort.Strings(result.data)
 	return result
@@ -140,7 +140,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 	s, ok := fc.defs[word]
 
 	if !ok {
-		s, ok = fc.macros[word]
+		s, ok = fc.inlines[word]
 	}
 
 	if !ok {
@@ -182,7 +182,7 @@ func (fc *ForthCompiler) printDefinition(word string) {
 
 func (fc *ForthCompiler) printAllDefinitions() {
 	keys := make([]string, 0, len(fc.defs))
-	mkeys := make([]string, 0, len(fc.macros))
+	mkeys := make([]string, 0, len(fc.inlines))
 
 	// TODO make it in parallel
 
@@ -192,7 +192,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 
 	sort.Strings(keys)
 
-	for k := range fc.macros {
+	for k := range fc.inlines {
 		mkeys = append(mkeys, k)
 	}
 
@@ -208,7 +208,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 		}
 
 		for _, k := range mkeys {
-			printWordColored(fc, k, fc.macros[k])
+			printWordColored(fc, k, fc.inlines[k])
 		}
 	} else {
 		fc.vars.Each(func(val string) {
@@ -220,7 +220,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 		}
 
 		for _, k := range mkeys {
-			printWord(k, fc.macros[k])
+			printWord(k, fc.inlines[k])
 		}
 	}
 }

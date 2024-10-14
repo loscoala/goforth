@@ -20,21 +20,21 @@ type Compiler interface {
 }
 
 type ForthCompiler struct {
-	label  Label
-	blocks Label
-	labels Stack[string]
-	leaves Stack[string]
-	whiles Stack[string]
-	dos    Stack[string]
-	cases  Stack[int]
-	vars   Stack[string]
-	funcs  map[string]*Stack[string]
-	locals SliceStack[string]
-	data   map[string]string
-	defs   map[string]*Stack[string]
-	macros map[string]*Stack[string]
-	output strings.Builder
-	Fvm    *ForthVM
+	label   Label
+	blocks  Label
+	labels  Stack[string]
+	leaves  Stack[string]
+	whiles  Stack[string]
+	dos     Stack[string]
+	cases   Stack[int]
+	vars    Stack[string]
+	funcs   map[string]*Stack[string]
+	locals  SliceStack[string]
+	data    map[string]string
+	defs    map[string]*Stack[string]
+	inlines map[string]*Stack[string]
+	output  strings.Builder
+	Fvm     *ForthVM
 }
 
 func NewForthCompiler() *ForthCompiler {
@@ -88,7 +88,7 @@ func NewForthCompiler() *ForthCompiler {
 	}
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
-	fc.macros = make(map[string]*Stack[string])
+	fc.inlines = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -167,17 +167,17 @@ func (fc *ForthCompiler) Parse(str string) error {
 					if err := fc.compileClass(def); err != nil {
 						return err
 					}
-				} else if word == "macro" {
+				} else if word == "inline" {
 					word = def.data[0]
 					if _, ok := fc.defs[word]; ok {
-						return fmt.Errorf("Unable to define macro. \"%s\" is already defined as word.", word)
+						return fmt.Errorf("unable to define inline. \"%s\" is already defined as word", word)
 					}
 					tmp := new(Stack[string])
 					tmp.data = def.data[1:]
-					fc.macros[word] = tmp
+					fc.inlines[word] = tmp
 				} else {
-					if _, ok := fc.macros[word]; ok {
-						return fmt.Errorf("Unable to define word. \"%s\" is already defined as macro.", word)
+					if _, ok := fc.inlines[word]; ok {
+						return fmt.Errorf("unable to define word. \"%s\" is already defined as inline", word)
 					}
 					fc.defs[word] = def
 				}
@@ -189,8 +189,8 @@ func (fc *ForthCompiler) Parse(str string) error {
 						word = string(buffer)
 					} else {
 						tmp := string(buffer)
-						if macro, ok := fc.macros[tmp]; ok {
-							macro.Each(func(value string) {
+						if inline, ok := fc.inlines[tmp]; ok {
+							inline.Each(func(value string) {
 								def.Push(value)
 							})
 						} else {
@@ -470,7 +470,7 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 
 func (fc *ForthCompiler) compileClass(def *Stack[string]) error {
 	if len(def.data) < 3 {
-		return fmt.Errorf("A class must have at least one property.")
+		return fmt.Errorf("a class must have at least one property")
 	}
 
 	clazz := def.data[0]
@@ -479,7 +479,7 @@ func (fc *ForthCompiler) compileClass(def *Stack[string]) error {
 		base := def.data[2]
 
 		if _, ok := fc.defs[base+":sizeof"]; !ok {
-			return fmt.Errorf("No base class \"%s\" found", base)
+			return fmt.Errorf("no base class \"%s\" found", base)
 		}
 
 		if err := fc.compileExtendedClass(clazz, base); err != nil {
