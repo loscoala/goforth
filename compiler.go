@@ -669,26 +669,95 @@ func (fc *ForthCompiler) compileWordWithLocals(word string, wordDef *Stack[strin
 }
 
 func isFloat(s string) bool {
-	pos := strings.IndexByte(s, '.')
+	// [-]?[0-9]+[\.][0-9]+?
+	var (
+		state  int
+		result bool
+	)
 
-	if pos == -1 {
-		return false
-	}
-
-	first := s[:pos]
-	last := s[pos+1:]
-
-	return (len(first) != 0 || len(last) != 0) && isNumeric(first) && isNumeric(last)
-}
-
-func isNumeric(s string) bool {
-	for _, v := range s {
-		if v < '0' || v > '9' {
-			return false
+	for _, i := range s {
+		switch state {
+		case 0:
+			if i == '0' {
+				state = 3
+			} else if i == '-' {
+				state = 1
+			} else if i >= '1' && i <= '9' {
+				state = 2
+			} else {
+				return false
+			}
+		case 1:
+			if i == '0' {
+				state = 3
+			} else if i >= '1' && i <= '9' {
+				state = 2
+			} else {
+				return false
+			}
+		case 2:
+			if i == '.' {
+				state = 4
+				result = true
+			} else if i < '0' || i > '9' {
+				return false
+			}
+		case 3:
+			if i == '.' {
+				state = 4
+				result = true
+			} else {
+				return false
+			}
+		case 4:
+			if i < '0' || i > '9' {
+				return false
+			}
 		}
 	}
 
-	return true
+	return result
+}
+
+func isNumeric(s string) bool {
+	// [-]?[0-9]+
+	var (
+		state  int
+		result bool
+	)
+
+	for _, i := range s {
+		switch state {
+		case 0:
+			if i == '0' {
+				state = 3
+				result = true
+			} else if i == '-' {
+				state = 1
+			} else if i >= '1' && i <= '9' {
+				state = 2
+				result = true
+			} else {
+				return false
+			}
+		case 1:
+			if i >= '1' && i <= '9' {
+				state = 2
+				result = true
+			} else {
+				return false
+			}
+		case 2:
+			if i < '0' || i > '9' {
+				return false
+			}
+			result = true
+		case 3:
+			result = false
+		}
+	}
+
+	return result
 }
 
 func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
