@@ -4,8 +4,8 @@
 : bounded? zdup dup f* swap dup f* f+ 4.0 f<= ;
 
 : X-POS 3.0 ;
-: Y-POS 1.0 fnegate ;
-\ : Y-POS 0.2166393884377127 fnegate ;
+: Y-POS -1.0 ;
+\ : Y-POS -0.2166393884377127 ;
 
 : mb-kernel
   0 { _i n ci c }
