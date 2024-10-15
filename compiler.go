@@ -751,9 +751,8 @@ func isNumeric(s string) bool {
 			if i < '0' || i > '9' {
 				return false
 			}
-			result = true
 		case 3:
-			result = false
+			return false
 		}
 	}
 
