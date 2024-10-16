@@ -252,10 +252,8 @@ variable here
 
 : 2! tuck ! cell+ ! ;
 : 2@ dup cell+ @ swap @ ;
-\ : ++ 1 swap +! ;
-: ++ dup >r @ 1+ r> ! ;
-\ : -- 1 negate swap +! ;
-: -- dup >r @ 1- r> ! ;
+: ++ dup @ 1+ swap ! ;
+: -- dup @ 1- swap ! ;
 : @+ dup cell+ swap @ ;
 
 \ Stack operations
