@@ -27,7 +27,7 @@
     node self list:tail !
   then
 
-  self list:len @ 1+ self list:len !
+  self list:len ++
 ;
 
 : list:each { self block } 

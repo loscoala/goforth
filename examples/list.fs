@@ -7,7 +7,7 @@
   \ push value
   self list:len @ self list:items th !
   \ inc len
-  self list:len @ 1+ self list:len !
+  self list:len ++
 ;
 
 : list:clear
