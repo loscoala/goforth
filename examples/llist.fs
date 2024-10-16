@@ -35,13 +35,15 @@
   begin
     current 0<>
   while
-    current block exec
+    \ current block exec
+    current node:data @ block exec
     current node:next @ to current
   repeat
 ;
 
 : list:print ( self -- )
-  [ node:print cr ] swap list:each
+  \ [ node:print cr ] swap list:each
+  [ . cr ] swap list:each
 ;
 
 : list:test
