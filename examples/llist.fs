@@ -14,7 +14,7 @@
 ;
 
 : list:append { self }
-  1 node:allot { node }
+  node:new { node }
 
   node node:data !
   0 node node:next !
@@ -47,7 +47,7 @@
 ;
 
 : list:test
-  1 list:allot drop
+  list:new drop
   98 0 list:append
   97 0 list:append
   96 0 list:append

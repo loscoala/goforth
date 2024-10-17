@@ -12,7 +12,7 @@ use llist.fs
 ;
 
 : dict:append ( k v self -- )
-  1 kv:allot { kv self v k }
+  kv:new { kv self v k }
   k kv kv:key !
   v kv kv:value !
   kv self list:append

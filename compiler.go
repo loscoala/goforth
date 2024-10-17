@@ -549,6 +549,7 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 
 	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", clazz, offset))
 	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", clazz, clazz))
+	builder.WriteString(fmt.Sprintf(": %s:new 1 %s:allot ;\n", clazz, clazz))
 	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", clazz, clazz))
 	return fc.Parse(builder.String())
 }
