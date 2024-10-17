@@ -46,6 +46,16 @@
   [ . cr ] swap list:each
 ;
 
+: list:map { self block }
+  self list:head @ { current }
+  begin
+    current 0<>
+  while
+    current node:data dup @ block exec swap !
+    current node:next @ to current
+  repeat
+;
+
 : list:test
   list:new drop
   98 0 list:append

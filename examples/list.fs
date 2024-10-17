@@ -14,10 +14,8 @@
   0 swap list:len !
 ;
 
-: list:print { self }
-  self list:len @ 0 ?do
-    self list:items i + ? cr
-  loop
+: list:print
+  [ . cr ] swap list:each
 ;
 
 : list:each { self block }
@@ -29,3 +27,10 @@
 : list:at { self block index }
   self list:items index + @ block exec
 ;
+
+: list:map { self block }
+  self list:len @ 0 ?do
+    self list:items i + dup @ block exec swap !
+  loop
+;
+
