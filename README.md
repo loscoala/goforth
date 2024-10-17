@@ -210,14 +210,10 @@ The result is also shown as follows:
 
 ### Call external programs
 
-The following example shows the usage of the `sh` word to list all the files and directories in the current directory under linux machine.
+The following example shows the usage of the `shell` word to list all the files and directories in the current directory under linux machine.
 
 ```forth
-: ls
-  100 [
-    [ s" ls -l" ] sh
-  ] alloc
-;
+: ls [ a" ls -l" shell ] alloc ;
 ```
 
 Optional: Now you can compile the word to a native binary.

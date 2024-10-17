@@ -2,9 +2,8 @@ template test html.tfs
 variable title
 
 : run
-  100 [
-    dup s" Hello World"
-    dup to title
+  [
+    a" Hello World" to title
     test
   ] alloc
 ;

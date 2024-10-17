@@ -158,7 +158,7 @@ variable here
   then
   r>
 ;
-: alloc ( n adr -- ) here >r >r allot r> exec drop r> to here ;
+: alloc ( block -- ) here swap exec to here ;
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
@@ -263,12 +263,12 @@ variable here
 : pop dup dup @ + @ swap -- ;
 : .stack @+ ?dup if 0 ?do dup ? cell+ cr loop then drop ;
 
-\ 100 [
-\   dup s" He"
-\   100 [
-\     dup s" llo" 2dup append
+\ [
+\   a" He"
+\   [
+\     a" llo" 2dup append
 \   ] alloc
-\   dup .s6
+\   .s6
 \ ] alloc
 : append ( t f -- ) s2i ?do dup i @ swap push loop drop ;
 : append2 [ { v } over { adr } v adr push ] each3 drop ;
