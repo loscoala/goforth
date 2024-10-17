@@ -173,7 +173,7 @@ variable here
 \ : >> ( n a b -- n ) { b a } dup dup a exec b exec ;
 \ : sh &shell >> ;
 \ : file-exist? &file >> ;
-: ls [ s" ls -lhA --color=always" ] sh ;
+: ls [ a" ls -lhA --color=always" shell ] alloc ;
 
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;
