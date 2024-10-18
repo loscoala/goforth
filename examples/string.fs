@@ -1,13 +1,15 @@
-: class string 1 len 1 items ;
+use llist.fs
 
-: string:each ( block self -- )
-  { self block }
-  self string:len @ 0 ?do
-    self string:items i + @ block exec
-  loop
-;
+: class string extends list ;
 
 : string:print ( self -- )
-  [ emit ] swap string:each
+  &.s swap string:each
+;
+
+: string:test
+  string:new { str }
+  a" hello" str string:append
+  a"  world" str string:append
+  str string:print
 ;
 
