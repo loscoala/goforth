@@ -1,6 +1,17 @@
 use llist.fs
 
-: class string extends list ;
+: class string extends list
+  1 slen
+;
+
+: string:length ( self -- )
+  string:slen @
+;
+
+: string:append { self item }
+  item @ self string:slen @ + self string:slen !
+  item self list:append
+;
 
 : string:print ( self -- )
   &.s swap string:each
