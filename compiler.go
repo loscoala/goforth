@@ -516,6 +516,7 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 	var (
 		builder strings.Builder
 		offset  int64
+		names   []string
 	)
 
 	if def, ok := fc.defs[base+":sizeof"]; len(base) > 0 && ok {
@@ -526,8 +527,11 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 		}
 	}
 
+	names = make([]string, 0, 10)
+
 	for i := 0; i < len(values); i += 2 {
 		name := values[i+1]
+		names = append(names, name)
 		size, err := strconv.ParseInt(values[i], 10, 64)
 
 		if err != nil {
@@ -547,9 +551,21 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 		offset += size
 	}
 
+	// clazz:init
+	// TODO: offset > 1, set all elements to 0
+	builder.WriteString(fmt.Sprintf(": %s:init ", clazz))
+	for _, n := range names {
+		builder.WriteString(fmt.Sprintf(" dup 0 swap %s:%s !", clazz, n))
+	}
+	if len(base) > 0 {
+		builder.WriteString(fmt.Sprintf(" %s:init", base))
+	}
+	builder.WriteString(" ;\n")
+
+	// basic methods
 	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", clazz, offset))
 	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", clazz, clazz))
-	builder.WriteString(fmt.Sprintf(": %s:new 1 %s:allot ;\n", clazz, clazz))
+	builder.WriteString(fmt.Sprintf(": %s:new 1 %s:allot %s:init ;\n", clazz, clazz, clazz))
 	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", clazz, clazz))
 	return fc.Parse(builder.String())
 }
