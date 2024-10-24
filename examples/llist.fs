@@ -15,10 +15,7 @@
 
 : list:append { self }
   node:new { node }
-
   node node:data !
-  0 node node:next !
-  
   self list:len @ 0= if
     node self list:head !
     node self list:tail !
@@ -26,7 +23,6 @@
     node self list:tail @ node:next !
     node self list:tail !
   then
-
   self list:len ++
 ;
 
