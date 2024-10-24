@@ -15,7 +15,7 @@ var Core string
 var Colored bool
 
 // The prompt in StartREPL
-var Repl = "forth> "
+var Repl = Magenta("forth> ")
 
 // Show byte code in StartREPL
 var ShowByteCode bool
