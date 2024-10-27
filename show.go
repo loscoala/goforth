@@ -358,6 +358,11 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
+		} else if strings.Index(text, "reset") == 0 {
+			clear(fc.defs)
+			clear(fc.inlines)
+			fc.Parse(Core)
+			continue
 		} else if strings.Index(text, "variable ") == 0 {
 			if err := fc.handleMeta(text); err != nil {
 				PrintError(err)
