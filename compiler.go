@@ -3,8 +3,10 @@ package goforth
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -418,6 +420,26 @@ func handleForthString(s *Stack[string], str []rune) {
 	}
 }
 
+func IsFile(filename string) bool {
+	info, err := os.Stat(filename)
+	return !os.IsNotExist(err) && !info.IsDir()
+}
+
+func ListFiles(dir string) ([]string, error) {
+	files := make([]string, 0, 10)
+
+	if err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() && filepath.Ext(path) == ".fs" {
+			files = append(files, path)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
 func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 	if strings.Index(filename, "http://") == 0 ||
 		strings.Index(filename, "https://") == 0 {
@@ -427,6 +449,27 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 		}
 		defer resp.Body.Close()
 		return io.ReadAll(resp.Body)
+	}
+
+	if !IsFile(filename) {
+		found := false
+		files, err := ListFiles(ConfigPath() + "lib/")
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, path := range files {
+			if strings.Contains(path, filename) {
+				filename = path
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil, fmt.Errorf("file \"%s\" not found", filename)
+		}
 	}
 
 	return os.ReadFile(filename)
