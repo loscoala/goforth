@@ -174,6 +174,7 @@ variable here
 \ : sh &shell >> ;
 \ : file-exist? &file >> ;
 : ls [ a" ls -lhA --color=always" shell ] alloc ;
+: vim [ a" vim" shell ] alloc ;
 
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;
