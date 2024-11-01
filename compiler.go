@@ -425,11 +425,11 @@ func IsFile(filename string) bool {
 	return !os.IsNotExist(err) && !info.IsDir()
 }
 
-func ListFiles(dir string) ([]string, error) {
+func ListFiles(dir, ext string) ([]string, error) {
 	files := make([]string, 0, 10)
 
 	if err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() && filepath.Ext(path) == ".fs" {
+		if !d.IsDir() && filepath.Ext(path) == ext {
 			files = append(files, path)
 		}
 		return nil
@@ -453,7 +453,7 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 
 	if !IsFile(filename) {
 		found := false
-		files, err := ListFiles(ConfigPath() + "lib/")
+		files, err := ListFiles(ConfigPath()+"lib/", filepath.Ext(filename))
 
 		if err != nil {
 			return nil, err
@@ -486,7 +486,7 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 }
 
 func (fc *ForthCompiler) ParseTemplateFile(entry, filename string) error {
-	data, err := os.ReadFile(filename)
+	data, err := fc.ReadFile(filename)
 
 	if err != nil {
 		return err
