@@ -203,7 +203,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 					counter++
 					buffer = buffer[:0]
 				}
-			case '.', 's', 'a':
+			case '.', 's', 'a', 'g':
 				if index+1 == len(str) {
 					break
 				}
@@ -309,7 +309,9 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	buffer.Grow(len(str) + len(entry) + 50)
 	buffer.WriteString(": ")
 	buffer.WriteString(entry)
-	buffer.WriteString(" .( ")
+	buffer.WriteString(" g( ")
+
+	gEnd := fmt.Sprintf(") %s:print", entry)
 
 	for i := 0; i < len(str); i++ {
 		switch state {
@@ -320,7 +322,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 				str[i+3] == 's' {
 				i += 3
 				state = 1
-				buffer.WriteByte(')')
+				buffer.WriteString(gEnd)
 				continue
 			}
 
@@ -337,7 +339,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 					i += 1
 				}
 				state = 0
-				buffer.WriteString(".( ")
+				buffer.WriteString("g( ")
 				continue
 			}
 
@@ -346,10 +348,11 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	}
 
 	if state == 0 {
-		buffer.WriteByte(')')
+		buffer.WriteString(gEnd)
 	}
 
-	buffer.WriteString("\n;")
+	buffer.WriteString("\n;\n")
+	buffer.WriteString(fmt.Sprintf(": %s:print print ;\n", entry))
 
 	return fc.Parse(buffer.String())
 }
@@ -409,6 +412,16 @@ func compile_m(s *Stack[string], str []rune) {
 	s.Push("!s")
 }
 
+// Loads a forth string onto the stack and terminates it with zero.
+// g( ABC) results in: 0 C B A
+func compile_g(s *Stack[string], str []rune) {
+	s.Push("0")
+
+	for _, i := range reverse(str) {
+		s.Push(fmt.Sprintf("%d", int(i)))
+	}
+}
+
 func handleForthString(s *Stack[string], str []rune) {
 	switch str[0] {
 	case '.':
@@ -417,6 +430,8 @@ func handleForthString(s *Stack[string], str []rune) {
 		compile_m(s, str[3:len(str)-1])
 	case 'a':
 		compile_a(s, str[3:len(str)-1])
+	case 'g':
+		compile_g(s, str[3:len(str)-1])
 	}
 }
 
