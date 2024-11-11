@@ -352,7 +352,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	}
 
 	buffer.WriteString("\n;\n")
-	buffer.WriteString(fmt.Sprintf(": %s:print print ;\n", entry))
+	buffer.WriteString(fmt.Sprintf(": %s:print drop print ;\n", entry))
 
 	return fc.Parse(buffer.String())
 }
@@ -413,13 +413,16 @@ func compile_m(s *Stack[string], str []rune) {
 }
 
 // Loads a forth string onto the stack and terminates it with zero.
-// g( ABC) results in: 0 C B A
+// The top element is the length of the string plus one.
+// g( ABC) results in: 0 C B A 4
 func compile_g(s *Stack[string], str []rune) {
 	s.Push("0")
 
 	for _, i := range reverse(str) {
 		s.Push(fmt.Sprintf("%d", int(i)))
 	}
+
+	s.Push(fmt.Sprintf("%d", len(str)+1))
 }
 
 func handleForthString(s *Stack[string], str []rune) {
