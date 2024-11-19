@@ -4,19 +4,40 @@
   1 capacity
 ;
 
+: array:INIT_CAP 256 ;
+
 : array:append { self item }
   self array:len @ self array:capacity @ >= if
     self array:capacity @ 0 = if
-      256 self array:capacity !
+      array:INIT_CAP self array:capacity !
     else
       self array:capacity @ 2* self array:capacity !
     then
+    \ TODO: copy old data into new array
     self array:capacity @ allot self array:items !
   then
   \ push value
   item self array:len @ self array:items @ th !
   \ inc len
   self array:len ++
+;
+
+: array:append_many { self items num_items }
+  self array:len @ self array:capacity @ >= if
+    self array:capacity @ 0 = if
+      array:INIT_CAP self array:capacity !
+    then
+    begin
+      self array:len @ num_items +
+      self array:capacity @ >
+    while
+      self array:capacity @ 2* self array:capacity !
+    repeat
+    \ TODO: copy old data into new array
+    self array:capacity @ allot self array:items !
+  then
+  \ TODO: memcpy(self items + self len, items, num_items)
+  self array:len @ num_items + self array:len !
 ;
 
 : array:clear
