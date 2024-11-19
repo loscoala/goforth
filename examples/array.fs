@@ -6,6 +6,23 @@
 
 : array:INIT_CAP 256 ;
 
+: memcpy { dest src n }
+  begin
+    n 0 >
+  while
+    src @ dest !
+    src 1+ to src
+    dest 1+ to dest
+    n 1- to n
+  repeat
+;
+
+: array:resize_items { self }
+  self array:capacity @ allot { new_array }
+  self array:len @ self array:items @ new_array memcpy
+  new_array self array:items !
+;
+
 : array:append { self item }
   self array:len @ self array:capacity @ >= if
     self array:capacity @ 0 = if
@@ -13,17 +30,14 @@
     else
       self array:capacity @ 2* self array:capacity !
     then
-    \ TODO: copy old data into new array
-    self array:capacity @ allot self array:items !
+    self array:resize_items
   then
-  \ push value
   item self array:len @ self array:items @ th !
-  \ inc len
   self array:len ++
 ;
 
 : array:append_many { self items num_items }
-  self array:len @ self array:capacity @ >= if
+  self array:len @ num_items + self array:capacity @ > if
     self array:capacity @ 0 = if
       array:INIT_CAP self array:capacity !
     then
@@ -33,10 +47,9 @@
     while
       self array:capacity @ 2* self array:capacity !
     repeat
-    \ TODO: copy old data into new array
-    self array:capacity @ allot self array:items !
+    self array:resize_items
   then
-  \ TODO: memcpy(self items + self len, items, num_items)
+  num_items items self array:items @ self array:len @ + memcpy
   self array:len @ num_items + self array:len !
 ;
 
