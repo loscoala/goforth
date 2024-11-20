@@ -53,6 +53,11 @@
   self array:len @ num_items + self array:len !
 ;
 
+\ Append a forth string like a" ..."
+: array:appendFS { self fs }
+  fs @ fs 1+ self array:append_many
+;
+
 : array:clear
   0 swap array:len !
 ;
