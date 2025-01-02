@@ -17,6 +17,16 @@
 : each3 swap s2i [ @ over exec ] for drop ;
 : map2 swap s2i [ { x } x @ over exec x ! ] for drop ;
 
+: memset { dest c n }
+  begin
+    n 0 >
+  while
+    c dest !
+    dest 1+ to dest
+    n 1- to n
+  repeat
+;
+
 \ find indices of bl in a string
 \ variable code
 \ variable my
