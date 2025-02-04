@@ -196,7 +196,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 		mkeys = append(mkeys, k)
 	}
 
-	sort.Strings(keys)
+	sort.Strings(mkeys)
 
 	if Colored {
 		fc.vars.Each(func(val string) {
