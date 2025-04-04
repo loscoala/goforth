@@ -471,7 +471,13 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 
 	if !IsFile(filename) {
 		found := false
-		files, err := ListFiles(ConfigPath()+"lib/", filepath.Ext(filename))
+		ext := filepath.Ext(filename)
+
+		if ext == "" {
+			ext = ".fs"
+		}
+
+		files, err := ListFiles(ConfigPath()+"lib/", ext)
 
 		if err != nil {
 			return nil, err
