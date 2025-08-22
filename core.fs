@@ -72,7 +72,7 @@ variable here
 : system ( str -- ) 14 sys ;
 : file ( str -- bool ) 15 sys ;
 : argc ( -- n ) 16 sys ;
-: argv ( addr n -- ) 17 sys ;
+: argv ( n -- ) 17 sys ;
 
 : ls [ a" ls -lhA --color=always" shell ] alloc ;
 : vim [ a" vim" shell ] alloc ;
