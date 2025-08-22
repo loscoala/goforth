@@ -50,10 +50,10 @@
 ;
 : i>f 3 sys ;
 : f>i 4 sys ;
-: readfile ( dest-addr name-addr -- ) 5 sys ;
+: readfile ( name-addr -- ) 5 sys ;
 : readimage ( name-addr -- ) 6 sys ;
 : writeimage ( name-addr -- ) 7 sys ;
-: read ( name-addr buffer-size -- ) 8 sys ;
+: read ( buffer-size -- ) 8 sys ;
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
@@ -263,10 +263,10 @@ variable here
   self sv:data @
   { base ptr }
   begin
-   ptr base >=
+    ptr base >=
   while
-   ptr @
-   ptr 1- to ptr
+    ptr @
+    ptr 1- to ptr
   repeat
   self sv:len @
 ;
