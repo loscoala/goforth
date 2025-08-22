@@ -359,12 +359,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 
 func compile_s(s *Stack[string], str []rune) {
 	if len(str) > 9 {
-		s.Push("0")
-
-		for _, i := range reverse(str) {
-			s.Push(fmt.Sprintf("%d", int(i)))
-		}
-
+		compile_g(s, str)
 		s.Push("print")
 	} else {
 		for _, i := range str {
