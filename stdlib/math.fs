@@ -31,10 +31,6 @@
 : 0<= 0 <= ;
 : 0>= 0 >= ;
 : slow_mod begin 2dup >= while dup -rot - swap repeat drop ;
-: depth 0 sys ;
-: $ depth begin dup 0> while dup pick . space 1- repeat drop ;
-: mod 1 sys ;
-: fsqrt 2 sys ;
 : factor mod 0= ;
 : even 2 factor ;
 : within ( u ul uh -- t ) >r over r> <= >r >= r> and ;

@@ -32,6 +32,8 @@ variable here
 
 : alloc ( block -- ) here swap exec to here ;
 
+: $ depth begin dup 0> while dup pick . space 1- repeat drop ;
+
 \ some custom words
 
 : showAlphabetPerChar

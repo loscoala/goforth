@@ -1,3 +1,6 @@
+: depth 0 sys ;
+: mod 1 sys ;
+: fsqrt 2 sys ;
 : i>f 3 sys ;
 : f>i 4 sys ;
 : readfile ( name-addr -- ) 5 sys ;
@@ -7,7 +10,6 @@
 : debug ( bool -- ) 9 sys ;
 : allocate ( size -- ) 10 sys ;
 : memsize ( -- size ) 11 sys ;
-
 : compare ( str1 str2 -- bool ) 12 sys ;
 : shell ( str -- ) 13 sys ;
 : system ( str -- ) 14 sys ;
