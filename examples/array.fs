@@ -6,17 +6,6 @@
 
 : array:INIT_CAP 256 ;
 
-: memcpy { dest src n }
-  begin
-    n 0 >
-  while
-    src @ dest !
-    src 1+ to src
-    dest 1+ to dest
-    n 1- to n
-  repeat
-;
-
 : array:resize_items { self }
   self array:capacity @ allot { new_array }
   self array:len @ self array:items @ new_array memcpy

@@ -203,7 +203,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 					counter++
 					buffer = buffer[:0]
 				}
-			case '.', 's', 'a', 'g':
+			case '.', 'a', 'g':
 				if index+1 == len(str) {
 					break
 				}
@@ -255,7 +255,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 			buffer = append(buffer, i)
 			state = 8
 		case 8:
-			// inside string with .|s" "
+			// inside string with .|a"|g" "
 			if index+1 == len(str) {
 				break
 			}
@@ -389,32 +389,15 @@ func reverse(s []rune) []rune {
 	return r
 }
 
+// compile a( ABC) to g( ABC) sv:fromS
 func compile_a(s *Stack[string], str []rune) {
-	s.Push("0")
-
-	for _, i := range reverse(str) {
-		s.Push(fmt.Sprintf("%d", int(i)))
-	}
-
-	s.Push(fmt.Sprintf("%d", len(str)+1))
-	s.Push("!a")
-}
-
-func compile_m(s *Stack[string], str []rune) {
-	s.Push(">r")
-	s.Push("0")
-
-	for _, i := range reverse(str) {
-		s.Push(fmt.Sprintf("%d", int(i)))
-	}
-
-	s.Push("r>")
-	s.Push("!s")
+	compile_g(s, str)
+	s.Push("sv:fromS")
 }
 
 // Loads a forth string onto the stack and terminates it with zero.
 // The top element is the length of the string plus one.
-// g( ABC) results in: 0 C B A 4
+// g( ABC) results in: 0 C B A 3
 func compile_g(s *Stack[string], str []rune) {
 	s.Push("0")
 
@@ -422,15 +405,13 @@ func compile_g(s *Stack[string], str []rune) {
 		s.Push(fmt.Sprintf("%d", int(i)))
 	}
 
-	s.Push(fmt.Sprintf("%d", len(str)+1))
+	s.Push(fmt.Sprintf("%d", len(str)))
 }
 
 func handleForthString(s *Stack[string], str []rune) {
 	switch str[0] {
 	case '.':
 		compile_s(s, str[3:len(str)-1])
-	case 's':
-		compile_m(s, str[3:len(str)-1])
 	case 'a':
 		compile_a(s, str[3:len(str)-1])
 	case 'g':
@@ -613,7 +594,11 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 		}
 
 		if offset > 0 {
-			builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", clazz, name, offset))
+			if offset == 1 {
+				builder.WriteString(fmt.Sprintf(": %s:%s 1+ ;\n", clazz, name))
+			} else {
+				builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", clazz, name, offset))
+			}
 		} else {
 			builder.WriteString(fmt.Sprintf(": %s:%s ;\n", clazz, name))
 		}

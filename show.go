@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/chzyer/readline"
@@ -181,22 +182,31 @@ func (fc *ForthCompiler) printDefinition(word string) {
 }
 
 func (fc *ForthCompiler) printAllDefinitions() {
+	var wg sync.WaitGroup
 	keys := make([]string, 0, len(fc.defs))
 	mkeys := make([]string, 0, len(fc.inlines))
 
-	// TODO make it in parallel
-
-	for k := range fc.defs {
-		keys = append(keys, k)
+	f_keys := func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		for k := range fc.defs {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
 	}
 
-	sort.Strings(keys)
-
-	for k := range fc.inlines {
-		mkeys = append(mkeys, k)
+	f_mkeys := func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		for k := range fc.inlines {
+			mkeys = append(mkeys, k)
+		}
+		sort.Strings(mkeys)
 	}
 
-	sort.Strings(mkeys)
+	wg.Add(2)
+	go f_keys(&wg)
+	go f_mkeys(&wg)
+
+	wg.Wait()
 
 	if Colored {
 		fc.vars.Each(func(val string) {
@@ -541,6 +551,16 @@ func (fc *ForthCompiler) CompileToC() error {
 	globals := fc.initGlobalNameCache()
 	spaces := initSpaceCache()
 	indent := 2
+
+	{
+		m := fc.defs["main"]
+		result.WriteString("// compiled from:\n//")
+		m.Each(func(word string) {
+			result.WriteString(" ")
+			result.WriteString(word)
+		})
+		result.WriteString("\n\n")
+	}
 
 	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
 		if cmd == "" {

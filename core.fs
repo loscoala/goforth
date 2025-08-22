@@ -3,19 +3,13 @@
 : ?? memsize 0 mem ;
 : mem ?do i @ ?dup if i . colon . space then loop ;
 
-: map swap dup @ over + 1+ swap 1+ ?do i @ over exec i ! loop drop ;
-: each swap dup @ over + 1+ swap 1+ ?do i @ over exec loop drop ;
-: bi4 ( n a b -- na nb ) { b a } dup a exec swap b exec ;
+: bi ( n a b -- na nb ) { b a } dup a exec swap b exec ;
 
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 
 \ 10 0 [ . ] for
 : for ( u l b -- ) { b } ?do i b exec loop ;
-
-: s2i ( adr -- end begin ) [ @ over + 1+ ] [ 1+ ] bi4 ;
-: each3 swap s2i [ @ over exec ] for drop ;
-: map2 swap s2i [ { x } x @ over exec x ! ] for drop ;
 
 : memset { dest c n }
   begin
@@ -27,115 +21,19 @@
   repeat
 ;
 
-\ find indices of bl in a string
-\ variable code
-\ variable my
-\ 20 to code
-\ my stack
-\ code s" a b bs dsd s"
-\ my code tok
-: tok { adr stk } adr @ 0> if adr @ 1 do adr i + @ bl = if i 1 - stk push then loop then ;
-
-: each1 \ a f --
-  swap \ f a -
-  dup  \ f a a --
-  @    \ f a l --
-  over \ f a l a --
-  +    \ f a l+a --
-  1+   \ f a l+a+1 --
-  >r   \ f a -- end
-  1+   \ f it -- end
+: memcpy { dest src n }
   begin
-    dup \ f it it -- end
-    r@  \ f it it end -- end
-    <   \ f it b -- end
+    n 0 >
   while
-    dup  \ f it it -- end
-    @    \ f it value -- end
-    2 pick \ f it value f -- end
-    exec   \ f it -- end
-    1+
+    src @ dest !
+    src 1+ to src
+    dest 1+ to dest
+    n 1- to n
   repeat
-  r>
-  drop
-  drop
-  drop
-;
-
-: each2   \ f a --
-  { f a } \     --
-  a @     \ l   --
-  a + 1+  \ l+a+1 --
-  >r      \ -- end
-  a 1+    \ it -- end
-  begin
-    dup
-    r@
-    <
-  while
-    dup
-    @
-    f
-    exec
-    1+
-  repeat
-  r>
-  2drop
-;
-
-: map1 swap dup @ over + 1+ >r 1+ begin dup r@ < while dup @ 2 pick exec over ! 1+ repeat r> drop drop drop ;
-
-(
-: bi  \ n a b
-  rot \ a b n
-  dup \ a b n n
-  rot \ a n n b
-  exec \ a n nb
-  -rot \ nb a n
-  swap \ nb n a
-  exec \ nb na
-  swap \ na nb
-;
-)
-
-: bi \ n a b
-  2 pick \ n a b n
-  swap \ n a n b
-  exec \ n a nb
-  -rot \ nb n a
-  exec \ nb na
-  swap \ na nb
-;
-
-: bi2 \ n a b
-  >r  \ n a -- b
-  over \ n a n -- b
-  swap \ n n a -- b
-  exec \ n na -- b
-  swap \ na n -- b
-  r>   \ na n b
-  exec \ na nb
-;
-
-: bi3  \ n a b
-  >r   \ n a -- b
-  over \ n a n -- b
-  r>   \ n a n b
-  exec \ n a nb
-  >r   \ n a -- nb
-  exec \ na -- nb
-  r>   \ na nb
 ;
 
 : if* ( n a b -- ) { b a } if a exec else b exec then ;
-\ : if* rot if drop else nip then exec ;
-\ : ifb { _ifb_b _ifb_a } dup 0<> _ifb_a * swap 0= _ifb_b * + exec ;
-\ : ifb2 { _ifb2_b _ifb2_a } [ 0<> _ifb2_a * ] [ 0= _ifb2_b * ] bi + exec ;
-
 : times swap 0 ?do dup exec loop drop ;
-\ : times swap begin dup 0> while swap dup exec swap 1- repeat 2drop ;
-\ : times { _times2_a } 0 ?do _times2_a exec loop ;
-
 : when swap if exec else drop then ;
 
 \ : -rot rot rot ;
@@ -176,13 +74,6 @@ variable here
 : argc ( -- n ) 16 sys ;
 : argv ( addr n -- ) 17 sys ;
 
-: >> over swap exec dup ;
-: sh >> shell ;
-: file-exist? >> file ;
-
-\ : >> ( n a b -- n ) { b a } dup dup a exec b exec ;
-\ : sh &shell >> ;
-\ : file-exist? &file >> ;
 : ls [ a" ls -lhA --color=always" shell ] alloc ;
 : vim [ a" vim" shell ] alloc ;
 
@@ -267,23 +158,6 @@ variable here
 : -- dup @ 1- swap ! ;
 : @+ dup cell+ swap @ ;
 
-\ Stack operations
-: stack empty ;
-: empty 0 swap ! ;
-: push dup ++ dup @ + ! ;
-: pop dup dup @ + @ swap -- ;
-: .stack @+ ?dup if 0 ?do dup ? cell+ cr loop then drop ;
-
-\ [
-\   a" He"
-\   [
-\     a" llo" 2dup append
-\   ] alloc
-\   .s6
-\ ] alloc
-: append ( t f -- ) s2i ?do dup i @ swap push loop drop ;
-: append2 [ { v } over { adr } v adr push ] each3 drop ;
-
 : squared dup * ;
 : cubed dup squared * ;
 : 4th squared squared ;
@@ -305,59 +179,8 @@ variable here
 : rb 41 emit ;
 : .c @ emit ;
 
-: .s dup 1+ swap @ begin dup 0> while swap dup .c 1+ swap 1- repeat 2drop ;
-
+: .s sv:print ;
 : print begin dup 0> while emit repeat drop ;
-
-: !s2 0 0 { n y x }
-  x to y
-  begin
-    dup 0>
-  while
-    n 1+ to n
-    y 1+ to y
-    y !
-  repeat
-  n x !
-  drop
-;
-
-: !s \ 0 n1 n2 ...  adr
-  dup \ 0 n1 n2 ... adr adr --
-  2>r  \ 0 n1 n2 ... -- adr_end adr_i
-  begin
-    dup 0>
-  while
-    r> 1+ >r r@ !
-  repeat
-  drop
-  2r>  \ adr_end adr_i
-  over \ adr_end adr_i adr_end
-  -    \ adr_end n
-  swap \ n adr_end
-  !
-;
-
-: !a ( 0 nx .. na n -- adr )
-  allot
-  dup
-  >r
-  !s
-  r>
-;
-
-: .s2 { pos }
-  pos @
-  pos 1+ to pos
-  0 ?do
-    pos dup .c 1+ to pos
-  loop
-;
-
-: .s3 [ emit ] each ;
-: .s4 [ emit ] each1 ;
-: .s5 [ emit ] each2 ;
-: .s6 [ emit ] each3 ;
 
 : abs
   dup
@@ -398,4 +221,53 @@ variable here
 ;
 
 : integers 1+ 1 ?do i . space loop ;
+
+\ ---------------- STRING ---------------------
+
+: class sv
+  1 len
+  1 data
+;
+
+: sv:fromS ( 0 c b a N -- adr )
+  sv:new { self len }
+  len self sv:len !
+  len allot self sv:data !
+  self sv:data @ { ptr }
+  begin
+    dup 0>
+  while
+    ptr !
+    ptr 1+ to ptr
+  repeat
+  drop
+  self
+;
+
+: sv:print { self }
+  self sv:data @ { ptr }
+  self sv:len @
+  begin
+    dup 0>
+  while
+    ptr @ emit
+    ptr 1+ to ptr
+    1-
+  repeat
+  drop
+;
+
+: sv:toS { self }
+  0
+  self sv:data @ self sv:len @ 1- +
+  self sv:data @
+  { base ptr }
+  begin
+   ptr base >=
+  while
+   ptr @
+   ptr 1- to ptr
+  repeat
+  self sv:len @
+;
 

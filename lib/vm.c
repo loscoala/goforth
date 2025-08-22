@@ -368,6 +368,7 @@ static inline void fvm_dec(void) {
 static inline char* fvm_getstring() {
   cell_t str = fvm_pop();
   cell_t len = fvm_mem[str.value];
+  cell_t data = fvm_mem[str.value+1];
   char *buffer = (char*)malloc(len.value+1);
 
   if (buffer == NULL) {
@@ -375,7 +376,7 @@ static inline char* fvm_getstring() {
   }
 
   for (int64_t i = 0; i < len.value; i++) {
-    buffer[i] = (char)fvm_mem[str.value+1+i].value;
+    buffer[i] = (char)fvm_mem[data.value+i].value;
   }
 
   buffer[len.value] = '\0';
@@ -383,15 +384,16 @@ static inline char* fvm_getstring() {
   return buffer;
 }
 
-static inline void fvm_setstring(const char* str) {
-  cell_t addr = fvm_pop();
-  size_t len = strlen(str);
+// Push str to the fvm_stack
+static inline void fvm_stringtostack(const char* str) {
+  fvm_push(fvm_cell(0));
+  int64_t length = (int64_t)strlen(str);
 
-  fvm_mem[addr.value].value = (int64_t)len;
-
-  for (size_t i = 0; i < len; i++) {
-    fvm_mem[addr.value+1+i].value = (int64_t)str[i];
+  for (int64_t i = length - 1; i >= 0; --i) {
+    fvm_push(fvm_cell(str[i]));
   }
+
+  fvm_push(fvm_cell(length));
 }
 
 static inline void fvm_free(void) {
@@ -449,20 +451,20 @@ static inline void fvm_sys(void) {
       buf[n] = '\0';
       fclose(fp);
       free(name);
-      if (n > 0) fvm_setstring(buf);
+      if (n > 0) fvm_stringtostack(buf);
     }
     break;
   case 8:
-    // read
+    // num-bytes read
     {
       cell_t c = fvm_pop();
       char buf[(size_t)c.value];
       ssize_t n = read(STDIN_FILENO, &buf, (size_t)c.value);
       if (n <= 0) {
-        fvm_setstring("");
+        fvm_stringtostack("");
       } else {
         buf[n] = '\0';
-        fvm_setstring(buf);
+        fvm_stringtostack(buf);
       }
     }
     break;
@@ -537,11 +539,11 @@ static inline void fvm_sys(void) {
     fvm_push(fvm_cell(fvm_argc));
     break;
   case 17:
-    // argv
+    // i argv
     {
       cell_t n = fvm_pop();
       char *arg = fvm_argv[(size_t)n.value];
-      fvm_setstring(arg);
+      fvm_stringtostack(arg);
     }
     break;
   default:

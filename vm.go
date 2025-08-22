@@ -481,10 +481,11 @@ func (fvm *ForthVM) Gset(name string) {
 func (fvm *ForthVM) GetString() string {
 	value := fvm.Pop()
 	length := fvm.Mem[value]
+	data := fvm.Mem[value+1]
 	var builder strings.Builder
 
 	for i := int64(0); i < length; i++ {
-		err := builder.WriteByte(byte(fvm.Mem[value+1+i]))
+		err := builder.WriteByte(byte(fvm.Mem[data+i]))
 
 		if err != nil {
 			log.Fatal(err)
@@ -494,15 +495,16 @@ func (fvm *ForthVM) GetString() string {
 	return builder.String()
 }
 
-func (fvm *ForthVM) SetString(str string) {
-	addr := fvm.Pop()
+// Push str to the fvm stack
+func (fvm *ForthVM) StringToStack(str string) {
+	fvm.Push(0)
 	length := int64(len(str))
 
-	fvm.Mem[addr] = length
-
-	for i := int64(0); i < length; i++ {
-		fvm.Mem[addr+1+i] = int64(str[i])
+	for i := length - 1; i >= 0; i-- {
+		fvm.Push(int64(str[i]))
 	}
+
+	fvm.Push(length)
 }
 
 func (fvm *ForthVM) Sys() {
@@ -529,7 +531,7 @@ func (fvm *ForthVM) Sys() {
 		value := fvm.Fpop()
 		fvm.Push(int64(value))
 	case 5:
-		// dest-addr name-addr readfile
+		// name-addr readfile
 		name := fvm.GetString()
 		content, err := os.ReadFile(name)
 
@@ -537,7 +539,7 @@ func (fvm *ForthVM) Sys() {
 			log.Fatal(err)
 		}
 
-		fvm.SetString(string(content))
+		fvm.StringToStack(string(content))
 	case 6:
 		// read memory from image
 		// name-addr readimage
@@ -571,13 +573,14 @@ func (fvm *ForthVM) Sys() {
 			log.Fatal(err)
 		}
 	case 8:
+		// num-bytes read
 		nbytes := fvm.Pop()
 		buf := make([]byte, nbytes)
 		if n, err := os.Stdin.Read(buf); err != nil {
-			fvm.SetString("")
+			fvm.StringToStack("")
 		} else {
 			str := string(buf[:n])
-			fvm.SetString(str)
+			fvm.StringToStack(str)
 		}
 	case 9:
 		ShowByteCode = fvm.Pop() != 0
@@ -637,10 +640,10 @@ func (fvm *ForthVM) Sys() {
 		// argc
 		fvm.Push(int64(len(os.Args)))
 	case 17:
-		// argv
+		// i argv
 		n := fvm.Pop()
 		arg := os.Args[n]
-		fvm.SetString(arg)
+		fvm.StringToStack(arg)
 	default:
 		if fvm.Sysfunc != nil {
 			fvm.Sysfunc(fvm, syscall)
