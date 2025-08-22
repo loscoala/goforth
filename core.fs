@@ -180,7 +180,7 @@ variable here
 : .c @ emit ;
 
 : .s sv:print ;
-: print begin dup 0> while emit repeat drop ;
+: print drop begin dup 0> while emit repeat drop ;
 
 : abs
   dup

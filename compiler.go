@@ -352,7 +352,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	}
 
 	buffer.WriteString("\n;\n")
-	buffer.WriteString(fmt.Sprintf(": %s:print drop print ;\n", entry))
+	buffer.WriteString(fmt.Sprintf(": %s:print print ;\n", entry))
 
 	return fc.Parse(buffer.String())
 }
