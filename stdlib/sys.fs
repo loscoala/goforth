@@ -1,0 +1,16 @@
+: i>f 3 sys ;
+: f>i 4 sys ;
+: readfile ( name-addr -- ) 5 sys ;
+: readimage ( name-addr -- ) 6 sys ;
+: writeimage ( name-addr -- ) 7 sys ;
+: read ( buffer-size -- ) 8 sys ;
+: debug ( bool -- ) 9 sys ;
+: allocate ( size -- ) 10 sys ;
+: memsize ( -- size ) 11 sys ;
+
+: compare ( str1 str2 -- bool ) 12 sys ;
+: shell ( str -- ) 13 sys ;
+: system ( str -- ) 14 sys ;
+: file ( str -- bool ) 15 sys ;
+: argc ( -- n ) 16 sys ;
+: argv ( n -- ) 17 sys ;

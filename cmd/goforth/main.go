@@ -37,7 +37,7 @@ func main() {
 	//}
 
 	// load the core words
-	if err := fc.Parse(goforth.Core); err != nil {
+	if err := fc.ParseFile("core"); err != nil {
 		goforth.PrintError(err)
 	}
 

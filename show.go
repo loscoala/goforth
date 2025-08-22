@@ -371,7 +371,7 @@ func (fc *ForthCompiler) handleREPL() {
 		} else if strings.Index(text, "reset") == 0 {
 			clear(fc.defs)
 			clear(fc.inlines)
-			fc.Parse(Core)
+			fc.ParseFile("core")
 			continue
 		} else if strings.Index(text, "variable ") == 0 {
 			if err := fc.handleMeta(text); err != nil {
