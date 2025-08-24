@@ -33,12 +33,12 @@
 : scale-y i>f F-Y-SIZE f/ scale-factor f* Y-POS f+ ;
 : scale-x i>f F-X-SIZE f/ F-X-SIZE F-Y-SIZE f/ f- scale-factor f* X-POS f+ ;
 
+variable dd
 : mb-init
-  memsize 55 < if 55 allocate then
-  0 s"  ====+++++++++********#########%%%%%%%%@@@@@@@@@@@@"
+  a"  ====+++++++++********#########%%%%%%%%@@@@@@@@@@@@" to dd
 ;
 
-: mb-draw 20 / 1+ @ emit ;
+: mb-draw 20 / 1+ dd sv:data + @ emit ;
 
 : mb
   0 0 { ci c }
