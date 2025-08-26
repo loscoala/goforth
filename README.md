@@ -90,6 +90,7 @@ Start `./goforth` and in the REPL you can look what the dictionary contains by t
 |---|---|
 | % | Shows the complete dictionary |
 | % name | Shows the definition of *name* in the dictionary |
+| find name | Displays all definitions that contain the string |
 | use filename | Loads a file |
 | $ | Shows the values of the stack |
 
@@ -169,6 +170,56 @@ which prints:
 
 ```forth
 120
+```
+
+### OOP with classes
+
+Goforth supports OOP.
+A class is defnied by placing the word "class" after the semicolon.
+Each property has a number of cells as a prefix to the name of the property.
+
+For example:
+
+```forth
+: class A
+  1 aa
+  5 bb
+  1 cc
+;
+```
+
+While the compiler is parsing the class definition, several methods are generated:
+
+TO BE CONTINUED...
+
+### Macros / Inlines
+
+GoForth refers to macros as "inline."
+An inline is defined by placing the word "inline" after the semicolon.
+Then the name has to be given.
+After that you can have up to four arguments. These arguments are stored in registers.
+The number of arguments can be obmitted, then no word is removed before the macro is called.
+If you provide the number of words like: @1@ for 1 or @4@ for 4 then the number of words before the inline call are removed.
+
+```forth
+: inline test @4@
+  word #1#
+  word #2#
+  word #3#
+  word #4#
+;
+
+: myword
+  d c b a test
+;
+
+\ myword is now:
+: myword
+  word a
+  word b
+  word c
+  word d
+;
 ```
 
 ### Generate C-Code

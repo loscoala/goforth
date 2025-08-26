@@ -31,27 +31,27 @@
   drop
 ;
 
-: inline sv:_toS
-  self sv:data @ self sv:len @ 1- +
-  self sv:data @
+: inline sv:_toS @1@
+  #1# sv:data @ #1# sv:len @ 1- +
+  #1# sv:data @
   { base ptr }
-  begin
-    ptr base >=
-  while
-    ptr @
-    ptr 1- to ptr
-  repeat
-  self sv:len @
+    begin
+      ptr base >=
+    while
+      ptr @
+      ptr 1- to ptr
+    repeat
+    #1# sv:len @
   done
 ;
 
 : sv:toS { self }
   0
-  sv:_toS
+  self sv:_toS
 ;
 
 : sv:append { self other }
-  other sv:toS drop sv:_toS drop
+  other sv:toS drop self sv:_toS drop
   other sv:len @
   self sv:len @
   +

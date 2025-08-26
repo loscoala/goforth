@@ -134,10 +134,11 @@ func (fc *ForthCompiler) Compile() error {
 // Parses the given Forth code and adds the word to the dictionary of the compiler.
 func (fc *ForthCompiler) Parse(str string) error {
 	var (
-		state   int
-		counter int
-		word    string
-		def     *Stack[string]
+		state         int
+		counter       int
+		word          string
+		macroRegister [4]string
+		def           *Stack[string]
 	)
 
 	buffer := make([]rune, 0, 100)
@@ -192,8 +193,40 @@ func (fc *ForthCompiler) Parse(str string) error {
 					} else {
 						tmp := string(buffer)
 						if inline, ok := fc.inlines[tmp]; ok {
+							switch inline.data[0] {
+							case "@1@":
+								def.Pop()
+							case "@2@":
+								def.Pop()
+								def.Pop()
+							case "@3@":
+								def.Pop()
+								def.Pop()
+								def.Pop()
+							case "@4@":
+								def.Pop()
+								def.Pop()
+								def.Pop()
+								def.Pop()
+							default:
+								// skip
+							}
+
 							inline.Each(func(value string) {
-								def.Push(value)
+								switch value {
+								case "#1#":
+									def.Push(macroRegister[0])
+								case "#2#":
+									def.Push(macroRegister[1])
+								case "#3#":
+									def.Push(macroRegister[2])
+								case "#4#":
+									def.Push(macroRegister[3])
+								case "@1@", "@2@", "@3@", "@4@":
+									// skip
+								default:
+									def.Push(value)
+								}
 							})
 						} else {
 							def.Push(tmp)
@@ -201,6 +234,10 @@ func (fc *ForthCompiler) Parse(str string) error {
 					}
 
 					counter++
+					macroRegister[3] = macroRegister[2]
+					macroRegister[2] = macroRegister[1]
+					macroRegister[1] = macroRegister[0]
+					macroRegister[0] = string(buffer)
 					buffer = buffer[:0]
 				}
 			case '.', 'a', 'g':
