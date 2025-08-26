@@ -41,17 +41,19 @@
       ptr @
       ptr 1- to ptr
     repeat
-    #1# sv:len @
   done
 ;
 
 : sv:toS { self }
   0
   self sv:_toS
+  self sv:len @
 ;
 
 : sv:append { self other }
-  other sv:toS drop self sv:_toS drop
+  0
+  other sv:_toS
+  self sv:_toS
   other sv:len @
   self sv:len @
   +
