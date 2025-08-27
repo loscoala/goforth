@@ -1,3 +1,5 @@
+: inline if+ @2@ if #1# else #2# then ;
+
 : if* ( n a b -- ) { b a } if a exec else b exec then ;
 : times swap 0 ?do dup exec loop drop ;
 : when swap if exec else drop then ;

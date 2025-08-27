@@ -137,11 +137,15 @@ func (fc *ForthCompiler) Parse(str string) error {
 		state         int
 		counter       int
 		word          string
-		macroRegister [4]string
+		macroRegister [4]*Stack[string]
 		def           *Stack[string]
 	)
 
 	buffer := make([]rune, 0, 100)
+
+	for i := range 4 {
+		macroRegister[i] = NewStack[string]()
+	}
 
 	for index, i := range str {
 		switch state {
@@ -192,22 +196,41 @@ func (fc *ForthCompiler) Parse(str string) error {
 						word = string(buffer)
 					} else {
 						tmp := string(buffer)
+
+						popWord := func(def *Stack[string], index int) {
+							w := def.ExPop()
+							if w == "]" {
+								// lambda
+								for {
+									w = def.ExPop()
+									if w == "[" {
+										break
+									} else {
+										macroRegister[index].Push(w)
+									}
+								}
+								macroRegister[index] = macroRegister[index].Reverse()
+							} else {
+								macroRegister[index].Push(w)
+							}
+						}
+
 						if inline, ok := fc.inlines[tmp]; ok {
 							switch inline.data[0] {
 							case "@1@":
-								def.Pop()
+								popWord(def, 0)
 							case "@2@":
-								def.Pop()
-								def.Pop()
+								popWord(def, 0)
+								popWord(def, 1)
 							case "@3@":
-								def.Pop()
-								def.Pop()
-								def.Pop()
+								popWord(def, 0)
+								popWord(def, 1)
+								popWord(def, 2)
 							case "@4@":
-								def.Pop()
-								def.Pop()
-								def.Pop()
-								def.Pop()
+								popWord(def, 0)
+								popWord(def, 1)
+								popWord(def, 2)
+								popWord(def, 3)
 							default:
 								// skip
 							}
@@ -215,13 +238,21 @@ func (fc *ForthCompiler) Parse(str string) error {
 							inline.Each(func(value string) {
 								switch value {
 								case "#1#":
-									def.Push(macroRegister[0])
+									macroRegister[0].Each(func(value string) {
+										def.Push(value)
+									})
 								case "#2#":
-									def.Push(macroRegister[1])
+									macroRegister[1].Each(func(value string) {
+										def.Push(value)
+									})
 								case "#3#":
-									def.Push(macroRegister[2])
+									macroRegister[2].Each(func(value string) {
+										def.Push(value)
+									})
 								case "#4#":
-									def.Push(macroRegister[3])
+									macroRegister[3].Each(func(value string) {
+										def.Push(value)
+									})
 								case "@1@", "@2@", "@3@", "@4@":
 									// skip
 								default:
@@ -234,10 +265,6 @@ func (fc *ForthCompiler) Parse(str string) error {
 					}
 
 					counter++
-					macroRegister[3] = macroRegister[2]
-					macroRegister[2] = macroRegister[1]
-					macroRegister[1] = macroRegister[0]
-					macroRegister[0] = string(buffer)
 					buffer = buffer[:0]
 				}
 			case '.', 'a', 'g':
