@@ -170,11 +170,12 @@ func (fc *ForthCompiler) Parse(str string) error {
 			case '\\':
 				state = 2
 			case ';':
-				if word == "class" {
+				switch word {
+				case "class":
 					if err := fc.compileClass(def); err != nil {
 						return err
 					}
-				} else if word == "inline" {
+				case "inline":
 					word = def.data[0]
 					if _, ok := fc.defs[word]; ok {
 						return fmt.Errorf("unable to define inline. \"%s\" is already defined as word", word)
@@ -182,12 +183,13 @@ func (fc *ForthCompiler) Parse(str string) error {
 					tmp := new(Stack[string])
 					tmp.data = def.data[1:]
 					fc.inlines[word] = tmp
-				} else {
+				default:
 					if _, ok := fc.inlines[word]; ok {
 						return fmt.Errorf("unable to define word. \"%s\" is already defined as inline", word)
 					}
 					fc.defs[word] = def
 				}
+
 				counter = 0
 				state = 0
 			case '\n', '\r', '\t', ' ':
@@ -196,41 +198,48 @@ func (fc *ForthCompiler) Parse(str string) error {
 						word = string(buffer)
 					} else {
 						tmp := string(buffer)
+						if inline, ok := fc.inlines[tmp]; ok {
+							// inline block or single word
+							popWord := func(index int) {
+								w := def.ExPop()
+								if w == "]" {
+									// inside block
+									count := 1
+									for {
+										w = def.ExPop()
+										if w == "[" {
+											count--
+											if count == 0 {
+												break
+											}
+										} else if w == "]" {
+											count++
+										}
 
-						popWord := func(def *Stack[string], index int) {
-							w := def.ExPop()
-							if w == "]" {
-								// lambda
-								for {
-									w = def.ExPop()
-									if w == "[" {
-										break
-									} else {
 										macroRegister[index].Push(w)
 									}
+									macroRegister[index] = macroRegister[index].Reverse()
+								} else {
+									// single word
+									macroRegister[index].Push(w)
 								}
-								macroRegister[index] = macroRegister[index].Reverse()
-							} else {
-								macroRegister[index].Push(w)
 							}
-						}
 
-						if inline, ok := fc.inlines[tmp]; ok {
 							switch inline.data[0] {
 							case "@1@":
-								popWord(def, 0)
+								popWord(0)
 							case "@2@":
-								popWord(def, 0)
-								popWord(def, 1)
+								popWord(0)
+								popWord(1)
 							case "@3@":
-								popWord(def, 0)
-								popWord(def, 1)
-								popWord(def, 2)
+								popWord(0)
+								popWord(1)
+								popWord(2)
 							case "@4@":
-								popWord(def, 0)
-								popWord(def, 1)
-								popWord(def, 2)
-								popWord(def, 3)
+								popWord(0)
+								popWord(1)
+								popWord(2)
+								popWord(3)
 							default:
 								// skip
 							}
@@ -562,14 +571,17 @@ func (fc *ForthCompiler) ParseTemplateFile(entry, filename string) error {
 func (fc *ForthCompiler) handleMeta(meta string) error {
 	cmd := strings.Split(meta, " ")
 
-	if cmd[0] == "use" {
+	switch cmd[0] {
+	case "use":
 		return fc.ParseFile(cmd[1])
-	} else if cmd[0] == "variable" {
+	case "variable":
 		if !fc.vars.Contains(cmd[1]) {
 			fc.vars.Push(cmd[1])
 		}
-	} else if cmd[0] == "template" {
+	case "template":
 		return fc.ParseTemplateFile(cmd[1], cmd[2])
+	default:
+		return fmt.Errorf("unknown meta command \"%s\"", cmd[0])
 	}
 
 	return nil
