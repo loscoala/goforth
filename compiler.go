@@ -22,21 +22,22 @@ type Compiler interface {
 }
 
 type ForthCompiler struct {
-	label   Label
-	blocks  Label
-	labels  Stack[string]
-	leaves  Stack[string]
-	whiles  Stack[string]
-	dos     Stack[string]
-	cases   Stack[int]
-	vars    Stack[string]
-	funcs   map[string]*Stack[string]
-	locals  SliceStack[string]
-	data    map[string]string
-	defs    map[string]*Stack[string]
-	inlines map[string]*Stack[string]
-	output  strings.Builder
-	Fvm     *ForthVM
+	label         Label
+	blocks        Label
+	labels        Stack[string]
+	leaves        Stack[string]
+	whiles        Stack[string]
+	dos           Stack[string]
+	cases         Stack[int]
+	vars          Stack[string]
+	funcs         map[string]*Stack[string]
+	locals        SliceStack[string]
+	data          map[string]string
+	defs          map[string]*Stack[string]
+	inlines       map[string]*Stack[string]
+	macroRegister [4]Stack[string]
+	output        strings.Builder
+	Fvm           *ForthVM
 }
 
 func NewForthCompiler() *ForthCompiler {
@@ -134,17 +135,16 @@ func (fc *ForthCompiler) Compile() error {
 // Parses the given Forth code and adds the word to the dictionary of the compiler.
 func (fc *ForthCompiler) Parse(str string) error {
 	var (
-		state         int
-		counter       int
-		word          string
-		macroRegister [4]*Stack[string]
-		def           *Stack[string]
+		state   int
+		counter int
+		word    string
+		def     *Stack[string]
 	)
 
 	buffer := make([]rune, 0, 100)
 
 	for i := range 4 {
-		macroRegister[i] = NewStack[string]()
+		fc.macroRegister[i].Reset()
 	}
 
 	for index, i := range str {
@@ -216,12 +216,12 @@ func (fc *ForthCompiler) Parse(str string) error {
 											count++
 										}
 
-										macroRegister[index].Push(w)
+										fc.macroRegister[index].Push(w)
 									}
-									macroRegister[index] = macroRegister[index].Reverse()
+									fc.macroRegister[index].Reverse()
 								} else {
 									// single word
-									macroRegister[index].Push(w)
+									fc.macroRegister[index].Push(w)
 								}
 							}
 
@@ -247,19 +247,19 @@ func (fc *ForthCompiler) Parse(str string) error {
 							inline.Each(func(value string) {
 								switch value {
 								case "#1#":
-									macroRegister[0].Each(func(value string) {
+									fc.macroRegister[0].Each(func(value string) {
 										def.Push(value)
 									})
 								case "#2#":
-									macroRegister[1].Each(func(value string) {
+									fc.macroRegister[1].Each(func(value string) {
 										def.Push(value)
 									})
 								case "#3#":
-									macroRegister[2].Each(func(value string) {
+									fc.macroRegister[2].Each(func(value string) {
 										def.Push(value)
 									})
 								case "#4#":
-									macroRegister[3].Each(func(value string) {
+									fc.macroRegister[3].Each(func(value string) {
 										def.Push(value)
 									})
 								case "@1@", "@2@", "@3@", "@4@":

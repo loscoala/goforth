@@ -67,16 +67,15 @@ func (s *Stack[T]) ExFetch() T {
 	return value
 }
 
-func (s *Stack[T]) Reverse() *Stack[T] {
-	result := NewStack[T]()
-
-	for s.Len() > 0 {
-		if value, ok := s.Pop(); ok {
-			result.Push(value)
-		}
+func (s *Stack[T]) Reverse() {
+	half := len(s.data) / 2
+	for i, j := 0, len(s.data)-1; i < half; i, j = i+1, j-1 {
+		s.data[i], s.data[j] = s.data[j], s.data[i]
 	}
+}
 
-	return result
+func (s *Stack[T]) Reset() {
+	s.data = s.data[:0]
 }
 
 /*
