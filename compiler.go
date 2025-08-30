@@ -143,10 +143,6 @@ func (fc *ForthCompiler) Parse(str string) error {
 
 	buffer := make([]rune, 0, 100)
 
-	for i := range 4 {
-		fc.macroRegister[i].Reset()
-	}
-
 	for index, i := range str {
 		switch state {
 		case 0:
@@ -247,20 +243,20 @@ func (fc *ForthCompiler) Parse(str string) error {
 							inline.Each(func(value string) {
 								switch value {
 								case "#1#":
-									fc.macroRegister[0].Each(func(value string) {
-										def.Push(value)
+									fc.macroRegister[0].Each(func(mvalue string) {
+										def.Push(mvalue)
 									})
 								case "#2#":
-									fc.macroRegister[1].Each(func(value string) {
-										def.Push(value)
+									fc.macroRegister[1].Each(func(mvalue string) {
+										def.Push(mvalue)
 									})
 								case "#3#":
-									fc.macroRegister[2].Each(func(value string) {
-										def.Push(value)
+									fc.macroRegister[2].Each(func(mvalue string) {
+										def.Push(mvalue)
 									})
 								case "#4#":
-									fc.macroRegister[3].Each(func(value string) {
-										def.Push(value)
+									fc.macroRegister[3].Each(func(mvalue string) {
+										def.Push(mvalue)
 									})
 								case "@1@", "@2@", "@3@", "@4@":
 									// skip
@@ -268,6 +264,10 @@ func (fc *ForthCompiler) Parse(str string) error {
 									def.Push(value)
 								}
 							})
+
+							for i := range 4 {
+								fc.macroRegister[i].Reset()
+							}
 						} else {
 							def.Push(tmp)
 						}
