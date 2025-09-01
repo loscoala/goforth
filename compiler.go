@@ -197,19 +197,39 @@ func (fc *ForthCompiler) Parse(str string) error {
 						if inline, ok := fc.inlines[tmp]; ok {
 							switch inline.data[0] {
 							case "@1@":
-								fc.wordInRegister(def, 0)
+								if err := fc.wordInRegister(def, 0); err != nil {
+									return err
+								}
 							case "@2@":
-								fc.wordInRegister(def, 0)
-								fc.wordInRegister(def, 1)
+								if err := fc.wordInRegister(def, 0); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 1); err != nil {
+									return err
+								}
 							case "@3@":
-								fc.wordInRegister(def, 0)
-								fc.wordInRegister(def, 1)
-								fc.wordInRegister(def, 2)
+								if err := fc.wordInRegister(def, 0); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 1); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 2); err != nil {
+									return err
+								}
 							case "@4@":
-								fc.wordInRegister(def, 0)
-								fc.wordInRegister(def, 1)
-								fc.wordInRegister(def, 2)
-								fc.wordInRegister(def, 3)
+								if err := fc.wordInRegister(def, 0); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 1); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 2); err != nil {
+									return err
+								}
+								if err := fc.wordInRegister(def, 3); err != nil {
+									return err
+								}
 							default:
 								// skip
 							}
@@ -349,13 +369,24 @@ func (fc *ForthCompiler) Parse(str string) error {
 }
 
 // inline block or single word
-func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) {
-	word := wordDef.ExPop()
+func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error {
+	var (
+		word  string
+		ok    bool
+		count int
+	)
+
+	if word, ok = wordDef.Pop(); !ok {
+		return fmt.Errorf("unable to pop word from word definition. Not enough arguments")
+	}
+
 	if word == "]" {
 		// inside block
-		count := 1
+		count = 1
 		for {
-			word = wordDef.ExPop()
+			if word, ok = wordDef.Pop(); !ok {
+				return fmt.Errorf("unable to pop word from block definition. Number of \"]\" and of \"[\" is not equal")
+			}
 			if word == "[" {
 				count--
 				if count == 0 {
@@ -372,6 +403,8 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) {
 		// single word
 		fc.macroRegister[index].Push(word)
 	}
+
+	return nil
 }
 
 func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
