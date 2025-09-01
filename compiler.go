@@ -377,7 +377,7 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error
 	)
 
 	if word, ok = wordDef.Pop(); !ok {
-		return fmt.Errorf("unable to pop word from word definition. Not enough arguments")
+		return fmt.Errorf("unable to pop %dth word from word definition. Not enough arguments", index+1)
 	}
 
 	if word == "]" {
