@@ -195,47 +195,21 @@ func (fc *ForthCompiler) Parse(str string) error {
 					} else {
 						tmp := string(buffer)
 						if inline, ok := fc.inlines[tmp]; ok {
-							// inline block or single word
-							popWord := func(index int) {
-								w := def.ExPop()
-								if w == "]" {
-									// inside block
-									count := 1
-									for {
-										w = def.ExPop()
-										if w == "[" {
-											count--
-											if count == 0 {
-												break
-											}
-										} else if w == "]" {
-											count++
-										}
-
-										fc.macroRegister[index].Push(w)
-									}
-									fc.macroRegister[index].Reverse()
-								} else {
-									// single word
-									fc.macroRegister[index].Push(w)
-								}
-							}
-
 							switch inline.data[0] {
 							case "@1@":
-								popWord(0)
+								fc.wordInRegister(def, 0)
 							case "@2@":
-								popWord(0)
-								popWord(1)
+								fc.wordInRegister(def, 0)
+								fc.wordInRegister(def, 1)
 							case "@3@":
-								popWord(0)
-								popWord(1)
-								popWord(2)
+								fc.wordInRegister(def, 0)
+								fc.wordInRegister(def, 1)
+								fc.wordInRegister(def, 2)
 							case "@4@":
-								popWord(0)
-								popWord(1)
-								popWord(2)
-								popWord(3)
+								fc.wordInRegister(def, 0)
+								fc.wordInRegister(def, 1)
+								fc.wordInRegister(def, 2)
+								fc.wordInRegister(def, 3)
 							default:
 								// skip
 							}
@@ -265,6 +239,7 @@ func (fc *ForthCompiler) Parse(str string) error {
 								}
 							})
 
+							// clean all registers
 							for i := range 4 {
 								fc.macroRegister[i].Reset()
 							}
@@ -371,6 +346,32 @@ func (fc *ForthCompiler) Parse(str string) error {
 	}
 
 	return nil
+}
+
+// inline block or single word
+func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) {
+	word := wordDef.ExPop()
+	if word == "]" {
+		// inside block
+		count := 1
+		for {
+			word = wordDef.ExPop()
+			if word == "[" {
+				count--
+				if count == 0 {
+					break
+				}
+			} else if word == "]" {
+				count++
+			}
+
+			fc.macroRegister[index].Push(word)
+		}
+		fc.macroRegister[index].Reverse()
+	} else {
+		// single word
+		fc.macroRegister[index].Push(word)
+	}
 }
 
 func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
