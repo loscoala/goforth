@@ -235,23 +235,18 @@ func (fc *ForthCompiler) Parse(str string) error {
 							}
 
 							inline.Each(func(value string) {
+								pushToDef := func(val string) {
+									def.Push(val)
+								}
 								switch value {
 								case "#1#":
-									fc.macroRegister[0].Each(func(mvalue string) {
-										def.Push(mvalue)
-									})
+									fc.macroRegister[0].Each(pushToDef)
 								case "#2#":
-									fc.macroRegister[1].Each(func(mvalue string) {
-										def.Push(mvalue)
-									})
+									fc.macroRegister[1].Each(pushToDef)
 								case "#3#":
-									fc.macroRegister[2].Each(func(mvalue string) {
-										def.Push(mvalue)
-									})
+									fc.macroRegister[2].Each(pushToDef)
 								case "#4#":
-									fc.macroRegister[3].Each(func(mvalue string) {
-										def.Push(mvalue)
-									})
+									fc.macroRegister[3].Each(pushToDef)
 								case "@1@", "@2@", "@3@", "@4@":
 									// skip
 								default:
