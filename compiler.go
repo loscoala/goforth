@@ -562,7 +562,7 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 		}
 
 		for _, path := range files {
-			if strings.Contains(path, filename) {
+			if strings.Contains(filepath.Base(path), filename) {
 				filename = path
 				found = true
 				break
