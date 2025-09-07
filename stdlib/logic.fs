@@ -10,6 +10,12 @@
 : inline bi+ @2@ dup #2# swap #1# ;
 : bi ( n a b -- na nb ) { b a } dup a exec swap b exec ;
 
+: tri { a b c } dup c exec over b exec rot a exec ;
+: inline tri+ @3@ dup #3# over #2# rot #1# ;
+
+: dip ( x quot -- x ) swap { x } exec x ;
+: keep ( ..a x quot -- ..b x ) over { x } exec x ;
+
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 : inline while+ @2@ begin #2# while #1# repeat drop ;
