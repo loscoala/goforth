@@ -343,7 +343,7 @@ func (fc *ForthCompiler) handleREPL() {
 
 		if text[0] == ':' {
 			// just parse
-			if err := fc.Parse(text); err != nil {
+			if err := fc.Parse(text, "main"); err != nil {
 				PrintError(err)
 			}
 			line.Config.AutoComplete = fc.initCompleter()
@@ -380,7 +380,7 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 			continue
 		} else if strings.Index(text, "debug ") == 0 {
-			if err := fc.Parse(": main\n" + text[6:] + "\n;"); err != nil {
+			if err := fc.Parse(": main\n"+text[6:]+"\n;", "main"); err != nil {
 				PrintError(err)
 				continue
 			}
@@ -395,7 +395,7 @@ func (fc *ForthCompiler) handleREPL() {
 			fc.printDebug()
 			continue
 		} else if strings.Index(text, "compile ") == 0 {
-			if err := fc.Parse(": main\n" + text[8:] + "\n;"); err != nil {
+			if err := fc.Parse(": main\n"+text[8:]+"\n;", "main"); err != nil {
 				PrintError(err)
 				continue
 			}
@@ -417,7 +417,7 @@ func (fc *ForthCompiler) handleREPL() {
 			continue
 		}
 
-		if err := fc.Parse(": main\n" + text + "\n;"); err != nil {
+		if err := fc.Parse(": main\n"+text+"\n;", "main"); err != nil {
 			PrintError(err)
 			continue
 		}
@@ -763,7 +763,7 @@ func (fc *ForthCompiler) CompileFile(str string) error {
 }
 
 func (fc *ForthCompiler) CompileScript(script string) error {
-	if err := fc.Parse(script); err != nil {
+	if err := fc.Parse(script, "script"); err != nil {
 		return err
 	}
 
@@ -775,7 +775,7 @@ func (fc *ForthCompiler) CompileScript(script string) error {
 }
 
 func (fc *ForthCompiler) Run(prog string) error {
-	if err := fc.Parse(prog); err != nil {
+	if err := fc.Parse(prog, "script"); err != nil {
 		return err
 	}
 

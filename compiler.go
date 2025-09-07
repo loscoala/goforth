@@ -133,7 +133,7 @@ func (fc *ForthCompiler) Compile() error {
 }
 
 // Parses the given Forth code and adds the word to the dictionary of the compiler.
-func (fc *ForthCompiler) Parse(str string) error {
+func (fc *ForthCompiler) Parse(str, filename string) error {
 	var (
 		state   int
 		counter int
@@ -142,8 +142,11 @@ func (fc *ForthCompiler) Parse(str string) error {
 	)
 
 	buffer := make([]rune, 0, 100)
+	line := 1
+	pos := 0
 
 	for index, i := range str {
+		pos++
 		switch state {
 		case 0:
 			switch i {
@@ -154,7 +157,10 @@ func (fc *ForthCompiler) Parse(str string) error {
 				state = 4
 			case '(':
 				state = 5
-			case '\n', '\r', '\t', ' ':
+			case '\r', '\t', ' ':
+			case '\n':
+				line++
+				pos = 1
 			default:
 				state = 6
 				buffer = append(buffer, i)
@@ -168,8 +174,8 @@ func (fc *ForthCompiler) Parse(str string) error {
 			case ';':
 				switch word {
 				case "class":
-					if err := fc.compileClass(def); err != nil {
-						return err
+					if err := fc.compileClass(def, filename); err != nil {
+						return fmt.Errorf("%s Line %d at %d: %s", filename, line, pos, err.Error())
 					}
 				case "inline":
 					word = def.data[0]
@@ -189,6 +195,10 @@ func (fc *ForthCompiler) Parse(str string) error {
 				counter = 0
 				state = 0
 			case '\n', '\r', '\t', ' ':
+				if i == '\n' {
+					line++
+					pos = 1
+				}
 				if len(buffer) > 0 {
 					if counter == 0 {
 						word = string(buffer)
@@ -286,6 +296,8 @@ func (fc *ForthCompiler) Parse(str string) error {
 		case 2:
 			if i == '\n' {
 				state = 1
+				line++
+				pos = 1
 			}
 		case 3:
 			if i == ')' {
@@ -294,6 +306,8 @@ func (fc *ForthCompiler) Parse(str string) error {
 		case 4:
 			if i == '\n' {
 				state = 0
+				line++
+				pos = 1
 			}
 		case 5:
 			if i == ')' {
@@ -302,13 +316,15 @@ func (fc *ForthCompiler) Parse(str string) error {
 		case 6:
 			if i == '\n' {
 				state = 0
+				pos = 1
 				meta := string(buffer)
 				if meta == "__END__" {
 					return nil
 				}
 				if err := fc.handleMeta(meta); err != nil {
-					return err
+					return fmt.Errorf("%s Line %d at %d: %s", filename, line, pos, err.Error())
 				}
+				line++
 				buffer = buffer[:0]
 			} else if i != '\r' {
 				buffer = append(buffer, i)
@@ -357,7 +373,18 @@ func (fc *ForthCompiler) Parse(str string) error {
 	}
 
 	if state != 0 {
-		return fmt.Errorf("syntax error: state should be 0 but is %d", state)
+		var cause string
+		switch state {
+		case 1:
+			cause = "word definition is not closed"
+		case 8:
+			cause = "missing '\"'"
+		case 3, 5, 10:
+			cause = "missing ')'"
+		default:
+			cause = fmt.Sprintf("parser state is %d but should be 0", state)
+		}
+		return fmt.Errorf("%s Line %d at %d: syntax error: %s", filename, line, pos, cause)
 	}
 
 	return nil
@@ -402,7 +429,7 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error
 	return nil
 }
 
-func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
+func (fc *ForthCompiler) ParseTemplate(entry, str, filename string) error {
 	var (
 		state  int
 		buffer strings.Builder
@@ -456,7 +483,7 @@ func (fc *ForthCompiler) ParseTemplate(entry, str string) error {
 	buffer.WriteString("\n;\n")
 	buffer.WriteString(fmt.Sprintf(": %s:print print ;\n", entry))
 
-	return fc.Parse(buffer.String())
+	return fc.Parse(buffer.String(), filename)
 }
 
 func compile_s(s *Stack[string], str []rune) {
@@ -584,7 +611,7 @@ func (fc *ForthCompiler) ParseFile(filename string) error {
 		return err
 	}
 
-	return fc.Parse(string(data))
+	return fc.Parse(string(data), filename)
 }
 
 func (fc *ForthCompiler) ParseTemplateFile(entry, filename string) error {
@@ -594,7 +621,7 @@ func (fc *ForthCompiler) ParseTemplateFile(entry, filename string) error {
 		return err
 	}
 
-	return fc.ParseTemplate(entry, string(data))
+	return fc.ParseTemplate(entry, string(data), filename)
 }
 
 func (fc *ForthCompiler) handleMeta(meta string) error {
@@ -616,7 +643,7 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 	return nil
 }
 
-func (fc *ForthCompiler) compileClass(def *Stack[string]) error {
+func (fc *ForthCompiler) compileClass(def *Stack[string], filename string) error {
 	if len(def.data) < 3 {
 		return fmt.Errorf("a class must have at least one property")
 	}
@@ -630,22 +657,22 @@ func (fc *ForthCompiler) compileClass(def *Stack[string]) error {
 			return fmt.Errorf("no base class \"%s\" found", base)
 		}
 
-		if err := fc.compileExtendedClass(clazz, base); err != nil {
+		if err := fc.compileExtendedClass(clazz, base, filename); err != nil {
 			return err
 		}
 
 		if len(def.data) > 3 {
-			return fc.compileBasicClass(clazz, base, def.data[3:])
+			return fc.compileBasicClass(clazz, base, filename, def.data[3:])
 		}
 
 		return nil
 	}
 
-	return fc.compileBasicClass(clazz, "", def.data[1:])
+	return fc.compileBasicClass(clazz, "", filename, def.data[1:])
 }
 
 // class moo extends foo <1 a 1 b ...>
-func (fc *ForthCompiler) compileExtendedClass(clazz, base string) error {
+func (fc *ForthCompiler) compileExtendedClass(clazz, base, filename string) error {
 	var builder strings.Builder
 	substr := base + ":"
 
@@ -656,11 +683,11 @@ func (fc *ForthCompiler) compileExtendedClass(clazz, base string) error {
 		}
 	}
 
-	return fc.Parse(builder.String())
+	return fc.Parse(builder.String(), filename)
 }
 
 // class foo 1 a <1 b 5 c>
-func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) error {
+func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values []string) error {
 	var (
 		builder strings.Builder
 		offset  int64
@@ -725,7 +752,7 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base string, values []string) 
 	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", clazz, clazz))
 	builder.WriteString(fmt.Sprintf(": %s:new 1 %s:allot %s:init ;\n", clazz, clazz, clazz))
 	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", clazz, clazz))
-	return fc.Parse(builder.String())
+	return fc.Parse(builder.String(), filename)
 }
 
 func (fc *ForthCompiler) compileLocals(iter *StackIter[string], result *Stack[string]) {
