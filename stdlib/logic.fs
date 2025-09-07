@@ -16,6 +16,8 @@
 : dip ( x quot -- x ) swap { x } exec x ;
 : keep ( ..a x quot -- ..b x ) over { x } exec x ;
 
+: inline curry+ @2@ [ #2# #1# ] ;
+
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
 : inline while+ @2@ begin #2# while #1# repeat drop ;
