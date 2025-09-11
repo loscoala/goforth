@@ -1,4 +1,4 @@
-: inline if+ @2@ if #1# else #2# then ;
+: inline if+ @2@ if #2# else #1# then ;
 : if* ( n a b -- ) { b a } if a exec else b exec then ;
 
 : inline times+ @1@ 0 ?do #1# loop ;
