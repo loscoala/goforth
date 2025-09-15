@@ -653,8 +653,10 @@ func (fvm *ForthVM) Sys() {
 	}
 }
 
+type Opcode int
+
 const (
-	RDI = iota
+	RDI Opcode = iota
 	PRI
 	PRA
 	DUP
@@ -719,7 +721,7 @@ const (
 	DEC
 )
 
-var CellName = map[int]string{
+var CellName = map[Opcode]string{
 	RDI:  "RDI",
 	PRI:  "PRI",
 	PRA:  "PRA",
@@ -786,7 +788,7 @@ var CellName = map[int]string{
 }
 
 type Cell struct {
-	cmd        int
+	cmd        Opcode
 	arg        int64
 	argf       float64
 	argStr     string
