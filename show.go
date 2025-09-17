@@ -55,6 +55,8 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		return Green(word)
 	} else if isFloat(word) || isNumeric(word) {
 		return Blue(word)
+	} else if isString(word) {
+		return Cyan(word)
 	}
 	return Yellow(word)
 }
