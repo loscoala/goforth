@@ -3,7 +3,7 @@
 : mem ?do i @ ?dup if i . colon . space then loop ;
 
 : ls [ a" ls -lhA --color=always" shell ] alloc ;
-: vim [ a" vim" shell ] alloc ;
+: inline vim @1@ [ a" vim #1#" shell ] alloc ;
 
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;

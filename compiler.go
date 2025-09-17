@@ -260,7 +260,23 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 								case "@1@", "@2@", "@3@", "@4@":
 									// skip
 								default:
-									def.Push(value)
+									if isString(value) {
+										if strings.Contains(value, "#1#") {
+											d := strings.Join(fc.macroRegister[0].data, " ")
+											def.Push(strings.ReplaceAll(value, "#1#", d))
+										} else if strings.Contains(value, "#2#") {
+											d := strings.Join(fc.macroRegister[1].data, " ")
+											def.Push(strings.ReplaceAll(value, "#2#", d))
+										} else if strings.Contains(value, "#3#") {
+											d := strings.Join(fc.macroRegister[2].data, " ")
+											def.Push(strings.ReplaceAll(value, "#3#", d))
+										} else if strings.Contains(value, "#4#") {
+											d := strings.Join(fc.macroRegister[3].data, " ")
+											def.Push(strings.ReplaceAll(value, "#4#", d))
+										}
+									} else {
+										def.Push(value)
+									}
 								}
 							})
 
@@ -345,7 +361,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 				buffer = buffer[:len(buffer)-1]
 				state = 7
 			} else if i == '"' {
-				handleForthString(def, buffer)
+				def.Push(string(buffer))
 				buffer = buffer[:0]
 				state = 1
 			}
@@ -365,7 +381,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 				buffer = buffer[:len(buffer)-1]
 				state = 9
 			} else if i == ')' {
-				handleForthString(def, buffer)
+				def.Push(string(buffer))
 				buffer = buffer[:0]
 				state = 1
 			}
@@ -961,8 +977,57 @@ func isNumeric(s string) bool {
 	return result
 }
 
+func isString(s string) bool {
+	var (
+		state int
+	)
+
+	for index, i := range s {
+		switch state {
+		case 0:
+			switch i {
+			case '.', 'a', 'g':
+				if index+1 == len(s) {
+					break
+				}
+				state = 1
+			default:
+				return false
+			}
+		case 1:
+			switch i {
+			case '"', '(':
+				state = 2
+			default:
+				return false
+			}
+		case 2:
+			// consume space
+			switch i {
+			case ' ':
+				state = 3
+			default:
+				return false
+			}
+		case 3:
+			if index == len(s)-1 && (i == ')' || i == '"') {
+				return true
+			}
+			// consume string
+		}
+	}
+
+	return false
+}
+
 func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
-	if isNumeric(word) {
+	if isString(word) {
+		tmp := NewStack[string]()
+		handleForthString(tmp, []rune(word))
+		tmp.Each(func(value string) {
+			fc.compileWord(value, result)
+		})
+	} else if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {
 		result.Push("LF " + word)
