@@ -110,7 +110,7 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 
 	f := func(data map[string]*Stack[string], word string, result *Stack[string]) {
 		for k, v := range data {
-			for value := range v.All() {
+			for value := range v.Values() {
 				if value == word {
 					if !result.Contains(k) {
 						result.Push(k)
@@ -212,7 +212,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 	wg.Wait()
 
 	if Colored {
-		for val := range fc.vars.All() {
+		for val := range fc.vars.Values() {
 			printVariableColored(fc, val)
 		}
 
@@ -224,7 +224,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 			printWordColored(fc, k, fc.inlines[k])
 		}
 	} else {
-		for val := range fc.vars.All() {
+		for val := range fc.vars.Values() {
 			printVariable(val)
 		}
 
@@ -240,7 +240,7 @@ func (fc *ForthCompiler) printAllDefinitions() {
 
 func (fc *ForthCompiler) printByteCode() {
 	if Colored {
-		for _, cmd := range strings.Split(fc.ByteCode(), ";") {
+		for cmd := range strings.SplitSeq(fc.ByteCode(), ";") {
 			if cmd == "" {
 				continue
 			}
@@ -360,7 +360,7 @@ func (fc *ForthCompiler) handleREPL() {
 			continue
 		} else if strings.Index(text, "find ") == 0 {
 			defs := fc.findDefinitions(text[5:])
-			for value := range defs.All() {
+			for value := range defs.Values() {
 				fc.printDefinition(value)
 			}
 			continue
@@ -414,6 +414,13 @@ func (fc *ForthCompiler) handleREPL() {
 
 			if err := fc.CompileToC(); err != nil {
 				PrintError(err)
+			}
+
+			continue
+		} else if strings.Index(text, "pp") == 0 {
+			if err := fc.Preprocess(); err != nil {
+				PrintError(err)
+				continue
 			}
 
 			continue
@@ -558,7 +565,7 @@ func (fc *ForthCompiler) CompileToC() error {
 	{
 		m := fc.defs["main"]
 		result.WriteString("// compiled from:\n//")
-		for word := range m.All() {
+		for word := range m.Values() {
 			result.WriteString(" ")
 			result.WriteString(word)
 		}

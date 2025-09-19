@@ -1,27 +1,27 @@
-: inline if+ @2@ if #2# else #1# then ;
+: inline if+ @f@ @t@ if #t# else #f# then ;
 : if* ( n a b -- ) { b a } if a exec else b exec then ;
 
-: inline times+ @1@ 0 ?do #1# loop ;
+: inline times+ @a@ 0 ?do #a# loop ;
 : times swap 0 ?do dup exec loop drop ;
 
-: inline when+ @2@ #2# if #1# then ;
+: inline when+ @a@ if #a# else drop then ;
 : when swap if exec else drop then ;
 
-: inline bi+ @2@ dup #2# swap #1# ;
+: inline bi+ @b@ @a@ dup #a# swap #b# ;
 : bi ( n a b -- na nb ) { b a } dup a exec swap b exec ;
 
 : tri { a b c } dup c exec over b exec rot a exec ;
-: inline tri+ @3@ dup #3# over #2# rot #1# ;
+: inline tri+ @a@ @b@ @c@ dup #c# over #b# rot #a# ;
 
 : dip ( x quot -- x ) swap { x } exec x ;
 : keep ( ..a x quot -- ..b x ) over { x } exec x ;
 
-: inline curry+ @2@ [ #2# #1# ] ;
+: inline curry+ @1@ @2@ [ #2# #1# ] ;
 
 \ 1 [ dup 10 < ] [ ." Hello" 1+ ] while*
 : while* { w b } begin b exec while w exec repeat drop ;
-: inline while+ @2@ begin #2# while #1# repeat drop ;
+: inline while+ @w@ @b@ begin #b# while #w# repeat drop ;
 
 \ 10 0 [ . ] for
 : for ( u l b -- ) { b } ?do i b exec loop ;
-: inline for+ @1@ ?do i #1# loop ;
+: inline for+ @b@ ?do i #b# loop ;

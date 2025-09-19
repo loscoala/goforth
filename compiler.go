@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -22,22 +24,22 @@ type Compiler interface {
 }
 
 type ForthCompiler struct {
-	label         Label
-	blocks        Label
-	labels        Stack[string]
-	leaves        Stack[string]
-	whiles        Stack[string]
-	dos           Stack[string]
-	cases         Stack[int]
-	vars          Stack[string]
-	funcs         map[string]*Stack[string]
-	locals        SliceStack[string]
-	data          map[string]string
-	defs          map[string]*Stack[string]
-	inlines       map[string]*Stack[string]
-	macroRegister [4]Stack[string]
-	output        strings.Builder
-	Fvm           *ForthVM
+	label    Label
+	blocks   Label
+	labels   Stack[string]
+	leaves   Stack[string]
+	whiles   Stack[string]
+	dos      Stack[string]
+	cases    Stack[int]
+	vars     Stack[string]
+	funcs    map[string]*Stack[string]
+	locals   SliceStack[string]
+	data     map[string]string
+	defs     map[string]*Stack[string]
+	inlines  map[string]*Stack[string]
+	register map[string]*Stack[string]
+	output   strings.Builder
+	Fvm      *ForthVM
 }
 
 func NewForthCompiler() *ForthCompiler {
@@ -92,6 +94,7 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.inlines = make(map[string]*Stack[string])
+	fc.register = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -123,14 +126,14 @@ func (fc *ForthCompiler) Compile() error {
 	}
 
 	for _, v := range fc.funcs {
-		for val := range v.All() {
+		for val := range v.Values() {
 			printVal(val)
 		}
 	}
 
 	fc.output.WriteString("MAIN;")
 
-	for val := range result.All() {
+	for val := range result.Values() {
 		printVal(val)
 	}
 
@@ -208,98 +211,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 					if counter == 0 {
 						word = string(buffer)
 					} else {
-						tmp := string(buffer)
-						if inline, ok := fc.inlines[tmp]; ok {
-							switch inline.data[0] {
-							case "@1@":
-								if err := fc.wordInRegister(def, 0); err != nil {
-									return err
-								}
-							case "@2@":
-								if err := fc.wordInRegister(def, 0); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 1); err != nil {
-									return err
-								}
-							case "@3@":
-								if err := fc.wordInRegister(def, 0); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 1); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 2); err != nil {
-									return err
-								}
-							case "@4@":
-								if err := fc.wordInRegister(def, 0); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 1); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 2); err != nil {
-									return err
-								}
-								if err := fc.wordInRegister(def, 3); err != nil {
-									return err
-								}
-							default:
-								// skip
-							}
-
-							for value := range inline.All() {
-								pushToDef := func(val string) {
-									def.Push(val)
-								}
-								switch value {
-								case "#1#":
-									for val := range fc.macroRegister[0].All() {
-										pushToDef(val)
-									}
-								case "#2#":
-									for val := range fc.macroRegister[1].All() {
-										pushToDef(val)
-									}
-								case "#3#":
-									for val := range fc.macroRegister[2].All() {
-										pushToDef(val)
-									}
-								case "#4#":
-									for val := range fc.macroRegister[3].All() {
-										pushToDef(val)
-									}
-								case "@1@", "@2@", "@3@", "@4@":
-									// skip
-								default:
-									if isString(value) {
-										if strings.Contains(value, "#1#") {
-											d := strings.Join(fc.macroRegister[0].data, " ")
-											def.Push(strings.ReplaceAll(value, "#1#", d))
-										} else if strings.Contains(value, "#2#") {
-											d := strings.Join(fc.macroRegister[1].data, " ")
-											def.Push(strings.ReplaceAll(value, "#2#", d))
-										} else if strings.Contains(value, "#3#") {
-											d := strings.Join(fc.macroRegister[2].data, " ")
-											def.Push(strings.ReplaceAll(value, "#3#", d))
-										} else if strings.Contains(value, "#4#") {
-											d := strings.Join(fc.macroRegister[3].data, " ")
-											def.Push(strings.ReplaceAll(value, "#4#", d))
-										}
-									} else {
-										def.Push(value)
-									}
-								}
-							}
-
-							// clean all registers
-							for i := range 4 {
-								fc.macroRegister[i].Reset()
-							}
-						} else {
-							def.Push(tmp)
-						}
+						def.Push(string(buffer))
 					}
 
 					counter++
@@ -420,7 +332,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 }
 
 // inline block or single word
-func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error {
+func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], register string) error {
 	var (
 		word  string
 		ok    bool
@@ -428,8 +340,10 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error
 	)
 
 	if word, ok = wordDef.Pop(); !ok {
-		return fmt.Errorf("unable to pop %dth word from word definition. Not enough arguments", index+1)
+		return fmt.Errorf("unable to pop \"%s\". Not enough arguments", register)
 	}
+
+	fc.register[register] = NewStack[string]()
 
 	if word == "]" {
 		// inside block
@@ -447,12 +361,84 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], index int) error
 				count++
 			}
 
-			fc.macroRegister[index].Push(word)
+			fc.register[register].Push(word)
 		}
-		fc.macroRegister[index].Reverse()
+		fc.register[register].Reverse()
 	} else {
 		// single word
-		fc.macroRegister[index].Push(word)
+		fc.register[register].Push(word)
+	}
+
+	return nil
+}
+
+func (fc *ForthCompiler) preprocessInternal(wordDef *Stack[string], wordName string) (*Stack[string], error) {
+	result := NewStack[string]()
+
+	for word := range wordDef.Values() {
+		if macroDef, ok := fc.inlines[word]; ok {
+			// we have found a macro
+
+			for macroWord := range macroDef.Values() {
+				length := len(macroWord)
+
+				switch {
+				case length > 2 && macroWord[0] == '@' && macroWord[length-1] == '@':
+					inner := macroWord[1 : len(macroWord)-1]
+
+					if err := fc.wordInRegister(result, inner); err != nil {
+						return nil, fmt.Errorf("unable to evaluate macro \"%s\" in word \"%s\": %s", word, wordName, err.Error())
+					}
+				case length > 2 && macroWord[0] == '#' && macroWord[length-1] == '#':
+					inner := macroWord[1 : len(macroWord)-1]
+
+					if _, ok := fc.register[inner]; !ok {
+						return nil, fmt.Errorf("unable to evaluate macro \"%s\" in word \"%s\": register \"%s\" is not defined", word, wordName, inner)
+					}
+
+					for regWord := range fc.register[inner].Values() {
+						result.Push(regWord)
+					}
+				case isString(macroWord):
+					for key := range fc.register {
+						marker := fmt.Sprintf("#%s#", key)
+
+						if strings.Contains(macroWord, marker) {
+							def := strings.Join(fc.register[key].data, " ")
+							result.Push(strings.ReplaceAll(macroWord, marker, def))
+						}
+					}
+				default:
+					result.Push(macroWord)
+				}
+			}
+		} else {
+			// just push the word
+			result.Push(word)
+		}
+	}
+
+	clear(fc.register)
+
+	return result, nil
+}
+
+// Preprocess the definitions of all words
+func (fc *ForthCompiler) Preprocess() error {
+	// for each word as w:
+	//   if w contains a macro in its definition:
+	//      evaluate the macro from left to right
+
+	macroNames := slices.Collect(maps.Keys(fc.inlines))
+
+	for word, wordDef := range fc.defs {
+		if fc.defs[word].ContainsAny(macroNames) {
+			if result, err := fc.preprocessInternal(wordDef, word); err != nil {
+				return err
+			} else {
+				fc.defs[word] = result
+			}
+		}
 	}
 
 	return nil
@@ -1037,7 +1023,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 	if isString(word) {
 		tmp := NewStack[string]()
 		handleForthString(tmp, []rune(word))
-		for value := range tmp.All() {
+		for value := range tmp.Values() {
 			fc.compileWord(value, result)
 		}
 	} else if isNumeric(word) {

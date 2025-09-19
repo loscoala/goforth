@@ -80,14 +80,8 @@ func (s *Stack[T]) Reset() {
 	s.data = s.data[:0]
 }
 
-func (s *Stack[T]) All() iter.Seq[T] {
-	return func(yield func(T) bool) {
-		for _, y := range s.data {
-			if !yield(y) {
-				return
-			}
-		}
-	}
+func (s *Stack[T]) Values() iter.Seq[T] {
+	return slices.Values(s.data)
 }
 
 /*
@@ -122,6 +116,10 @@ func (s *StackIter[T]) Next() bool {
 
 func (s *StackIter[T]) Get() T {
 	return s.stack.data[s.index]
+}
+
+func (s *Stack[T]) ContainsAny(values []T) bool {
+	return slices.ContainsFunc(values, s.Contains)
 }
 
 func (s *Stack[T]) Contains(val T) bool {
