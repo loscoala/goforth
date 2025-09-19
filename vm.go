@@ -944,17 +944,17 @@ func parseCode(codeStr string) *Code {
 				if !locals.Contains(scmd[1]) {
 					locals.Push(scmd[1])
 				}
-				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
+				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
 			case "LDEF":
 				if !locals.Contains(scmd[1]) {
 					locals.Push(scmd[1])
 				}
-				cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
+				cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
 			case "LCL":
 				if !locals.Contains(scmd[1]) {
 					locals.Push(scmd[1])
 				}
-				cells = append(cells, Cell{cmd: LCL, argStr: scmd[1], localIndex: locals.GetIndex(scmd[1])})
+				cells = append(cells, Cell{cmd: LCL, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
 			case "LCLR":
 				cells = append(cells, Cell{cmd: LCLR})
 			case "CALL":

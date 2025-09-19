@@ -3,6 +3,7 @@ package goforth
 import (
 	"iter"
 	"log"
+	"slices"
 )
 
 type Stack[T comparable] struct {
@@ -124,23 +125,11 @@ func (s *StackIter[T]) Get() T {
 }
 
 func (s *Stack[T]) Contains(val T) bool {
-	for _, i := range s.data {
-		if i == val {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(s.data, val)
 }
 
-func (s *Stack[T]) GetIndex(val T) int {
-	for pos, i := range s.data {
-		if i == val {
-			return pos
-		}
-	}
-
-	return -1
+func (s *Stack[T]) Index(val T) int {
+	return slices.Index(s.data, val)
 }
 
 /*
