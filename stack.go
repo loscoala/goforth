@@ -81,8 +81,8 @@ func (s *Stack[T]) Reset() {
 
 func (s *Stack[T]) All() iter.Seq[T] {
 	return func(yield func(T) bool) {
-		for i := range s.Len() {
-			if !yield(s.data[i]) {
+		for _, y := range s.data {
+			if !yield(y) {
 				return
 			}
 		}
