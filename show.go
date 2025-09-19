@@ -110,13 +110,13 @@ func (fc *ForthCompiler) findDefinitions(word string) *Stack[string] {
 
 	f := func(data map[string]*Stack[string], word string, result *Stack[string]) {
 		for k, v := range data {
-			v.Each(func(value string) {
+			for value := range v.All() {
 				if value == word {
 					if !result.Contains(k) {
 						result.Push(k)
 					}
 				}
-			})
+			}
 
 			if strings.Contains(k, word) {
 				result.Push(k)
@@ -212,9 +212,9 @@ func (fc *ForthCompiler) printAllDefinitions() {
 	wg.Wait()
 
 	if Colored {
-		fc.vars.Each(func(val string) {
+		for val := range fc.vars.All() {
 			printVariableColored(fc, val)
-		})
+		}
 
 		for _, k := range keys {
 			printWordColored(fc, k, fc.defs[k])
@@ -224,9 +224,9 @@ func (fc *ForthCompiler) printAllDefinitions() {
 			printWordColored(fc, k, fc.inlines[k])
 		}
 	} else {
-		fc.vars.Each(func(val string) {
+		for val := range fc.vars.All() {
 			printVariable(val)
-		})
+		}
 
 		for _, k := range keys {
 			printWord(k, fc.defs[k])
@@ -360,9 +360,9 @@ func (fc *ForthCompiler) handleREPL() {
 			continue
 		} else if strings.Index(text, "find ") == 0 {
 			defs := fc.findDefinitions(text[5:])
-			defs.Each(func(value string) {
+			for value := range defs.All() {
 				fc.printDefinition(value)
-			})
+			}
 			continue
 		} else if strings.Index(text, "use ") == 0 ||
 			strings.Index(text, "template ") == 0 {
@@ -558,10 +558,10 @@ func (fc *ForthCompiler) CompileToC() error {
 	{
 		m := fc.defs["main"]
 		result.WriteString("// compiled from:\n//")
-		m.Each(func(word string) {
+		for word := range m.All() {
 			result.WriteString(" ")
 			result.WriteString(word)
-		})
+		}
 		result.WriteString("\n\n")
 	}
 

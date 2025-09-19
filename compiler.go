@@ -123,11 +123,16 @@ func (fc *ForthCompiler) Compile() error {
 	}
 
 	for _, v := range fc.funcs {
-		v.Each(printVal)
+		for val := range v.All() {
+			printVal(val)
+		}
 	}
 
 	fc.output.WriteString("MAIN;")
-	result.Each(printVal)
+
+	for val := range result.All() {
+		printVal(val)
+	}
 
 	return nil
 }
@@ -244,19 +249,27 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 								// skip
 							}
 
-							inline.Each(func(value string) {
+							for value := range inline.All() {
 								pushToDef := func(val string) {
 									def.Push(val)
 								}
 								switch value {
 								case "#1#":
-									fc.macroRegister[0].Each(pushToDef)
+									for val := range fc.macroRegister[0].All() {
+										pushToDef(val)
+									}
 								case "#2#":
-									fc.macroRegister[1].Each(pushToDef)
+									for val := range fc.macroRegister[1].All() {
+										pushToDef(val)
+									}
 								case "#3#":
-									fc.macroRegister[2].Each(pushToDef)
+									for val := range fc.macroRegister[2].All() {
+										pushToDef(val)
+									}
 								case "#4#":
-									fc.macroRegister[3].Each(pushToDef)
+									for val := range fc.macroRegister[3].All() {
+										pushToDef(val)
+									}
 								case "@1@", "@2@", "@3@", "@4@":
 									// skip
 								default:
@@ -278,7 +291,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 										def.Push(value)
 									}
 								}
-							})
+							}
 
 							// clean all registers
 							for i := range 4 {
@@ -1024,9 +1037,9 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 	if isString(word) {
 		tmp := NewStack[string]()
 		handleForthString(tmp, []rune(word))
-		tmp.Each(func(value string) {
+		for value := range tmp.All() {
 			fc.compileWord(value, result)
-		})
+		}
 	} else if isNumeric(word) {
 		result.Push("L " + word)
 	} else if isFloat(word) {

@@ -1,6 +1,7 @@
 package goforth
 
 import (
+	"iter"
 	"log"
 )
 
@@ -78,6 +79,16 @@ func (s *Stack[T]) Reset() {
 	s.data = s.data[:0]
 }
 
+func (s *Stack[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for i := range s.Len() {
+			if !yield(s.data[i]) {
+				return
+			}
+		}
+	}
+}
+
 /*
 func (s *Stack) Append(stk *Stack) {
 	nstk := stk.Reverse()
@@ -132,11 +143,13 @@ func (s *Stack[T]) GetIndex(val T) int {
 	return -1
 }
 
+/*
 func (s *Stack[T]) Each(f func(value T)) {
 	for iter := s.Iter(); iter.Next(); {
 		f(iter.Get())
 	}
 }
+*/
 
 // -------------------- SliceStack ----------------------------
 
