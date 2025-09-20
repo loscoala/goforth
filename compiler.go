@@ -374,12 +374,20 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], register string)
 
 func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) (*Stack[string], error) {
 	result := NewStack[string]()
+	tmp := NewStack[int64]()
+	skip := false
 
 	for word := range wordDef.Values() {
 		if macroDef, ok := fc.inlines[word]; ok {
 			// we have found a macro
 
 			for macroWord := range macroDef.Values() {
+				if skip {
+					if macroWord != "@else" {
+						continue
+					}
+				}
+
 				length := len(macroWord)
 
 				switch {
@@ -400,13 +408,44 @@ func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) 
 						result.Push(regWord)
 					}
 				case isString(macroWord):
-					for key := range fc.register {
-						marker := fmt.Sprintf("#%s#", key)
+					if len(fc.register) == 0 {
+						result.Push(macroWord)
+					} else {
+						for key := range fc.register {
+							marker := fmt.Sprintf("#%s#", key)
 
-						if strings.Contains(macroWord, marker) {
-							def := strings.Join(fc.register[key].data, " ")
-							result.Push(strings.ReplaceAll(macroWord, marker, def))
+							if strings.Contains(macroWord, marker) {
+								def := strings.Join(fc.register[key].data, " ")
+								result.Push(strings.ReplaceAll(macroWord, marker, def))
+							}
 						}
+					}
+				case macroWord == "@numArgs":
+					tmp.Push(int64(result.Len()))
+				case macroWord == "@>":
+					v := int64(0)
+					a := tmp.ExPop()
+					b := tmp.ExPop()
+					if a < b {
+						v = 1
+					}
+					tmp.Push(v)
+				case macroWord == "@if":
+					a := tmp.ExPop()
+					if a == 0 {
+						skip = true
+					}
+				case macroWord == "@else":
+					skip = !skip
+				case macroWord == "@push":
+					a := result.ExPop()
+					if !isNumeric(a) {
+						return nil, fmt.Errorf("unable to parse %s as integer", a)
+					}
+					if b, err := strconv.ParseInt(a, 10, 64); err != nil {
+						return nil, err
+					} else {
+						tmp.Push(b)
 					}
 				default:
 					result.Push(macroWord)
