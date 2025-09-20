@@ -372,7 +372,7 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], register string)
 	return nil
 }
 
-func (fc *ForthCompiler) preprocessInternal(wordDef *Stack[string], wordName string) (*Stack[string], error) {
+func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) (*Stack[string], error) {
 	result := NewStack[string]()
 
 	for word := range wordDef.Values() {
@@ -432,8 +432,8 @@ func (fc *ForthCompiler) Preprocess() error {
 	macroNames := slices.Collect(maps.Keys(fc.inlines))
 
 	for word, wordDef := range fc.defs {
-		if fc.defs[word].ContainsAny(macroNames) {
-			if result, err := fc.preprocessInternal(wordDef, word); err != nil {
+		if wordDef.ContainsAny(macroNames) {
+			if result, err := fc.evaluateMacro(wordDef, word); err != nil {
 				return err
 			} else {
 				fc.defs[word] = result

@@ -4,7 +4,7 @@
 : inline times+ @a@ 0 ?do #a# loop ;
 : times swap 0 ?do dup exec loop drop ;
 
-: inline when+ @a@ if #a# else drop then ;
+: inline when+ @a@ if #a# then ;
 : when swap if exec else drop then ;
 
 : inline bi+ @b@ @a@ dup #a# swap #b# ;

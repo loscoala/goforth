@@ -387,6 +387,11 @@ func (fc *ForthCompiler) handleREPL() {
 				continue
 			}
 
+			if err := fc.Preprocess(); err != nil {
+				PrintError(err)
+				continue
+			}
+
 			if err := fc.Compile(); err != nil {
 				PrintError(err)
 				continue
@@ -398,6 +403,11 @@ func (fc *ForthCompiler) handleREPL() {
 			continue
 		} else if strings.Index(text, "compile ") == 0 {
 			if err := fc.Parse(": main\n"+text[8:]+"\n;", "main"); err != nil {
+				PrintError(err)
+				continue
+			}
+
+			if err := fc.Preprocess(); err != nil {
 				PrintError(err)
 				continue
 			}
@@ -427,6 +437,11 @@ func (fc *ForthCompiler) handleREPL() {
 		}
 
 		if err := fc.Parse(": main\n"+text+"\n;", "main"); err != nil {
+			PrintError(err)
+			continue
+		}
+
+		if err := fc.Preprocess(); err != nil {
 			PrintError(err)
 			continue
 		}
@@ -750,6 +765,10 @@ func (fc *ForthCompiler) RunFile(str string) error {
 		return err
 	}
 
+	if err := fc.Preprocess(); err != nil {
+		return err
+	}
+
 	if err := fc.Compile(); err != nil {
 		return err
 	}
@@ -761,6 +780,10 @@ func (fc *ForthCompiler) RunFile(str string) error {
 
 func (fc *ForthCompiler) CompileFile(str string) error {
 	if err := fc.ParseFile(str); err != nil {
+		return err
+	}
+
+	if err := fc.Preprocess(); err != nil {
 		return err
 	}
 
@@ -776,6 +799,10 @@ func (fc *ForthCompiler) CompileScript(script string) error {
 		return err
 	}
 
+	if err := fc.Preprocess(); err != nil {
+		return err
+	}
+
 	if err := fc.Compile(); err != nil {
 		return err
 	}
@@ -785,6 +812,10 @@ func (fc *ForthCompiler) CompileScript(script string) error {
 
 func (fc *ForthCompiler) Run(prog string) error {
 	if err := fc.Parse(prog, "script"); err != nil {
+		return err
+	}
+
+	if err := fc.Preprocess(); err != nil {
 		return err
 	}
 
