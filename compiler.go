@@ -372,9 +372,23 @@ func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], register string)
 	return nil
 }
 
+func popToInt(s *Stack[string]) (int64, error) {
+	a := s.ExPop()
+
+	if !isNumeric(a) {
+		return 0, fmt.Errorf("unable to parse %s as integer", a)
+	}
+
+	if b, err := strconv.ParseInt(a, 10, 64); err != nil {
+		return 0, err
+	} else {
+		return b, nil
+	}
+}
+
 func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) (*Stack[string], error) {
 	result := NewStack[string]()
-	tmp := Stack[int64]{}
+	tmp := Stack[string]{}
 	skip := false
 
 	for word := range wordDef.Values() {
@@ -421,32 +435,71 @@ func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) 
 						}
 					}
 				case macroWord == "@numArgs":
-					tmp.Push(int64(result.Len()))
+					tmp.Push(fmt.Sprint(result.Len()))
 				case macroWord == "@>":
-					v := int64(0)
-					a := tmp.ExPop()
-					b := tmp.ExPop()
+					var (
+						a, b, v int64
+						err     error
+					)
+					if a, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
+					if b, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
 					if a < b {
 						v = 1
 					}
-					tmp.Push(v)
+					tmp.Push(fmt.Sprint(v))
+				case macroWord == "@<":
+					var (
+						a, b, v int64
+						err     error
+					)
+					if a, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
+					if b, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
+					if a > b {
+						v = 1
+					}
+					tmp.Push(fmt.Sprint(v))
+				case macroWord == "@=":
+					var (
+						a, b, v int64
+						err     error
+					)
+					if a, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
+					if b, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
+					if a == b {
+						v = 1
+					}
+					tmp.Push(fmt.Sprint(v))
+				case macroWord == "@dup":
+					tmp.Push(tmp.ExFetch())
+				case macroWord == "@.":
+					result.Push(tmp.ExPop())
 				case macroWord == "@if":
-					a := tmp.ExPop()
+					var (
+						a   int64
+						err error
+					)
+					if a, err = popToInt(&tmp); err != nil {
+						return nil, err
+					}
 					if a == 0 {
 						skip = true
 					}
 				case macroWord == "@else":
 					skip = !skip
 				case macroWord == "@push":
-					a := result.ExPop()
-					if !isNumeric(a) {
-						return nil, fmt.Errorf("unable to parse %s as integer", a)
-					}
-					if b, err := strconv.ParseInt(a, 10, 64); err != nil {
-						return nil, err
-					} else {
-						tmp.Push(b)
-					}
+					tmp.Push(result.ExPop())
 				default:
 					result.Push(macroWord)
 				}
