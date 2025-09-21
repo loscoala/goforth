@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand"
 	"os"
 	"os/exec"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -427,8 +429,8 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 
 			continue
-		} else if strings.Index(text, "pp") == 0 {
-			if err := fc.Preprocess(); err != nil {
+		} else if strings.Index(text, "pp ") == 0 {
+			if err := fc.printPreprocess(text[3:]); err != nil {
 				PrintError(err)
 				continue
 			}
@@ -697,6 +699,24 @@ func (fc *ForthCompiler) runBinary() error {
 
 	if _, err := os.Stdout.WriteString("\n"); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// Prints the preprocessing steps of a given word
+func (fc *ForthCompiler) printPreprocess(word string) error {
+	macroNames := slices.Collect(maps.Keys(fc.inlines))
+
+	printWordColored(fc, word, fc.defs[word])
+
+	for fc.defs[word].ContainsAny(macroNames) {
+		if result, err := fc.evaluateMacro(fc.defs[word], word); err != nil {
+			return err
+		} else {
+			fc.defs[word] = result
+			printWordColored(fc, word, fc.defs[word])
+		}
 	}
 
 	return nil
