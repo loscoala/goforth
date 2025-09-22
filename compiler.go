@@ -422,19 +422,15 @@ func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) 
 						result.Push(regWord)
 					}
 				case isString(macroWord):
-					if len(fc.register) == 0 {
-						result.Push(macroWord)
-					} else {
-						for key := range fc.register {
-							marker := fmt.Sprintf("#%s#", key)
+					for key := range fc.register {
+						marker := fmt.Sprintf("#%s#", key)
 
-							if strings.Contains(macroWord, marker) {
-								def := strings.Join(fc.register[key].data, " ")
-								macroWord = strings.ReplaceAll(macroWord, marker, def)
-							}
+						if strings.Contains(macroWord, marker) {
+							def := strings.Join(fc.register[key].data, " ")
+							macroWord = strings.ReplaceAll(macroWord, marker, def)
 						}
-						result.Push(macroWord)
 					}
+					result.Push(macroWord)
 				case macroWord == "@numArgs":
 					tmp.Push(fmt.Sprint(result.Len()))
 				case macroWord == "@>":
