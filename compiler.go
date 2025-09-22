@@ -430,9 +430,10 @@ func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) 
 
 							if strings.Contains(macroWord, marker) {
 								def := strings.Join(fc.register[key].data, " ")
-								result.Push(strings.ReplaceAll(macroWord, marker, def))
+								macroWord = strings.ReplaceAll(macroWord, marker, def)
 							}
 						}
+						result.Push(macroWord)
 					}
 				case macroWord == "@numArgs":
 					tmp.Push(fmt.Sprint(result.Len()))
