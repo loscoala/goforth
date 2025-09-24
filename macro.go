@@ -192,7 +192,7 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 			if word, err = vm.wordInRegister(result, cmd.arg); err != nil {
 				return err
 			}
-			for w := range word.Values() {
+			for _, w := range word.Backward() {
 				vm.stack.Push(w)
 			}
 		case M_GRI:
@@ -232,7 +232,7 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 			}
 			vm.stack.Push(fmt.Sprint(v))
 		case M_PRINT_STACK:
-			for word := range vm.stack.Values() {
+			for _, word := range vm.stack.Backward() {
 				result.Push(word)
 			}
 			vm.stack.Reset()

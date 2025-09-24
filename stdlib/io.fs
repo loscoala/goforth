@@ -23,8 +23,6 @@
   @then
 ;
 
-: t ls -lhA --color=always cmd ;
-
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;
 : i r@ ;
