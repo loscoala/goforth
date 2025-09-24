@@ -138,6 +138,8 @@ func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) (*Sta
 
 			result.Push(word)
 		}
+
+		result.Reverse()
 	} else {
 		// single word
 		result.Push(word)
