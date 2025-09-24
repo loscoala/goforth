@@ -707,11 +707,12 @@ func (fc *ForthCompiler) runBinary() error {
 // Prints the preprocessing steps of a given word
 func (fc *ForthCompiler) printPreprocess(word string) error {
 	macroNames := slices.Collect(maps.Keys(fc.inlines))
-
 	printWordColored(fc, word, fc.defs[word])
+	fc.compileMacros(macroNames)
+	mvm := NewMacroVM()
 
 	for fc.defs[word].ContainsAny(macroNames) {
-		if result, err := fc.evaluateMacro(fc.defs[word]); err != nil {
+		if result, err := fc.evaluateMacro(word, mvm); err != nil {
 			return err
 		} else {
 			fc.defs[word] = result

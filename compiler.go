@@ -37,6 +37,8 @@ type ForthCompiler struct {
 	data    map[string]string
 	defs    map[string]*Stack[string]
 	inlines map[string]*Stack[string]
+	clean   bool
+	macros  map[string]*Stack[Mc]
 	output  strings.Builder
 	Fvm     *ForthVM
 }
@@ -93,6 +95,7 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.inlines = make(map[string]*Stack[string])
+	fc.macros = make(map[string]*Stack[Mc])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -191,6 +194,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 					tmp := new(Stack[string])
 					tmp.data = def.data[1:]
 					fc.inlines[word] = tmp
+					fc.clean = false
 				default:
 					if _, ok := fc.inlines[word]; ok {
 						return fmt.Errorf("unable to define word. \"%s\" is already defined as inline", word)
@@ -329,24 +333,14 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 	return nil
 }
 
-func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string]) (*Stack[string], error) {
+func (fc *ForthCompiler) evaluateMacro(wordName string, mvm *MacroVM) (*Stack[string], error) {
 	result := NewStack[string]()
 
-	mc := MacroCompiler{}
-	mvm := NewMacroVM()
-
-	for word := range wordDef.Values() {
-		if macroDef, ok := fc.inlines[word]; ok {
+	for word := range fc.defs[wordName].Values() {
+		if _, ok := fc.inlines[word]; ok {
 			// we have found a macro
-			for i := range macroDef.Values() {
-				fmt.Printf("(%s) ", i)
-			}
 
-			fmt.Println("")
-
-			byteCode := mc.Compile(macroDef)
-
-			if err := mvm.Run(byteCode, result); err != nil {
+			if err := mvm.Run(fc.macros[word], result); err != nil {
 				return nil, err
 			}
 		} else {
@@ -358,6 +352,19 @@ func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string]) (*Stack[string], 
 	return result, nil
 }
 
+func (fc *ForthCompiler) compileMacros(macroNames []string) {
+	if fc.clean {
+		return
+	}
+
+	var mc MacroCompiler
+	for _, macro := range macroNames {
+		fc.macros[macro] = mc.Compile(fc.inlines[macro])
+	}
+
+	fc.clean = true
+}
+
 // Preprocess the definitions of all words
 func (fc *ForthCompiler) Preprocess() error {
 	// for each word as w:
@@ -365,10 +372,12 @@ func (fc *ForthCompiler) Preprocess() error {
 	//      evaluate the macro from left to right
 
 	macroNames := slices.Collect(maps.Keys(fc.inlines))
+	fc.compileMacros(macroNames)
+	mvm := NewMacroVM()
 
 	for word := range fc.defs {
 		for fc.defs[word].ContainsAny(macroNames) {
-			if result, err := fc.evaluateMacro(fc.defs[word]); err != nil {
+			if result, err := fc.evaluateMacro(word, mvm); err != nil {
 				return err
 			} else {
 				fc.defs[word] = result

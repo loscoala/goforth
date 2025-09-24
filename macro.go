@@ -95,8 +95,6 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[Mc] {
 	return r
 }
 
-var macroVMStack Stack[string]
-
 type MacroVM struct {
 	register map[string]*Stack[string]
 	stack    *Stack[string]
@@ -105,7 +103,7 @@ type MacroVM struct {
 func NewMacroVM() *MacroVM {
 	r := new(MacroVM)
 	r.register = make(map[string]*Stack[string])
-	r.stack = &macroVMStack
+	r.stack = NewStack[string]()
 	return r
 }
 
@@ -164,6 +162,7 @@ func popToInt(s *Stack[string]) (int64, error) {
 
 func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 	done := false
+	defer clear(vm.register)
 
 	for progPtr := 0; !done; progPtr++ {
 		cmd := &code.data[progPtr]
@@ -278,5 +277,6 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 			return fmt.Errorf("unknown opcode")
 		}
 	}
+
 	return nil
 }
