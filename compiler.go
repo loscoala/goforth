@@ -38,7 +38,7 @@ type ForthCompiler struct {
 	defs    map[string]*Stack[string]
 	inlines map[string]*Stack[string]
 	clean   bool
-	macros  map[string]*Stack[Mc]
+	macros  map[string]*Stack[*Mc]
 	output  strings.Builder
 	Fvm     *ForthVM
 }
@@ -95,7 +95,7 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.inlines = make(map[string]*Stack[string])
-	fc.macros = make(map[string]*Stack[Mc])
+	fc.macros = make(map[string]*Stack[*Mc])
 	fc.Fvm = NewForthVM()
 	return fc
 }

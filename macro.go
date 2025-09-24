@@ -45,12 +45,13 @@ var MacroName = map[MacroOptcode]string{
 }
 
 type Mc struct {
-	cmd MacroOptcode
-	arg string
+	cmd    MacroOptcode
+	arg    string
+	argInt int
 }
 
-func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[Mc] {
-	r := &Stack[Mc]{}
+func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
+	r := NewStack[*Mc]()
 
 	for macroWord := range macroDef.Values() {
 		length := len(macroWord)
@@ -58,39 +59,50 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[Mc] {
 		switch {
 		case length > 2 && (macroWord[0] == '@' && macroWord[length-1] == '@'):
 			inner := macroWord[1 : length-1]
-			r.Push(Mc{cmd: M_L, arg: inner})
+			r.Push(&Mc{cmd: M_L, arg: inner})
 		case length > 2 && (macroWord[0] == '#' && macroWord[length-1] == '#'):
 			inner := macroWord[1 : length-1]
-			r.Push(Mc{cmd: M_STR, arg: inner})
+			r.Push(&Mc{cmd: M_STR, arg: inner})
 		case macroWord == "@numArgs":
-			r.Push(Mc{cmd: M_NUM_ARGS})
+			r.Push(&Mc{cmd: M_NUM_ARGS})
 		case macroWord == "@depth":
-			r.Push(Mc{cmd: M_DEPTH})
+			r.Push(&Mc{cmd: M_DEPTH})
 		case macroWord == "@push":
-			r.Push(Mc{cmd: M_PUSH})
+			r.Push(&Mc{cmd: M_PUSH})
 		case macroWord == "@>":
-			r.Push(Mc{cmd: M_GRI})
+			r.Push(&Mc{cmd: M_GRI})
 		case macroWord == "@=":
-			r.Push(Mc{cmd: M_EQI})
+			r.Push(&Mc{cmd: M_EQI})
 		case macroWord == "@$":
-			r.Push(Mc{cmd: M_PRINT_STACK})
+			r.Push(&Mc{cmd: M_PRINT_STACK})
 		case macroWord == "@if":
 			lbl := mc.label.CreateNewLabel()
-			r.Push(Mc{cmd: M_JIN, arg: lbl})
+			r.Push(&Mc{cmd: M_JIN, arg: lbl})
 			mc.labels.Push(lbl)
 		case macroWord == "@else":
 			lbl := mc.label.CreateNewLabel()
-			r.Push(Mc{cmd: M_JMP, arg: lbl})
-			r.Push(Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
+			r.Push(&Mc{cmd: M_JMP, arg: lbl})
+			r.Push(&Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
 			mc.labels.Push(lbl)
 		case macroWord == "@then":
-			r.Push(Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
+			r.Push(&Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
 		default:
-			r.Push(Mc{cmd: M_PRINT, arg: macroWord})
+			r.Push(&Mc{cmd: M_PRINT, arg: macroWord})
 		}
 	}
 
-	r.Push(Mc{cmd: M_STP})
+	r.Push(&Mc{cmd: M_STP})
+
+	// optimise JIN and JMP
+	for index, nop := range r.All() {
+		if nop.cmd == M_NOP {
+			for c := range r.Values() {
+				if (c.cmd == M_JIN || c.cmd == M_JMP) && nop.arg == c.arg {
+					c.argInt = index
+				}
+			}
+		}
+	}
 
 	return r
 }
@@ -162,12 +174,12 @@ func popToInt(s *Stack[string]) (int64, error) {
 	}
 }
 
-func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
+func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 	done := false
 	defer clear(vm.register)
 
 	for progPtr := 0; !done; progPtr++ {
-		cmd := &code.data[progPtr]
+		cmd := code.data[progPtr]
 
 		switch cmd.cmd {
 		case M_L:
@@ -245,20 +257,10 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 				return err
 			}
 			if a == 0 {
-				// todo optimise
-				for index, c := range code.All() {
-					if c.cmd == M_NOP && c.arg == cmd.arg {
-						progPtr = index
-					}
-				}
+				progPtr = cmd.argInt
 			}
 		case M_JMP:
-			// todo optimise
-			for index, c := range code.All() {
-				if c.cmd == M_NOP && c.arg == cmd.arg {
-					progPtr = index
-				}
-			}
+			progPtr = cmd.argInt
 		case M_NOP:
 			// pass
 		case M_PRINT:
