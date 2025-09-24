@@ -2,13 +2,28 @@
 : ?? memsize 0 mem ;
 : mem ?do i @ ?dup if i . colon . space then loop ;
 
-: ls [ a" ls -lhA --color=always" shell ] alloc ;
+: ls [ ls -lhA --color=always ] cmd ;
 : inline vim
   @numArgs 0 @push @> @if
     @file@ [ a" vim #file#" shell ] alloc
   @else
     [ a" vim" shell ] alloc
+  @then
 ;
+
+: inline cmd
+  @numArgs 0 @push @> @if
+    @push cmd
+  @else
+    @depth 0 @push @= @if
+      [ a" bash" shell ] alloc
+    @else
+      [ @$ ] @1@ [ a" #1#" shell ] alloc
+    @then
+  @then
+;
+
+: t ls -lhA --color=always cmd ;
 
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;

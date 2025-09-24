@@ -1,0 +1,275 @@
+package goforth
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+type MacroCompiler struct {
+	label  Label
+	labels Stack[string]
+}
+
+type MacroOptcode int
+
+const (
+	M_L MacroOptcode = iota
+	M_STR
+	M_NUM_ARGS
+	M_DEPTH
+	M_PUSH
+	M_GRI
+	M_EQI
+	M_PRINT_STACK
+	M_JIN
+	M_JMP
+	M_NOP
+	M_PRINT
+	M_STP
+)
+
+var MacroName = map[MacroOptcode]string{
+	M_L:           "L",
+	M_NUM_ARGS:    "NUM_ARGS",
+	M_DEPTH:       "DEPTH",
+	M_PUSH:        "PUSH",
+	M_GRI:         "GRI",
+	M_EQI:         "EQI",
+	M_PRINT_STACK: "PRINT_STACK",
+	M_JIN:         "JIN",
+	M_JMP:         "JMP",
+	M_NOP:         "NOP",
+	M_PRINT:       "PRINT",
+	M_STP:         "STP",
+}
+
+type Mc struct {
+	cmd MacroOptcode
+	arg string
+}
+
+func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[Mc] {
+	r := &Stack[Mc]{}
+
+	for macroWord := range macroDef.Values() {
+		length := len(macroWord)
+
+		switch {
+		case length > 2 && (macroWord[0] == '@' && macroWord[length-1] == '@'):
+			inner := macroWord[1 : length-1]
+			r.Push(Mc{cmd: M_L, arg: inner})
+		case length > 2 && (macroWord[0] == '#' && macroWord[length-1] == '#'):
+			inner := macroWord[1 : length-1]
+			r.Push(Mc{cmd: M_STR, arg: inner})
+		case macroWord == "@numArgs":
+			r.Push(Mc{cmd: M_NUM_ARGS})
+		case macroWord == "@depth":
+			r.Push(Mc{cmd: M_DEPTH})
+		case macroWord == "@push":
+			r.Push(Mc{cmd: M_PUSH})
+		case macroWord == "@>":
+			r.Push(Mc{cmd: M_GRI})
+		case macroWord == "@=":
+			r.Push(Mc{cmd: M_EQI})
+		case macroWord == "@$":
+			r.Push(Mc{cmd: M_PRINT_STACK})
+		case macroWord == "@if":
+			lbl := mc.label.CreateNewLabel()
+			r.Push(Mc{cmd: M_JIN, arg: lbl})
+			mc.labels.Push(lbl)
+		case macroWord == "@else":
+			lbl := mc.label.CreateNewLabel()
+			r.Push(Mc{cmd: M_JMP, arg: lbl})
+			r.Push(Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
+			mc.labels.Push(lbl)
+		case macroWord == "@then":
+			r.Push(Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
+		default:
+			r.Push(Mc{cmd: M_PRINT, arg: macroWord})
+		}
+	}
+
+	r.Push(Mc{cmd: M_STP})
+
+	return r
+}
+
+var macroVMStack Stack[string]
+
+type MacroVM struct {
+	register map[string]*Stack[string]
+	stack    *Stack[string]
+}
+
+func NewMacroVM() *MacroVM {
+	r := new(MacroVM)
+	r.register = make(map[string]*Stack[string])
+	r.stack = &macroVMStack
+	return r
+}
+
+func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) error {
+	var (
+		word  string
+		ok    bool
+		count int
+	)
+
+	if word, ok = wordDef.Pop(); !ok {
+		return fmt.Errorf("unable to pop \"%s\". Not enough arguments", register)
+	}
+
+	vm.register[register] = NewStack[string]()
+
+	if word == "]" {
+		// inside block
+		count = 1
+		for {
+			if word, ok = wordDef.Pop(); !ok {
+				return fmt.Errorf("unable to pop word from block definition. Number of \"]\" and of \"[\" is not equal")
+			}
+			if word == "[" {
+				count--
+				if count == 0 {
+					break
+				}
+			} else if word == "]" {
+				count++
+			}
+
+			vm.register[register].Push(word)
+		}
+		vm.register[register].Reverse()
+	} else {
+		// single word
+		vm.register[register].Push(word)
+	}
+
+	return nil
+}
+
+func popToInt(s *Stack[string]) (int64, error) {
+	a := s.ExPop()
+
+	if !isNumeric(a) {
+		return 0, fmt.Errorf("unable to parse %s as integer", a)
+	}
+
+	if b, err := strconv.ParseInt(a, 10, 64); err != nil {
+		return 0, err
+	} else {
+		return b, nil
+	}
+}
+
+func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
+	done := false
+
+	for progPtr := 0; !done; progPtr++ {
+		cmd := &code.data[progPtr]
+
+		switch cmd.cmd {
+		case M_L:
+			if err := vm.wordInRegister(result, cmd.arg); err != nil {
+				return err
+			}
+		case M_STR:
+			for w := range vm.register[cmd.arg].Values() {
+				result.Push(w)
+			}
+		case M_NUM_ARGS:
+			fmt.Printf("numargs: %d\n", result.Len())
+			vm.stack.Push(fmt.Sprint(result.Len()))
+		case M_DEPTH:
+			vm.stack.Push(fmt.Sprint(vm.stack.Len()))
+		case M_PUSH:
+			// TODO: push blocks
+			vm.stack.Push(result.ExPop())
+		case M_GRI:
+			var (
+				a   int64
+				b   int64
+				v   int64
+				err error
+			)
+			if a, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+
+			if b, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if a < b {
+				v = 1
+			}
+			vm.stack.Push(fmt.Sprint(v))
+		case M_EQI:
+			var (
+				a   int64
+				b   int64
+				v   int64
+				err error
+			)
+			if a, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+
+			if b, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if a == b {
+				v = 1
+			}
+			vm.stack.Push(fmt.Sprint(v))
+		case M_PRINT_STACK:
+			vm.stack.Reverse()
+			for word := range vm.stack.Values() {
+				result.Push(word)
+			}
+			vm.stack.Reset()
+		case M_JIN:
+			var (
+				a   int64
+				err error
+			)
+			if a, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if a == 0 {
+				// todo optimise
+				for index, c := range code.All() {
+					if c.cmd == M_NOP && c.arg == cmd.arg {
+						progPtr = index
+					}
+				}
+			}
+		case M_JMP:
+			// todo optimise
+			for index, c := range code.All() {
+				if c.cmd == M_NOP && c.arg == cmd.arg {
+					progPtr = index
+				}
+			}
+		case M_NOP:
+			// pass
+		case M_PRINT:
+			if isString(cmd.arg) {
+				for key := range vm.register {
+					marker := fmt.Sprintf("#%s#", key)
+
+					if strings.Contains(cmd.arg, marker) {
+						def := strings.Join(vm.register[key].data, " ")
+						cmd.arg = strings.ReplaceAll(cmd.arg, marker, def)
+					}
+				}
+			}
+			result.Push(cmd.arg)
+		case M_STP:
+			done = true
+		default:
+			return fmt.Errorf("unknown opcode")
+		}
+	}
+	return nil
+}

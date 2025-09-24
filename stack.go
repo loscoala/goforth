@@ -84,6 +84,10 @@ func (s *Stack[T]) Values() iter.Seq[T] {
 	return slices.Values(s.data)
 }
 
+func (s *Stack[T]) All() iter.Seq2[int, T] {
+	return slices.All(s.data)
+}
+
 /*
 func (s *Stack) Append(stk *Stack) {
 	nstk := stk.Reverse()

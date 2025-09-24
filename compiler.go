@@ -24,22 +24,21 @@ type Compiler interface {
 }
 
 type ForthCompiler struct {
-	label    Label
-	blocks   Label
-	labels   Stack[string]
-	leaves   Stack[string]
-	whiles   Stack[string]
-	dos      Stack[string]
-	cases    Stack[int]
-	vars     Stack[string]
-	funcs    map[string]*Stack[string]
-	locals   SliceStack[string]
-	data     map[string]string
-	defs     map[string]*Stack[string]
-	inlines  map[string]*Stack[string]
-	register map[string]*Stack[string]
-	output   strings.Builder
-	Fvm      *ForthVM
+	label   Label
+	blocks  Label
+	labels  Stack[string]
+	leaves  Stack[string]
+	whiles  Stack[string]
+	dos     Stack[string]
+	cases   Stack[int]
+	vars    Stack[string]
+	funcs   map[string]*Stack[string]
+	locals  SliceStack[string]
+	data    map[string]string
+	defs    map[string]*Stack[string]
+	inlines map[string]*Stack[string]
+	output  strings.Builder
+	Fvm     *ForthVM
 }
 
 func NewForthCompiler() *ForthCompiler {
@@ -94,7 +93,6 @@ func NewForthCompiler() *ForthCompiler {
 	fc.funcs = make(map[string]*Stack[string])
 	fc.defs = make(map[string]*Stack[string])
 	fc.inlines = make(map[string]*Stack[string])
-	fc.register = make(map[string]*Stack[string])
 	fc.Fvm = NewForthVM()
 	return fc
 }
@@ -331,183 +329,31 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 	return nil
 }
 
-// inline block or single word
-func (fc *ForthCompiler) wordInRegister(wordDef *Stack[string], register string) error {
-	var (
-		word  string
-		ok    bool
-		count int
-	)
-
-	if word, ok = wordDef.Pop(); !ok {
-		return fmt.Errorf("unable to pop \"%s\". Not enough arguments", register)
-	}
-
-	fc.register[register] = NewStack[string]()
-
-	if word == "]" {
-		// inside block
-		count = 1
-		for {
-			if word, ok = wordDef.Pop(); !ok {
-				return fmt.Errorf("unable to pop word from block definition. Number of \"]\" and of \"[\" is not equal")
-			}
-			if word == "[" {
-				count--
-				if count == 0 {
-					break
-				}
-			} else if word == "]" {
-				count++
-			}
-
-			fc.register[register].Push(word)
-		}
-		fc.register[register].Reverse()
-	} else {
-		// single word
-		fc.register[register].Push(word)
-	}
-
-	return nil
-}
-
-func popToInt(s *Stack[string]) (int64, error) {
-	a := s.ExPop()
-
-	if !isNumeric(a) {
-		return 0, fmt.Errorf("unable to parse %s as integer", a)
-	}
-
-	if b, err := strconv.ParseInt(a, 10, 64); err != nil {
-		return 0, err
-	} else {
-		return b, nil
-	}
-}
-
-func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string], wordName string) (*Stack[string], error) {
+func (fc *ForthCompiler) evaluateMacro(wordDef *Stack[string]) (*Stack[string], error) {
 	result := NewStack[string]()
-	tmp := Stack[string]{}
-	skip := false
+
+	mc := MacroCompiler{}
+	mvm := NewMacroVM()
 
 	for word := range wordDef.Values() {
 		if macroDef, ok := fc.inlines[word]; ok {
 			// we have found a macro
+			for i := range macroDef.Values() {
+				fmt.Printf("(%s) ", i)
+			}
 
-			for macroWord := range macroDef.Values() {
-				if skip {
-					if macroWord != "@else" {
-						continue
-					}
-				}
+			fmt.Println("")
 
-				length := len(macroWord)
+			byteCode := mc.Compile(macroDef)
 
-				switch {
-				case length > 2 && macroWord[0] == '@' && macroWord[length-1] == '@':
-					inner := macroWord[1 : len(macroWord)-1]
-
-					if err := fc.wordInRegister(result, inner); err != nil {
-						return nil, fmt.Errorf("unable to evaluate macro \"%s\" in word \"%s\": %s", word, wordName, err.Error())
-					}
-				case length > 2 && macroWord[0] == '#' && macroWord[length-1] == '#':
-					inner := macroWord[1 : len(macroWord)-1]
-
-					if _, ok := fc.register[inner]; !ok {
-						return nil, fmt.Errorf("unable to evaluate macro \"%s\" in word \"%s\": register \"%s\" is not defined", word, wordName, inner)
-					}
-
-					for regWord := range fc.register[inner].Values() {
-						result.Push(regWord)
-					}
-				case isString(macroWord):
-					for key := range fc.register {
-						marker := fmt.Sprintf("#%s#", key)
-
-						if strings.Contains(macroWord, marker) {
-							def := strings.Join(fc.register[key].data, " ")
-							macroWord = strings.ReplaceAll(macroWord, marker, def)
-						}
-					}
-					result.Push(macroWord)
-				case macroWord == "@numArgs":
-					tmp.Push(fmt.Sprint(result.Len()))
-				case macroWord == "@>":
-					var (
-						a, b, v int64
-						err     error
-					)
-					if a, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if b, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if a < b {
-						v = 1
-					}
-					tmp.Push(fmt.Sprint(v))
-				case macroWord == "@<":
-					var (
-						a, b, v int64
-						err     error
-					)
-					if a, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if b, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if a > b {
-						v = 1
-					}
-					tmp.Push(fmt.Sprint(v))
-				case macroWord == "@=":
-					var (
-						a, b, v int64
-						err     error
-					)
-					if a, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if b, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if a == b {
-						v = 1
-					}
-					tmp.Push(fmt.Sprint(v))
-				case macroWord == "@dup":
-					tmp.Push(tmp.ExFetch())
-				case macroWord == "@.":
-					result.Push(tmp.ExPop())
-				case macroWord == "@if":
-					var (
-						a   int64
-						err error
-					)
-					if a, err = popToInt(&tmp); err != nil {
-						return nil, err
-					}
-					if a == 0 {
-						skip = true
-					}
-				case macroWord == "@else":
-					skip = !skip
-				case macroWord == "@push":
-					tmp.Push(result.ExPop())
-				default:
-					result.Push(macroWord)
-				}
+			if err := mvm.Run(byteCode, result); err != nil {
+				return nil, err
 			}
 		} else {
 			// just push the word
 			result.Push(word)
 		}
 	}
-
-	clear(fc.register)
 
 	return result, nil
 }
@@ -522,7 +368,7 @@ func (fc *ForthCompiler) Preprocess() error {
 
 	for word := range fc.defs {
 		for fc.defs[word].ContainsAny(macroNames) {
-			if result, err := fc.evaluateMacro(fc.defs[word], word); err != nil {
+			if result, err := fc.evaluateMacro(fc.defs[word]); err != nil {
 				return err
 			} else {
 				fc.defs[word] = result

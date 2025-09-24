@@ -711,7 +711,7 @@ func (fc *ForthCompiler) printPreprocess(word string) error {
 	printWordColored(fc, word, fc.defs[word])
 
 	for fc.defs[word].ContainsAny(macroNames) {
-		if result, err := fc.evaluateMacro(fc.defs[word], word); err != nil {
+		if result, err := fc.evaluateMacro(fc.defs[word]); err != nil {
 			return err
 		} else {
 			fc.defs[word] = result
