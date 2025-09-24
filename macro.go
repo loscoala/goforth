@@ -140,7 +140,6 @@ func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) (*Sta
 
 			result.Push(word)
 		}
-		result.Reverse()
 	} else {
 		// single word
 		result.Push(word)
@@ -192,7 +191,6 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 			if word, err = vm.wordInRegister(result, cmd.arg); err != nil {
 				return err
 			}
-			word.Reverse()
 			for w := range word.Values() {
 				vm.stack.Push(w)
 			}
@@ -233,7 +231,6 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 			}
 			vm.stack.Push(fmt.Sprint(v))
 		case M_PRINT_STACK:
-			vm.stack.Reverse()
 			for word := range vm.stack.Values() {
 				result.Push(word)
 			}
