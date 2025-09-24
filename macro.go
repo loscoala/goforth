@@ -260,17 +260,18 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 		case M_NOP:
 			// pass
 		case M_PRINT:
-			if isString(cmd.arg) {
+			arg := cmd.arg
+			if isString(arg) {
 				for key := range vm.register {
 					marker := fmt.Sprintf("#%s#", key)
 
-					if strings.Contains(cmd.arg, marker) {
+					if strings.Contains(arg, marker) {
 						def := strings.Join(vm.register[key].data, " ")
-						cmd.arg = strings.ReplaceAll(cmd.arg, marker, def)
+						arg = strings.ReplaceAll(arg, marker, def)
 					}
 				}
 			}
-			result.Push(cmd.arg)
+			result.Push(arg)
 		case M_STP:
 			done = true
 		default:
