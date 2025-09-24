@@ -109,7 +109,7 @@ func NewMacroVM() *MacroVM {
 	return r
 }
 
-func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) error {
+func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) (*Stack[string], error) {
 	var (
 		word  string
 		ok    bool
@@ -117,17 +117,17 @@ func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) error
 	)
 
 	if word, ok = wordDef.Pop(); !ok {
-		return fmt.Errorf("unable to pop \"%s\". Not enough arguments", register)
+		return nil, fmt.Errorf("unable to pop \"%s\". Not enough arguments", register)
 	}
 
-	vm.register[register] = NewStack[string]()
+	result := NewStack[string]()
 
 	if word == "]" {
 		// inside block
 		count = 1
 		for {
 			if word, ok = wordDef.Pop(); !ok {
-				return fmt.Errorf("unable to pop word from block definition. Number of \"]\" and of \"[\" is not equal")
+				return nil, fmt.Errorf("unable to pop word from block definition. Number of \"]\" and of \"[\" is not equal")
 			}
 			if word == "[" {
 				count--
@@ -138,15 +138,15 @@ func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) error
 				count++
 			}
 
-			vm.register[register].Push(word)
+			result.Push(word)
 		}
-		vm.register[register].Reverse()
+		result.Reverse()
 	} else {
 		// single word
-		vm.register[register].Push(word)
+		result.Push(word)
 	}
 
-	return nil
+	return result, nil
 }
 
 func popToInt(s *Stack[string]) (int64, error) {
@@ -171,7 +171,8 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 
 		switch cmd.cmd {
 		case M_L:
-			if err := vm.wordInRegister(result, cmd.arg); err != nil {
+			var err error
+			if vm.register[cmd.arg], err = vm.wordInRegister(result, cmd.arg); err != nil {
 				return err
 			}
 		case M_STR:
@@ -179,13 +180,22 @@ func (vm *MacroVM) Run(code *Stack[Mc], result *Stack[string]) error {
 				result.Push(w)
 			}
 		case M_NUM_ARGS:
-			fmt.Printf("numargs: %d\n", result.Len())
+			// todo: numArgs shows the wrong number if a block is present
 			vm.stack.Push(fmt.Sprint(result.Len()))
 		case M_DEPTH:
 			vm.stack.Push(fmt.Sprint(vm.stack.Len()))
 		case M_PUSH:
-			// TODO: push blocks
-			vm.stack.Push(result.ExPop())
+			var (
+				err  error
+				word *Stack[string]
+			)
+			if word, err = vm.wordInRegister(result, cmd.arg); err != nil {
+				return err
+			}
+			word.Reverse()
+			for w := range word.Values() {
+				vm.stack.Push(w)
+			}
 		case M_GRI:
 			var (
 				a   int64
