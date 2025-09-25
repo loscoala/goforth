@@ -20,11 +20,15 @@ const (
 	M_DEPTH
 	M_PUSH
 	M_GRI
+	M_LSI
 	M_EQI
 	M_PRINT_STACK
 	M_JIN
 	M_JMP
 	M_NOP
+	M_DROP
+	M_SWAP
+	M_PRS
 	M_PRINT
 	M_STP
 )
@@ -36,10 +40,14 @@ var MacroName = map[MacroOptcode]string{
 	M_PUSH:        "PUSH",
 	M_GRI:         "GRI",
 	M_EQI:         "EQI",
+	M_LSI:         "LSI",
 	M_PRINT_STACK: "PRINT_STACK",
 	M_JIN:         "JIN",
 	M_JMP:         "JMP",
 	M_NOP:         "NOP",
+	M_DROP:        "DROP",
+	M_SWAP:        "SWAP",
+	M_PRS:         "PRS",
 	M_PRINT:       "PRINT",
 	M_STP:         "STP",
 }
@@ -71,10 +79,18 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 			r.Push(&Mc{cmd: M_PUSH})
 		case macroWord == "@>":
 			r.Push(&Mc{cmd: M_GRI})
+		case macroWord == "@<":
+			r.Push(&Mc{cmd: M_LSI})
 		case macroWord == "@=":
 			r.Push(&Mc{cmd: M_EQI})
 		case macroWord == "@$":
 			r.Push(&Mc{cmd: M_PRINT_STACK})
+		case macroWord == "@drop":
+			r.Push(&Mc{cmd: M_DROP})
+		case macroWord == "@swap":
+			r.Push(&Mc{cmd: M_SWAP})
+		case macroWord == "@.":
+			r.Push(&Mc{cmd: M_PRS})
 		case macroWord == "@if":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_JIN, arg: lbl})
@@ -224,6 +240,23 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 				v = 1
 			}
 			vm.stack.Push(fmt.Sprint(v))
+		case M_LSI:
+			var (
+				a   int64
+				b   int64
+				v   int64
+				err error
+			)
+			if a, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if b, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if a > b {
+				v = 1
+			}
+			vm.stack.Push(fmt.Sprint(v))
 		case M_EQI:
 			a := vm.stack.ExPop()
 			b := vm.stack.ExPop()
@@ -247,6 +280,15 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			progPtr = cmd.argInt
 		case M_NOP:
 			// pass
+		case M_DROP:
+			vm.stack.ExPop()
+		case M_SWAP:
+			n := len(vm.stack.data) - 1
+			a := vm.stack.data[n]
+			vm.stack.data[n] = vm.stack.data[n-1]
+			vm.stack.data[n-1] = a
+		case M_PRS:
+			result.Push(vm.stack.ExPop())
 		case M_PRINT:
 			arg := cmd.arg
 			if isString(arg) {
