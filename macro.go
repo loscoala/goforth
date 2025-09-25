@@ -26,6 +26,7 @@ const (
 	M_JIN
 	M_JMP
 	M_NOP
+	M_DUP
 	M_DROP
 	M_SWAP
 	M_PRS
@@ -45,6 +46,7 @@ var MacroName = map[MacroOptcode]string{
 	M_JIN:         "JIN",
 	M_JMP:         "JMP",
 	M_NOP:         "NOP",
+	M_DUP:         "DUP",
 	M_DROP:        "DROP",
 	M_SWAP:        "SWAP",
 	M_PRS:         "PRS",
@@ -85,6 +87,8 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 			r.Push(&Mc{cmd: M_EQI})
 		case macroWord == "@$":
 			r.Push(&Mc{cmd: M_PRINT_STACK})
+		case macroWord == "@dup":
+			r.Push(&Mc{cmd: M_DUP})
 		case macroWord == "@drop":
 			r.Push(&Mc{cmd: M_DROP})
 		case macroWord == "@swap":
@@ -280,6 +284,8 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			progPtr = cmd.argInt
 		case M_NOP:
 			// pass
+		case M_DUP:
+			vm.stack.Push(vm.stack.data[len(vm.stack.data)-1])
 		case M_DROP:
 			vm.stack.ExPop()
 		case M_SWAP:
