@@ -335,14 +335,17 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 
 func (fc *ForthCompiler) evaluateMacro(wordName string, mvm *MacroVM) (*Stack[string], error) {
 	result := NewStack[string]()
+	skip := false
 
 	for word := range fc.defs[wordName].Values() {
-		if _, ok := fc.inlines[word]; ok {
+		if _, ok := fc.inlines[word]; ok && !skip {
 			// we have found a macro
 
 			if err := mvm.Run(fc.macros[word], result); err != nil {
 				return nil, err
 			}
+
+			skip = true
 		} else {
 			// just push the word
 			result.Push(word)

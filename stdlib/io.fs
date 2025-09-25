@@ -11,6 +11,8 @@
   @then
 ;
 
+\ macro ends at beginning of word definition
+\ example: ls -lhA cmd
 : inline cmd
   @numArgs 0 @push @> @if
     @push cmd
@@ -20,6 +22,23 @@
     @else
       [ @$ ] @1@ [ a" #1#" shell ] alloc
     @then
+  @then
+;
+
+( ***************************
+  macro ends at | word
+  : test
+    | ls -lhA $$
+    | htop $$
+    | btop $$
+    | du -sh . $$
+  ;
+  *************************** )
+: inline $$
+  @push @dup | @push @= @if
+    @drop [ @$ ] @1@ [ a" #1#" shell ] alloc
+  @else
+    $$
   @then
 ;
 
