@@ -217,7 +217,6 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			if a, err = popToInt(vm.stack); err != nil {
 				return err
 			}
-
 			if b, err = popToInt(vm.stack); err != nil {
 				return err
 			}
@@ -226,37 +225,22 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			}
 			vm.stack.Push(fmt.Sprint(v))
 		case M_EQI:
-			var (
-				a   int64
-				b   int64
-				v   int64
-				err error
-			)
-			if a, err = popToInt(vm.stack); err != nil {
-				return err
-			}
+			a := vm.stack.ExPop()
+			b := vm.stack.ExPop()
 
-			if b, err = popToInt(vm.stack); err != nil {
-				return err
-			}
 			if a == b {
-				v = 1
+				vm.stack.Push("1")
+			} else {
+				vm.stack.Push("0")
 			}
-			vm.stack.Push(fmt.Sprint(v))
 		case M_PRINT_STACK:
 			for _, word := range vm.stack.Backward() {
 				result.Push(word)
 			}
 			vm.stack.Reset()
 		case M_JIN:
-			var (
-				a   int64
-				err error
-			)
-			if a, err = popToInt(vm.stack); err != nil {
-				return err
-			}
-			if a == 0 {
+			a := vm.stack.ExPop()
+			if a == "0" {
 				progPtr = cmd.argInt
 			}
 		case M_JMP:
