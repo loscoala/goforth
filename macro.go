@@ -9,6 +9,7 @@ import (
 type MacroCompiler struct {
 	label  Label
 	labels Stack[string]
+	whiles Stack[string]
 }
 
 type MacroOptcode int
@@ -22,6 +23,7 @@ const (
 	M_GRI
 	M_LSI
 	M_EQI
+	M_ADI
 	M_PRINT_STACK
 	M_JIN
 	M_JMP
@@ -41,6 +43,7 @@ var MacroName = map[MacroOptcode]string{
 	M_PUSH:        "PUSH",
 	M_GRI:         "GRI",
 	M_EQI:         "EQI",
+	M_ADI:         "ADI",
 	M_LSI:         "LSI",
 	M_PRINT_STACK: "PRINT_STACK",
 	M_JIN:         "JIN",
@@ -95,6 +98,8 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 			r.Push(&Mc{cmd: M_SWAP})
 		case macroWord == "@.":
 			r.Push(&Mc{cmd: M_PRS})
+		case macroWord == "@add":
+			r.Push(&Mc{cmd: M_ADI})
 		case macroWord == "@if":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_JIN, arg: lbl})
@@ -106,6 +111,17 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 			mc.labels.Push(lbl)
 		case macroWord == "@then":
 			r.Push(&Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
+		case macroWord == "@begin":
+			lbl := mc.label.CreateNewLabel()
+			r.Push(&Mc{cmd: M_NOP, arg: lbl})
+			mc.labels.Push(lbl)
+		case macroWord == "@while":
+			lbl := mc.label.CreateNewLabel()
+			r.Push(&Mc{cmd: M_JIN, arg: lbl})
+			mc.whiles.Push(lbl)
+		case macroWord == "@repeat":
+			r.Push(&Mc{cmd: M_JMP, arg: mc.labels.ExPop()})
+			r.Push(&Mc{cmd: M_NOP, arg: mc.whiles.ExPop()})
 		default:
 			r.Push(&Mc{cmd: M_PRINT, arg: macroWord})
 		}
@@ -270,6 +286,20 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			} else {
 				vm.stack.Push("0")
 			}
+		case M_ADI:
+			var (
+				a   int64
+				b   int64
+				err error
+			)
+			if a, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			if b, err = popToInt(vm.stack); err != nil {
+				return err
+			}
+			v := a + b
+			vm.stack.Push(fmt.Sprint(v))
 		case M_PRINT_STACK:
 			for _, word := range vm.stack.Backward() {
 				result.Push(word)
