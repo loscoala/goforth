@@ -23,6 +23,7 @@ const (
 	M_GRI
 	M_LSI
 	M_EQI
+	M_NOT
 	M_ADI
 	M_PRINT_STACK
 	M_JIN
@@ -43,6 +44,7 @@ var MacroName = map[MacroOptcode]string{
 	M_PUSH:        "PUSH",
 	M_GRI:         "GRI",
 	M_EQI:         "EQI",
+	M_NOT:         "NOT",
 	M_ADI:         "ADI",
 	M_LSI:         "LSI",
 	M_PRINT_STACK: "PRINT_STACK",
@@ -94,6 +96,8 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 			r.Push(&Mc{cmd: M_LSI})
 		case "@=":
 			r.Push(&Mc{cmd: M_EQI})
+		case "@not":
+			r.Push(&Mc{cmd: M_NOT})
 		case "@$":
 			r.Push(&Mc{cmd: M_PRINT_STACK})
 		case "@dup":
@@ -286,6 +290,14 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			b := vm.stack.ExPop()
 
 			if a == b {
+				vm.stack.Push("1")
+			} else {
+				vm.stack.Push("0")
+			}
+		case M_NOT:
+			a := vm.stack.ExPop()
+
+			if a == "0" {
 				vm.stack.Push("1")
 			} else {
 				vm.stack.Push("0")
