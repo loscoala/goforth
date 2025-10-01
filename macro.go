@@ -69,57 +69,63 @@ func (mc *MacroCompiler) Compile(macroDef *Stack[string]) *Stack[*Mc] {
 	for macroWord := range macroDef.Values() {
 		length := len(macroWord)
 
-		switch {
-		case length > 2 && (macroWord[0] == '@' && macroWord[length-1] == '@'):
+		if length > 2 && (macroWord[0] == '@' && macroWord[length-1] == '@') {
 			inner := macroWord[1 : length-1]
 			r.Push(&Mc{cmd: M_L, arg: inner})
-		case length > 2 && (macroWord[0] == '#' && macroWord[length-1] == '#'):
+			continue
+		}
+
+		if length > 2 && (macroWord[0] == '#' && macroWord[length-1] == '#') {
 			inner := macroWord[1 : length-1]
 			r.Push(&Mc{cmd: M_STR, arg: inner})
-		case macroWord == "@numArgs":
+			continue
+		}
+
+		switch macroWord {
+		case "@numArgs":
 			r.Push(&Mc{cmd: M_NUM_ARGS})
-		case macroWord == "@depth":
+		case "@depth":
 			r.Push(&Mc{cmd: M_DEPTH})
-		case macroWord == "@push":
+		case "@push":
 			r.Push(&Mc{cmd: M_PUSH})
-		case macroWord == "@>":
+		case "@>":
 			r.Push(&Mc{cmd: M_GRI})
-		case macroWord == "@<":
+		case "@<":
 			r.Push(&Mc{cmd: M_LSI})
-		case macroWord == "@=":
+		case "@=":
 			r.Push(&Mc{cmd: M_EQI})
-		case macroWord == "@$":
+		case "@$":
 			r.Push(&Mc{cmd: M_PRINT_STACK})
-		case macroWord == "@dup":
+		case "@dup":
 			r.Push(&Mc{cmd: M_DUP})
-		case macroWord == "@drop":
+		case "@drop":
 			r.Push(&Mc{cmd: M_DROP})
-		case macroWord == "@swap":
+		case "@swap":
 			r.Push(&Mc{cmd: M_SWAP})
-		case macroWord == "@.":
+		case "@.":
 			r.Push(&Mc{cmd: M_PRS})
-		case macroWord == "@add":
+		case "@add":
 			r.Push(&Mc{cmd: M_ADI})
-		case macroWord == "@if":
+		case "@if":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_JIN, arg: lbl})
 			mc.labels.Push(lbl)
-		case macroWord == "@else":
+		case "@else":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_JMP, arg: lbl})
 			r.Push(&Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
 			mc.labels.Push(lbl)
-		case macroWord == "@then":
+		case "@then":
 			r.Push(&Mc{cmd: M_NOP, arg: mc.labels.ExPop()})
-		case macroWord == "@begin":
+		case "@begin":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_NOP, arg: lbl})
 			mc.labels.Push(lbl)
-		case macroWord == "@while":
+		case "@while":
 			lbl := mc.label.CreateNewLabel()
 			r.Push(&Mc{cmd: M_JIN, arg: lbl})
 			mc.whiles.Push(lbl)
-		case macroWord == "@repeat":
+		case "@repeat":
 			r.Push(&Mc{cmd: M_JMP, arg: mc.labels.ExPop()})
 			r.Push(&Mc{cmd: M_NOP, arg: mc.whiles.ExPop()})
 		default:
@@ -245,10 +251,8 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			}
 		case M_GRI:
 			var (
-				a   int64
-				b   int64
-				v   int64
-				err error
+				a, b int64
+				err  error
 			)
 			if a, err = popToInt(vm.stack); err != nil {
 				return err
@@ -257,15 +261,14 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 				return err
 			}
 			if a < b {
-				v = 1
+				vm.stack.Push("1")
+			} else {
+				vm.stack.Push("0")
 			}
-			vm.stack.Push(fmt.Sprint(v))
 		case M_LSI:
 			var (
-				a   int64
-				b   int64
-				v   int64
-				err error
+				a, b int64
+				err  error
 			)
 			if a, err = popToInt(vm.stack); err != nil {
 				return err
@@ -274,9 +277,10 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 				return err
 			}
 			if a > b {
-				v = 1
+				vm.stack.Push("1")
+			} else {
+				vm.stack.Push("0")
 			}
-			vm.stack.Push(fmt.Sprint(v))
 		case M_EQI:
 			a := vm.stack.ExPop()
 			b := vm.stack.ExPop()
@@ -288,9 +292,8 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			}
 		case M_ADI:
 			var (
-				a   int64
-				b   int64
-				err error
+				a, b int64
+				err  error
 			)
 			if a, err = popToInt(vm.stack); err != nil {
 				return err
@@ -298,8 +301,7 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			if b, err = popToInt(vm.stack); err != nil {
 				return err
 			}
-			v := a + b
-			vm.stack.Push(fmt.Sprint(v))
+			vm.stack.Push(fmt.Sprint(a + b))
 		case M_PRINT_STACK:
 			for _, word := range vm.stack.Backward() {
 				result.Push(word)
