@@ -589,7 +589,7 @@ func (fc *ForthCompiler) CompileToC() error {
 		result.WriteString("\n\n")
 	}
 
-	for _, cmd := range strings.Split(fc.ByteCode(), ";") {
+	for cmd := range strings.SplitSeq(fc.ByteCode(), ";") {
 		if cmd == "" {
 			continue
 		}
