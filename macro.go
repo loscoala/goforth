@@ -206,6 +206,30 @@ func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) (*Sta
 	return result, nil
 }
 
+func numberOfBlocksOrWords(data *Stack[string]) int {
+	var (
+		counter, result int
+	)
+
+	for _, word := range data.Backward() {
+		switch word {
+		case "]":
+			counter++
+		case "[":
+			counter--
+			if counter == 0 {
+				result++
+			}
+		default:
+			if counter == 0 {
+				result++
+			}
+		}
+	}
+
+	return result
+}
+
 func popToInt(s *Stack[string]) (int64, error) {
 	a := s.ExPop()
 
@@ -238,8 +262,7 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 				result.Push(w)
 			}
 		case M_NUM_ARGS:
-			// todo: numArgs shows the wrong number if a block is present
-			vm.stack.Push(fmt.Sprint(result.Len()))
+			vm.stack.Push(fmt.Sprint(numberOfBlocksOrWords(result)))
 		case M_DEPTH:
 			vm.stack.Push(fmt.Sprint(vm.stack.Len()))
 		case M_PUSH:
