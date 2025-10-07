@@ -2,46 +2,6 @@
 : ?? memsize 0 mem ;
 : mem ?do i @ ?dup if i . colon . space then loop ;
 
-: ls [ ls -lhA --color=always ] cmd ;
-: inline vim
-  @numArgs 0 @push @> @if
-    @file@ [ a" vim #file#" shell ] alloc
-  @else
-    [ a" vim" shell ] alloc
-  @then
-;
-
-\ macro ends at beginning of word definition
-\ example: ls -lhA cmd
-: inline cmd
-  @numArgs 0 @push @> @if
-    @push cmd
-  @else
-    @depth 0 @push @= @if
-      [ a" bash" shell ] alloc
-    @else
-      [ @$ ] @1@ [ a" #1#" shell ] alloc
-    @then
-  @then
-;
-
-( ***************************
-  macro ends at | word
-  : test
-    | ls -lhA $$
-    | htop $$
-    | btop $$
-    | du -sh . $$
-  ;
-  *************************** )
-: inline $$
-  @push @dup | @push @= @if
-    @drop [ @$ ] @1@ [ a" #1#" shell ] alloc
-  @else
-    $$
-  @then
-;
-
 \ iend is the upper limit inside a do .. loop
 : iend 2r> 2dup 2>r drop ;
 : i r@ ;
