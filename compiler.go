@@ -1038,18 +1038,18 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 	} else if word == "else" || word == "endof" {
 		lbl := fc.label.CreateNewLabel()
 		result.Push("JMP #" + lbl)
-		result.Push("#" + fc.labels.ExPop() + " NOP")
+		result.Push("NOP #" + fc.labels.ExPop())
 		fc.labels.Push(lbl)
 	} else if word == "then" {
-		result.Push("#" + fc.labels.ExPop() + " NOP")
+		result.Push("NOP #" + fc.labels.ExPop())
 	} else if word == "endcase" {
 		num := fc.cases.ExPop()
-		for i := 0; i < num; i++ {
-			result.Push("#" + fc.labels.ExPop() + " NOP")
+		for range num {
+			result.Push("NOP #" + fc.labels.ExPop())
 		}
 	} else if word == "begin" {
 		lbl := fc.label.CreateNewLabel()
-		result.Push("#" + lbl + " NOP")
+		result.Push("NOP #" + lbl)
 		fc.labels.Push(lbl)
 	} else if word == "do" || word == "?do" {
 		result.Push("TTR") // rstack: end i
@@ -1062,7 +1062,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 			fc.dos.Push(lbl)
 		}
 		lbl := fc.label.CreateNewLabel()
-		result.Push("#" + lbl + " NOP")
+		result.Push("NOP #" + lbl)
 		fc.labels.Push(lbl)
 	} else if word == "while" {
 		lbl := fc.label.CreateNewLabel()
@@ -1092,10 +1092,10 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 		result.Push("NOT")
 		result.Push("JIN #" + fc.labels.ExPop())
 		if fc.leaves.Len() > 0 {
-			result.Push("#" + fc.leaves.ExPop() + " NOP")
+			result.Push("NOP #" + fc.leaves.ExPop())
 		}
 		if fc.dos.Len() > 0 {
-			result.Push("#" + fc.dos.ExPop() + " NOP")
+			result.Push("NOP #" + fc.dos.ExPop())
 		}
 		result.Push("TFR")
 		result.Push("DRP")
@@ -1107,15 +1107,15 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 	} else if word == "until" {
 		result.Push("JIN #" + fc.labels.ExPop())
 		if fc.leaves.Len() > 0 {
-			result.Push("#" + fc.leaves.ExPop() + " NOP")
+			result.Push("NOP #" + fc.leaves.ExPop())
 		}
 	} else if word == "again" || word == "repeat" {
 		result.Push("JMP #" + fc.labels.ExPop())
 		if fc.leaves.Len() > 0 {
-			result.Push("#" + fc.leaves.ExPop() + " NOP")
+			result.Push("NOP #" + fc.leaves.ExPop())
 		}
 		if word == "repeat" && fc.whiles.Len() > 0 {
-			result.Push("#" + fc.whiles.ExPop() + " NOP")
+			result.Push("NOP #" + fc.whiles.ExPop())
 		}
 	} else {
 		return fmt.Errorf("word \"%s\" unknown", word)

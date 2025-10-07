@@ -596,53 +596,50 @@ func (fc *ForthCompiler) CompileToC() error {
 
 		scmd := strings.Split(cmd, " ")
 
-		if len(scmd) == 2 && scmd[0][0] == '#' {
-			// NOP
-			result.WriteString(fmt.Sprintf("l%s:\n%s;\n", scmd[0][1:], spaces(indent)))
-		} else {
-			switch scmd[0] {
-			case "GDEF":
-				globals(scmd[1])
-			case "GSET":
-				result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
-			case "GBL":
-				result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
-			case "JMP":
-				result.WriteString(fmt.Sprintf("%sgoto l%s;\n", spaces(indent), scmd[1][1:]))
-			case "JIN":
-				result.WriteString(fmt.Sprintf("%sif (fvm_jin()) goto l%s;\n", spaces(indent), scmd[1][1:]))
-			case "L":
-				result.WriteString(fmt.Sprintf("%sfvm_push(fvm_cell(%s));\n", spaces(indent), scmd[1]))
-			case "LF":
-				result.WriteString(fmt.Sprintf("%sfvm_push(fvm_cell_d(%s));\n", spaces(indent), scmd[1]))
-			case "LCTX":
-				result.WriteString(fmt.Sprintf("%s{\n", spaces(indent)))
-				indent += 2
-			case "LCLR":
-				indent -= 2
-				result.WriteString(fmt.Sprintf("%s}\n", spaces(indent)))
-			case "LDEF":
-				result.WriteString(fmt.Sprintf("%scell_t %s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
-			case "LCL":
-				result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
-			case "LSET":
-				result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
-			case "SUB":
-				result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
-			case "END":
-				result.WriteString("}\n\n")
-			case "MAIN":
-				result.WriteString("int main(int argc, char** argv) {\n  fvm_argc = (int64_t)argc;\n  fvm_argv = argv;\n")
-				if ShowExecutionTime {
-					result.WriteString("  fvm_time();\n")
-				}
-			case "CALL":
-				result.WriteString(fmt.Sprintf("%s%s(); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
-			case "REF":
-				result.WriteString(fmt.Sprintf("%sfvm_ref(&%s); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
-			default:
-				result.WriteString(fmt.Sprintf("%sfvm_%s();\n", spaces(indent), strings.ToLower(scmd[0])))
+		switch scmd[0] {
+		case "NOP":
+			result.WriteString(fmt.Sprintf("l%s:\n%s;\n", scmd[1][1:], spaces(indent)))
+		case "GDEF":
+			globals(scmd[1])
+		case "GSET":
+			result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
+		case "GBL":
+			result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), globals(scmd[1]), scmd[1]))
+		case "JMP":
+			result.WriteString(fmt.Sprintf("%sgoto l%s;\n", spaces(indent), scmd[1][1:]))
+		case "JIN":
+			result.WriteString(fmt.Sprintf("%sif (fvm_jin()) goto l%s;\n", spaces(indent), scmd[1][1:]))
+		case "L":
+			result.WriteString(fmt.Sprintf("%sfvm_push(fvm_cell(%s));\n", spaces(indent), scmd[1]))
+		case "LF":
+			result.WriteString(fmt.Sprintf("%sfvm_push(fvm_cell_d(%s));\n", spaces(indent), scmd[1]))
+		case "LCTX":
+			result.WriteString(fmt.Sprintf("%s{\n", spaces(indent)))
+			indent += 2
+		case "LCLR":
+			indent -= 2
+			result.WriteString(fmt.Sprintf("%s}\n", spaces(indent)))
+		case "LDEF":
+			result.WriteString(fmt.Sprintf("%scell_t %s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
+		case "LCL":
+			result.WriteString(fmt.Sprintf("%sfvm_push(%s); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
+		case "LSET":
+			result.WriteString(fmt.Sprintf("%s%s = fvm_pop(); // %s\n", spaces(indent), locals(scmd[1]), scmd[1]))
+		case "SUB":
+			result.WriteString(fmt.Sprintf("static void %s(void) { // %s\n", funcs(scmd[1]), scmd[1]))
+		case "END":
+			result.WriteString("}\n\n")
+		case "MAIN":
+			result.WriteString("int main(int argc, char** argv) {\n  fvm_argc = (int64_t)argc;\n  fvm_argv = argv;\n")
+			if ShowExecutionTime {
+				result.WriteString("  fvm_time();\n")
 			}
+		case "CALL":
+			result.WriteString(fmt.Sprintf("%s%s(); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
+		case "REF":
+			result.WriteString(fmt.Sprintf("%sfvm_ref(&%s); // %s\n", spaces(indent), funcs(scmd[1]), scmd[1]))
+		default:
+			result.WriteString(fmt.Sprintf("%sfvm_%s();\n", spaces(indent), strings.ToLower(scmd[0])))
 		}
 	}
 

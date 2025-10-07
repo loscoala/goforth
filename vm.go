@@ -834,158 +834,155 @@ func parseCode(codeStr string) *Code {
 		//fmt.Println(cmd)
 		scmd := strings.Split(cmd, " ")
 
-		if len(scmd) == 2 && scmd[0][0] == '#' {
-			// NOP
-			code.labels[scmd[0]] = pos
-			cells = append(cells, Cell{cmd: NOP, argStr: scmd[0]})
-		} else {
-			switch scmd[0] {
-			case "RDI":
-				cells = append(cells, Cell{cmd: RDI})
-			case "PRI":
-				cells = append(cells, Cell{cmd: PRI})
-			case "PRA":
-				cells = append(cells, Cell{cmd: PRA})
-			case "DUP":
-				cells = append(cells, Cell{cmd: DUP})
-			case "OVR":
-				cells = append(cells, Cell{cmd: OVR})
-			case "TVR":
-				cells = append(cells, Cell{cmd: TVR})
-			case "TWP":
-				cells = append(cells, Cell{cmd: TWP})
-			case "QDP":
-				cells = append(cells, Cell{cmd: QDP})
-			case "ROT":
-				cells = append(cells, Cell{cmd: ROT})
-			case "TDP":
-				cells = append(cells, Cell{cmd: TDP})
-			case "DRP":
-				cells = append(cells, Cell{cmd: DRP})
-			case "SWP":
-				cells = append(cells, Cell{cmd: SWP})
-			case "ADI":
-				cells = append(cells, Cell{cmd: ADI})
-			case "JMP":
-				cells = append(cells, Cell{cmd: JMP, argStr: scmd[1]})
-			case "JIN":
-				cells = append(cells, Cell{cmd: JIN, argStr: scmd[1]})
-			case "SBI":
-				cells = append(cells, Cell{cmd: SBI})
-			case "DVI":
-				cells = append(cells, Cell{cmd: DVI})
-			case "LSI":
-				cells = append(cells, Cell{cmd: LSI})
-			case "GRI":
-				cells = append(cells, Cell{cmd: GRI})
-			case "MLI":
-				cells = append(cells, Cell{cmd: MLI})
-			case "ADF":
-				cells = append(cells, Cell{cmd: ADF})
-			case "SBF":
-				cells = append(cells, Cell{cmd: SBF})
-			case "MLF":
-				cells = append(cells, Cell{cmd: MLF})
-			case "DVF":
-				cells = append(cells, Cell{cmd: DVF})
-			case "PRF":
-				cells = append(cells, Cell{cmd: PRF})
-			case "LSF":
-				cells = append(cells, Cell{cmd: LSF})
-			case "GRF":
-				cells = append(cells, Cell{cmd: GRF})
-			case "OR":
-				cells = append(cells, Cell{cmd: OR})
-			case "AND":
-				cells = append(cells, Cell{cmd: AND})
-			case "NOT":
-				cells = append(cells, Cell{cmd: NOT})
-			case "EQI":
-				cells = append(cells, Cell{cmd: EQI})
-			case "XOR":
-				cells = append(cells, Cell{cmd: XOR})
-			case "LV":
-				cells = append(cells, Cell{cmd: LV})
-			case "L":
-				value, err := strconv.ParseInt(scmd[1], 10, 64)
-				if err != nil {
-					log.Fatal(err)
-				}
-				cells = append(cells, Cell{cmd: L, arg: value})
-			case "LF":
-				value, err := strconv.ParseFloat(scmd[1], 64)
-				if err != nil {
-					log.Fatal(err)
-				}
-				cells = append(cells, Cell{cmd: LF, argf: value})
-			case "STR":
-				cells = append(cells, Cell{cmd: STR})
-			case "SYS":
-				cells = append(cells, Cell{cmd: SYS})
-			case "STP":
-				cells = append(cells, Cell{cmd: STP})
-			case "SUB":
-				code.labels[scmd[1]] = pos
-				cells = append(cells, Cell{cmd: SUB, argStr: scmd[1]})
-			case "END":
-				cells = append(cells, Cell{cmd: END})
-			case "MAIN":
-				code.PosMain = pos
-				cells = append(cells, Cell{cmd: MAIN})
-			case "GDEF":
-				cells = append(cells, Cell{cmd: GDEF, argStr: scmd[1]})
-			case "GSET":
-				cells = append(cells, Cell{cmd: GSET, argStr: scmd[1]})
-			case "GBL":
-				cells = append(cells, Cell{cmd: GBL, argStr: scmd[1]})
-			case "LCTX":
-				cells = append(cells, Cell{cmd: LCTX})
-			case "LSET":
-				if !locals.Contains(scmd[1]) {
-					locals.Push(scmd[1])
-				}
-				cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
-			case "LDEF":
-				if !locals.Contains(scmd[1]) {
-					locals.Push(scmd[1])
-				}
-				cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
-			case "LCL":
-				if !locals.Contains(scmd[1]) {
-					locals.Push(scmd[1])
-				}
-				cells = append(cells, Cell{cmd: LCL, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
-			case "LCLR":
-				cells = append(cells, Cell{cmd: LCLR})
-			case "CALL":
-				cells = append(cells, Cell{cmd: CALL, argStr: scmd[1]})
-			case "REF":
-				cells = append(cells, Cell{cmd: REF, argStr: scmd[1]})
-			case "EXC":
-				cells = append(cells, Cell{cmd: EXC})
-			case "PCK":
-				cells = append(cells, Cell{cmd: PCK})
-			case "NRT":
-				cells = append(cells, Cell{cmd: NRT})
-			case "TR":
-				cells = append(cells, Cell{cmd: TR})
-			case "FR":
-				cells = append(cells, Cell{cmd: FR})
-			case "RF":
-				cells = append(cells, Cell{cmd: RF})
-			case "TTR":
-				cells = append(cells, Cell{cmd: TTR})
-			case "TFR":
-				cells = append(cells, Cell{cmd: TFR})
-			case "TRF":
-				cells = append(cells, Cell{cmd: TRF})
-			case "INC":
-				cells = append(cells, Cell{cmd: INC})
-			case "DEC":
-				cells = append(cells, Cell{cmd: DEC})
-			default:
-				log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
+		switch scmd[0] {
+		case "NOP":
+			code.labels[scmd[1]] = pos
+			cells = append(cells, Cell{cmd: NOP, argStr: scmd[1]})
+		case "RDI":
+			cells = append(cells, Cell{cmd: RDI})
+		case "PRI":
+			cells = append(cells, Cell{cmd: PRI})
+		case "PRA":
+			cells = append(cells, Cell{cmd: PRA})
+		case "DUP":
+			cells = append(cells, Cell{cmd: DUP})
+		case "OVR":
+			cells = append(cells, Cell{cmd: OVR})
+		case "TVR":
+			cells = append(cells, Cell{cmd: TVR})
+		case "TWP":
+			cells = append(cells, Cell{cmd: TWP})
+		case "QDP":
+			cells = append(cells, Cell{cmd: QDP})
+		case "ROT":
+			cells = append(cells, Cell{cmd: ROT})
+		case "TDP":
+			cells = append(cells, Cell{cmd: TDP})
+		case "DRP":
+			cells = append(cells, Cell{cmd: DRP})
+		case "SWP":
+			cells = append(cells, Cell{cmd: SWP})
+		case "ADI":
+			cells = append(cells, Cell{cmd: ADI})
+		case "JMP":
+			cells = append(cells, Cell{cmd: JMP, argStr: scmd[1]})
+		case "JIN":
+			cells = append(cells, Cell{cmd: JIN, argStr: scmd[1]})
+		case "SBI":
+			cells = append(cells, Cell{cmd: SBI})
+		case "DVI":
+			cells = append(cells, Cell{cmd: DVI})
+		case "LSI":
+			cells = append(cells, Cell{cmd: LSI})
+		case "GRI":
+			cells = append(cells, Cell{cmd: GRI})
+		case "MLI":
+			cells = append(cells, Cell{cmd: MLI})
+		case "ADF":
+			cells = append(cells, Cell{cmd: ADF})
+		case "SBF":
+			cells = append(cells, Cell{cmd: SBF})
+		case "MLF":
+			cells = append(cells, Cell{cmd: MLF})
+		case "DVF":
+			cells = append(cells, Cell{cmd: DVF})
+		case "PRF":
+			cells = append(cells, Cell{cmd: PRF})
+		case "LSF":
+			cells = append(cells, Cell{cmd: LSF})
+		case "GRF":
+			cells = append(cells, Cell{cmd: GRF})
+		case "OR":
+			cells = append(cells, Cell{cmd: OR})
+		case "AND":
+			cells = append(cells, Cell{cmd: AND})
+		case "NOT":
+			cells = append(cells, Cell{cmd: NOT})
+		case "EQI":
+			cells = append(cells, Cell{cmd: EQI})
+		case "XOR":
+			cells = append(cells, Cell{cmd: XOR})
+		case "LV":
+			cells = append(cells, Cell{cmd: LV})
+		case "L":
+			value, err := strconv.ParseInt(scmd[1], 10, 64)
+			if err != nil {
+				log.Fatal(err)
 			}
+			cells = append(cells, Cell{cmd: L, arg: value})
+		case "LF":
+			value, err := strconv.ParseFloat(scmd[1], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			cells = append(cells, Cell{cmd: LF, argf: value})
+		case "STR":
+			cells = append(cells, Cell{cmd: STR})
+		case "SYS":
+			cells = append(cells, Cell{cmd: SYS})
+		case "STP":
+			cells = append(cells, Cell{cmd: STP})
+		case "SUB":
+			code.labels[scmd[1]] = pos
+			cells = append(cells, Cell{cmd: SUB, argStr: scmd[1]})
+		case "END":
+			cells = append(cells, Cell{cmd: END})
+		case "MAIN":
+			code.PosMain = pos
+			cells = append(cells, Cell{cmd: MAIN})
+		case "GDEF":
+			cells = append(cells, Cell{cmd: GDEF, argStr: scmd[1]})
+		case "GSET":
+			cells = append(cells, Cell{cmd: GSET, argStr: scmd[1]})
+		case "GBL":
+			cells = append(cells, Cell{cmd: GBL, argStr: scmd[1]})
+		case "LCTX":
+			cells = append(cells, Cell{cmd: LCTX})
+		case "LSET":
+			if !locals.Contains(scmd[1]) {
+				locals.Push(scmd[1])
+			}
+			cells = append(cells, Cell{cmd: LSET, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
+		case "LDEF":
+			if !locals.Contains(scmd[1]) {
+				locals.Push(scmd[1])
+			}
+			cells = append(cells, Cell{cmd: LDEF, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
+		case "LCL":
+			if !locals.Contains(scmd[1]) {
+				locals.Push(scmd[1])
+			}
+			cells = append(cells, Cell{cmd: LCL, argStr: scmd[1], localIndex: locals.Index(scmd[1])})
+		case "LCLR":
+			cells = append(cells, Cell{cmd: LCLR})
+		case "CALL":
+			cells = append(cells, Cell{cmd: CALL, argStr: scmd[1]})
+		case "REF":
+			cells = append(cells, Cell{cmd: REF, argStr: scmd[1]})
+		case "EXC":
+			cells = append(cells, Cell{cmd: EXC})
+		case "PCK":
+			cells = append(cells, Cell{cmd: PCK})
+		case "NRT":
+			cells = append(cells, Cell{cmd: NRT})
+		case "TR":
+			cells = append(cells, Cell{cmd: TR})
+		case "FR":
+			cells = append(cells, Cell{cmd: FR})
+		case "RF":
+			cells = append(cells, Cell{cmd: RF})
+		case "TTR":
+			cells = append(cells, Cell{cmd: TTR})
+		case "TFR":
+			cells = append(cells, Cell{cmd: TFR})
+		case "TRF":
+			cells = append(cells, Cell{cmd: TRF})
+		case "INC":
+			cells = append(cells, Cell{cmd: INC})
+		case "DEC":
+			cells = append(cells, Cell{cmd: DEC})
+		default:
+			log.Fatalf("ERROR: Unknown command \"%s\"\n", cmd)
 		}
 	}
 
