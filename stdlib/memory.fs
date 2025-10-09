@@ -33,7 +33,7 @@ variable here
 : alloc ( block -- ) here swap exec to here ;
 
 : $ depth begin dup 0> while dup pick . space 1- repeat drop ;
-: empty [ depth 1 > ] [ drop ] while! ;
+: empty begin depth 0> while drop repeat ;
 
 \ some custom words
 
