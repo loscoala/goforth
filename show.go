@@ -18,30 +18,41 @@ import (
 	"github.com/fatih/color"
 )
 
-var baseSyntax = [...]string{
+var baseSyntax = []string{
 	"begin", "while", "repeat", "do", "?do", "loop", "+loop", "-loop", "if", "then",
 	"else", "{", "}", "[", "]", "until", "again", "leave", "to", "done", ":", ";",
 	"case", "of", "?of", "endof", "endcase", "variable", "char", "class", "extends",
 	"inline",
 }
 
+var marcoSyntax = []string{
+	"@if", "@else", "@then", "@push", "@drop", "@dup", "@swap", "@numArgs", "@depth",
+	"@>", "@<", "@=", "@not", "@$", "@.", "@add", "@begin", "@while", "@repeat",
+}
+
 var (
-	Magenta = color.New(color.FgHiMagenta).SprintFunc()
-	Cyan    = color.New(color.FgHiCyan).SprintFunc()
-	Green   = color.New(color.FgHiGreen).SprintFunc()
-	Blue    = color.New(color.FgHiBlue).SprintFunc()
-	Yellow  = color.New(color.FgHiYellow).SprintFunc()
-	Red     = color.New(color.FgHiRed).SprintFunc()
+	Magenta = color.HiMagentaString
+	Cyan    = color.HiCyanString
+	Green   = color.HiGreenString
+	Blue    = color.HiBlueString
+	Yellow  = color.HiYellowString
+	Red     = color.HiRedString
+	Macro   = color.BlueString
 )
 
 func isBaseSytax(word string) bool {
-	for _, w := range baseSyntax {
-		if w == word {
-			return true
-		}
-	}
+	return slices.Contains(baseSyntax, word)
+}
 
-	return false
+func isMacroVariable(word string) bool {
+	length := len(word)
+	return length > 2 &&
+		((word[0] == '@' && word[length-1] == '@') ||
+			(word[0] == '#' && word[length-1] == '#'))
+}
+
+func isMacroSyntax(word string) bool {
+	return isMacroVariable(word) || slices.Contains(marcoSyntax, word)
 }
 
 func getWordColored(fc *ForthCompiler, word string) string {
@@ -55,6 +66,8 @@ func getWordColored(fc *ForthCompiler, word string) string {
 		return Red(word)
 	} else if isBaseSytax(word) {
 		return Green(word)
+	} else if isMacroSyntax(word) {
+		return Macro(word)
 	} else if isFloat(word) || isNumeric(word) {
 		return Blue(word)
 	} else if isString(word) {
@@ -159,6 +172,12 @@ func (fc *ForthCompiler) printDefinition(word string) {
 					fmt.Printf("Word %s is a compiler builtin.\n", getWordColored(fc, word))
 				} else {
 					fmt.Printf("Word \"%s\" is a compiler builtin.\n", word)
+				}
+			} else if isMacroSyntax(word) {
+				if Colored {
+					fmt.Printf("Word %s is a macro compiler builtin.\n", getWordColored(fc, word))
+				} else {
+					fmt.Printf("Word \"%s\" is a macro compiler builtin.\n", word)
 				}
 			} else {
 				if Colored {
