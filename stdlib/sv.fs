@@ -8,27 +8,25 @@
   len self sv:len !
   len allot self sv:data !
   self sv:data @ { ptr }
-  begin
-    dup 0>
-  while
+  [ dup 0> ]
+  [
     ptr !
     ptr 1+ to ptr
-  repeat
-  drop
+  ]
+  while!
   self
 ;
 
 : sv:print { self }
   self sv:data @ { ptr }
   self sv:len @
-  begin
-    dup 0>
-  while
+  [ dup 0> ]
+  [
     ptr @ emit
     ptr 1+ to ptr
     1-
-  repeat
-  drop
+  ]
+  while!
 ;
 
 : inline sv:_toS @1@
