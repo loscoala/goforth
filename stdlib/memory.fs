@@ -48,7 +48,7 @@ variable here
 ;
 
 : showAlphabetPerChar2
-  26 0 [ toChar space colon space 26 0 [ toChar ] for cr ] for
+  26 0 [ toChar space colon space 26 0 [ toChar ] for! cr ] for!
 ;
 
 : integers 1+ 1 ?do i . space loop ;
