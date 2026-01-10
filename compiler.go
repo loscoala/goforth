@@ -988,7 +988,7 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 		result.Push("GBL " + word)
 	} else if value, ok := fc.data[word]; ok {
 		// try to optimize
-		if result.Len() > 1 && (value == "ADI" || value == "MLI" || value == "DVI") {
+		if result.Len() > 1 && (value == "ADI" || value == "MLI" || value == "DVI" || value == "SBI") {
 			a := result.ExPop()
 			b := result.ExPop()
 			aa := strings.Split(a, " ")
@@ -1001,9 +1001,9 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 				result.Push(value)
 			} else {
 				// optimize
-				an, _ := strconv.ParseInt(aa[1], 10, 0)
-				bn, _ := strconv.ParseInt(ba[1], 10, 0)
-				var cn int64
+				an, _ := strconv.Atoi(aa[1])
+				bn, _ := strconv.Atoi(ba[1])
+				var cn int
 
 				if value == "ADI" {
 					cn = an + bn
@@ -1011,9 +1011,11 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 					cn = an * bn
 				} else if value == "DVI" {
 					cn = bn / an
+				} else if value == "SBI" {
+					cn = bn - an
 				}
 
-				result.Push("L " + strconv.FormatInt(cn, 10))
+				result.Push("L " + strconv.Itoa(cn))
 			}
 		} else {
 			// we cant optimize
