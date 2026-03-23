@@ -537,29 +537,14 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 	}
 
 	if !IsFile(filename) {
-		found := false
-		ext := filepath.Ext(filename)
-
-		if ext == "" {
-			ext = ".fs"
+		if filepath.Ext(filename) == "" {
+			filename += ".fs"
 		}
 
-		files, err := ListFiles(ConfigPath()+"lib/", ext)
-
-		if err != nil {
-			return nil, err
-		}
-
-		for _, path := range files {
-			if strings.Contains(filepath.Base(path), filename) {
-				filename = path
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if data, err := Stdlib.ReadFile("stdlib/" + filename); err != nil {
 			return nil, fmt.Errorf("file \"%s\" not found", filename)
+		} else {
+			return data, nil
 		}
 	}
 

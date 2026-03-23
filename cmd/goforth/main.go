@@ -18,8 +18,7 @@ func initFlags() {
 	flag.BoolVar(&goforth.Colored, "color", true, "Use colors")
 	flag.StringVar(&script, "script", "", "Program passed in as string")
 	flag.BoolVar(&compile, "compile", false, "Compile to C")
-	flag.StringVar(&outfile, "o", "main", "The name of the generated binary file (-compile flag is required)")
-	flag.BoolVar(&goforth.CAutoExecute, "run", goforth.CAutoExecute, "Automatically execute the binary after compiling")
+	flag.StringVar(&outfile, "o", goforth.CBinaryName, "The name of the generated binary file (-compile flag is required)")
 
 	flag.Parse()
 }
@@ -44,9 +43,10 @@ func main() {
 		goforth.PrintError(err)
 	}
 
-	if len(outfile) > 0 {
+	if outfile != goforth.CBinaryName {
 		goforth.CBinaryName = outfile
 		goforth.CCodeName = outfile + ".c"
+		goforth.CCurrentDir = true
 	}
 
 	if len(script) > 0 {

@@ -1,10 +1,10 @@
 module github.com/loscoala/goforth
 
-go 1.25.0
+go 1.25.8
 
 require (
 	github.com/chzyer/readline v1.5.1
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 )
 
 require (

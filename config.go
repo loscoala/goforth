@@ -1,7 +1,7 @@
 package goforth
 
 import (
-	_ "embed"
+	"embed"
 	"log"
 	"os"
 )
@@ -24,22 +24,19 @@ var CCompiler = "cc"
 // The optimization flag of the C compiler
 var COptimization = "-O2"
 
-// Compile automatically after C code generation
-var CAutoCompile = true
-
-// Automatically execute the binary after compiling
-var CAutoExecute = true
-
 // The name of the C code file
 var CCodeName = "main.c"
 
 // The name of the binary
 var CBinaryName = "main"
 
-// The vm in C
+// If set use the current path as output directory
+var CCurrentDir bool
+
+// The stdlib in goforth and runtime in C
 //
-//go:embed lib/vm.c
-var CVM []byte
+//go:embed stdlib/*.fs lib/vm.c
+var Stdlib embed.FS
 
 var cachedConfigPath string
 
@@ -55,5 +52,13 @@ func ConfigPath() string {
 	}
 
 	cachedConfigPath = dir + "/goforth/"
+
+	// Create goforth dir in user config path
+	if _, err := os.Stat(cachedConfigPath); os.IsNotExist(err) {
+		if err2 := os.Mkdir(cachedConfigPath, 0750); err2 != nil {
+			log.Fatal(err2)
+		}
+	}
+
 	return cachedConfigPath
 }

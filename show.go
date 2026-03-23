@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -598,16 +599,6 @@ func (fc *ForthCompiler) CompileToC() error {
 	spaces := initSpaceCache()
 	indent := 2
 
-	{
-		m := fc.defs["main"]
-		result.WriteString("// compiled from:\n//")
-		for word := range m.Values() {
-			result.WriteString(" ")
-			result.WriteString(word)
-		}
-		result.WriteString("\n\n")
-	}
-
 	for cmd := range strings.SplitSeq(fc.ByteCode(), ";") {
 		if cmd == "" {
 			continue
@@ -663,48 +654,126 @@ func (fc *ForthCompiler) CompileToC() error {
 	}
 
 	result.WriteString("  return 0;\n}\n")
+	cgen := "\n\n" + funcs("") + globals("") + result.String()
+	result.Reset()
 
-	if _, err := os.Stat(ConfigPath()); os.IsNotExist(err) {
-		if err := os.Mkdir(ConfigPath(), 0750); err != nil {
-			return err
-		} else {
-			if err := os.WriteFile(ConfigPath()+"vm.c", CVM, 0644); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := os.WriteFile(ConfigPath()+CCodeName, []byte("#include \"vm.c\"\n\n"+funcs("")+globals("")+result.String()), 0644); err != nil {
+	if err := fc.prepareCompileAndRun(cgen); err != nil {
 		return err
 	}
 
-	result.Reset()
+	return nil
+}
 
-	if CAutoCompile {
-		if err := fc.compileToBinary(); err != nil {
+func (fc *ForthCompiler) prepareCompileAndRun(cgen string) error {
+	cvm, _ := Stdlib.ReadFile("lib/vm.c")
+	var cout *COutFile
+
+	{
+		var err error
+		if cout, err = NewCOutFile(); err != nil {
+			return err
+		}
+	}
+
+	if _, err := cout.Write(cvm); err != nil {
+		return err
+	}
+
+	if _, err := cout.WriteString(cgen); err != nil {
+		return err
+	}
+
+	cout.Sync()
+	if err := cout.Close(); err != nil {
+		return err
+	}
+
+	return fc.compileAndRun(cout)
+}
+
+func (fc *ForthCompiler) compileAndRun(cout *COutFile) error {
+	if err := fc.compileToBinary(cout); err != nil {
+		return err
+	}
+
+	if !CCurrentDir {
+		if err := fc.runBinary(cout); err != nil {
 			return err
 		}
 
-		if CAutoExecute {
-			if err := fc.runBinary(); err != nil {
-				return err
-			}
+		if err := os.Remove(cout.code); err != nil {
+			return err
+		}
+
+		if err := os.Remove(cout.binary); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (fc *ForthCompiler) compileToBinary() error {
-	cmd := exec.Command(CCompiler, "-o", CBinaryName, CCodeName, COptimization)
-	cmd.Dir = ConfigPath()
+// Helper struct to handle C code generation file names
+type COutFile struct {
+	cfile  *os.File
+	code   string
+	binary string
+}
+
+func NewCOutFile() (*COutFile, error) {
+	var err error
+	cg := new(COutFile)
+
+	if CCurrentDir {
+		// output in the current directory
+		if cg.cfile, err = os.OpenFile(CCodeName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+			return nil, err
+		}
+
+		cg.code = CCodeName
+		cg.binary = CBinaryName
+	} else {
+		// use tmp folder
+		if cg.cfile, err = os.CreateTemp("", CCodeName); err != nil {
+			return nil, err
+		}
+
+		cg.code = cg.cfile.Name()
+		cg.binary = filepath.Join(filepath.Dir(cg.cfile.Name()), CBinaryName)
+	}
+
+	return cg, nil
+}
+
+func (cg *COutFile) Close() error {
+	return cg.cfile.Close()
+}
+
+func (cg *COutFile) Name() string {
+	return cg.cfile.Name()
+}
+
+func (cg *COutFile) Sync() error {
+	return cg.cfile.Sync()
+}
+
+func (cg *COutFile) Write(data []byte) (int, error) {
+	return cg.cfile.Write(data)
+}
+
+func (cg *COutFile) WriteString(data string) (int, error) {
+	return cg.cfile.WriteString(data)
+}
+
+func (fc *ForthCompiler) compileToBinary(cg *COutFile) error {
+	cmd := exec.Command(CCompiler, "-std=c99", "-x", "c", "-o", cg.binary, cg.code, COptimization)
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
 
-func (fc *ForthCompiler) runBinary() error {
-	cmd := exec.Command(ConfigPath() + CBinaryName)
+func (fc *ForthCompiler) runBinary(cg *COutFile) error {
+	cmd := exec.Command(cg.binary)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
