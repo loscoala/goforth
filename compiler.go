@@ -546,7 +546,7 @@ func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 		}
 
 		if data, err := Stdlib.ReadFile("stdlib/" + filename); err != nil {
-			return nil, fmt.Errorf("file \"%s\" not found", filename)
+			return nil, err
 		} else {
 			return data, nil
 		}
