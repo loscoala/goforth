@@ -29,6 +29,18 @@
   while!
 ;
 
+: sv:each { self block }
+  self sv:data @ { ptr }
+  self sv:len @
+  [ dup 0> ]
+  [
+    ptr @ block exec
+    ptr 1+ to ptr
+    1-
+  ]
+  while!
+;
+
 : inline sv:_toS @1@
   #1# sv:data @ #1# sv:len @ 1- +
   #1# sv:data @

@@ -282,7 +282,14 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 				break
 			}
 
-			buffer = append(buffer, i)
+			if i == '\\' && str[index+1] == 'n' {
+				buffer = append(buffer, '\n')
+				// consume n
+				state = 11
+				continue
+			} else {
+				buffer = append(buffer, i)
+			}
 
 			if i == '\\' && str[index+1] == '"' {
 				buffer = buffer[:len(buffer)-1]
@@ -302,7 +309,14 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 				break
 			}
 
-			buffer = append(buffer, i)
+			if i == '\\' && str[index+1] == 'n' {
+				buffer = append(buffer, '\n')
+				// consume n
+				state = 12
+				continue
+			} else {
+				buffer = append(buffer, i)
+			}
 
 			if i == '\\' && str[index+1] == ')' {
 				buffer = buffer[:len(buffer)-1]
@@ -312,6 +326,12 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 				buffer = buffer[:0]
 				state = 1
 			}
+		case 11:
+			// consume n
+			state = 8
+		case 12:
+			// consume n
+			state = 10
 		}
 	}
 
