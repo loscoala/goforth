@@ -30,15 +30,12 @@
 ;
 
 : sv:each { self block }
-  self sv:data @ { ptr }
-  self sv:len @
-  [ dup 0> ]
   [
-    ptr @ block exec
-    ptr 1+ to ptr
-    1-
-  ]
-  while!
+    self sv:iter
+    [ dup sviter:next ]
+    [ dup sviter:get block exec ]
+    while!
+  ] alloc
 ;
 
 : inline sv:_toS @1@
@@ -67,4 +64,37 @@
   other sv:len @
   self sv:len @
   +
+;
+
+\ ------------ Iterator ----------------
+
+: class sviter
+  1 sv
+  1 len
+  1 index
+;
+
+: sv:iter { self }
+  sviter:new { it }
+  self it sviter:sv !
+  self sv:len @ it sviter:len !
+  -1 it sviter:index !
+  it
+;
+
+: sviter:next { self }
+  self sviter:index @ self sviter:len @ 1- < if
+    self sviter:index ++
+    true
+  else
+    false
+  then
+;
+
+: sviter:back { self }
+  self sviter:index --
+;
+
+: sviter:get { self }
+  self sviter:sv @ sv:data @ self sviter:index @ + @
 ;

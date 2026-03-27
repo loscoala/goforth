@@ -30,7 +30,7 @@ variable here
   r>
 ;
 
-: alloc ( block -- ) here swap exec to here ;
+: inline alloc ( block -- ) @b@ here #b# to here ;
 
 : $ depth begin dup 0> while dup pick . space 1- repeat drop ;
 : empty begin depth 0> while drop repeat ;
