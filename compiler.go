@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // This is the public API for ForthCompiler.
@@ -702,6 +703,18 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values 
 		}
 
 		offset += size
+
+		if size == 1 {
+			// getter
+			builder.WriteString(fmt.Sprintf(": %s:%s %s:%s @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			// setter
+			builder.WriteString(fmt.Sprintf(": %s:%s %s:%s ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+		} else {
+			// getter
+			builder.WriteString(fmt.Sprintf(": %s:%s { self idx value } value self %s:%s idx + @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			// setter
+			builder.WriteString(fmt.Sprintf(": %s:%s { self idx value } value self %s:%s idx + ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+		}
 	}
 
 	// clazz:init
