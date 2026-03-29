@@ -42,7 +42,7 @@
         59 of self csv:column ++ endof
         10 of
           self csv:line ++
-          0 self csv:column !
+          0 self csv:setColumn
         endof
       endcase
       drop
