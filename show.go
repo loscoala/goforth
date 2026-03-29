@@ -791,6 +791,10 @@ func (fc *ForthCompiler) runBinary(cg *COutFile) error {
 
 // Prints the preprocessing steps of a given word
 func (fc *ForthCompiler) printPreprocess(word string) error {
+	if _, ok := fc.inlines[word]; ok {
+		return fmt.Errorf("only words can be preprocessed. \"%s\" is a macro.", word)
+	}
+
 	macroNames := slices.Collect(maps.Keys(fc.inlines))
 	printWordColored(fc, word, fc.defs[word])
 	fc.compileMacros(macroNames)
