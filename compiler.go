@@ -651,7 +651,7 @@ func (fc *ForthCompiler) compileExtendedClass(clazz, base, filename string) erro
 	for k := range fc.defs {
 		if strings.Index(k, substr) == 0 {
 			after, _ := strings.CutPrefix(k, substr) // ignore found, strings.index(k, substr) == 0
-			builder.WriteString(fmt.Sprintf(": %s:%s %s ;\n", clazz, after, k))
+			fmt.Fprintf(&builder, ": %s:%s %s ;\n", clazz, after, k)
 		}
 	}
 
@@ -694,48 +694,48 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values 
 
 		if offset > 0 {
 			if offset == 1 {
-				builder.WriteString(fmt.Sprintf(": %s:%s 1+ ;\n", clazz, name))
+				fmt.Fprintf(&builder, ": %s:%s 1+ ;\n", clazz, name)
 			} else {
-				builder.WriteString(fmt.Sprintf(": %s:%s %d + ;\n", clazz, name, offset))
+				fmt.Fprintf(&builder, ": %s:%s %d + ;\n", clazz, name, offset)
 			}
 		} else {
-			builder.WriteString(fmt.Sprintf(": %s:%s ;\n", clazz, name))
+			fmt.Fprintf(&builder, ": %s:%s ;\n", clazz, name)
 		}
 
 		offset += size
 
 		if size == 1 {
 			// getter
-			builder.WriteString(fmt.Sprintf(": %s:%s %s:%s @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			fmt.Fprintf(&builder, ": %s:%s %s:%s @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name)
 			// setter
-			builder.WriteString(fmt.Sprintf(": %s:%s %s:%s ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			fmt.Fprintf(&builder, ": %s:%s %s:%s ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name)
 		} else {
 			// getter
-			builder.WriteString(fmt.Sprintf(": %s:%s { self idx value } value self %s:%s idx + @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			fmt.Fprintf(&builder, ": %s:%s { self idx value } value self %s:%s idx + @ ;\n", clazz, "get"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name)
 			// setter
-			builder.WriteString(fmt.Sprintf(": %s:%s { self idx value } value self %s:%s idx + ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name))
+			fmt.Fprintf(&builder, ": %s:%s { self idx value } value self %s:%s idx + ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name)
 		}
 	}
 
 	// clazz:init
-	builder.WriteString(fmt.Sprintf(": %s:init ", clazz))
+	fmt.Fprintf(&builder, ": %s:init ", clazz)
 	for i, n := range names {
 		if sizes[i] > 1 {
-			builder.WriteString(fmt.Sprintf(" dup %d 0 rot %s:%s memset", sizes[i], clazz, n))
+			fmt.Fprintf(&builder, " dup %d 0 rot %s:%s memset", sizes[i], clazz, n)
 		} else {
-			builder.WriteString(fmt.Sprintf(" dup 0 swap %s:%s !", clazz, n))
+			fmt.Fprintf(&builder, " dup 0 swap %s:%s !", clazz, n)
 		}
 	}
 	if len(base) > 0 {
-		builder.WriteString(fmt.Sprintf(" %s:init", base))
+		fmt.Fprintf(&builder, " %s:init", base)
 	}
 	builder.WriteString(" ;\n")
 
 	// basic methods
-	builder.WriteString(fmt.Sprintf(": %s:sizeof %d ;\n", clazz, offset))
-	builder.WriteString(fmt.Sprintf(": %s:allot %s:sizeof * allot ;\n", clazz, clazz))
-	builder.WriteString(fmt.Sprintf(": %s:new 1 %s:allot %s:init ;\n", clazz, clazz, clazz))
-	builder.WriteString(fmt.Sprintf(": %s:[] swap %s:sizeof * + ;\n", clazz, clazz))
+	fmt.Fprintf(&builder, ": %s:sizeof %d ;\n", clazz, offset)
+	fmt.Fprintf(&builder, ": %s:allot %s:sizeof * allot ;\n", clazz, clazz)
+	fmt.Fprintf(&builder, ": %s:new 1 %s:allot %s:init ;\n", clazz, clazz, clazz)
+	fmt.Fprintf(&builder, ": %s:[] swap %s:sizeof * + ;\n", clazz, clazz)
 	return fc.Parse(builder.String(), filename)
 }
 
