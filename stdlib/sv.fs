@@ -1,13 +1,13 @@
 : class sv
-  1 len
-  1 data
+  len
+  data
 ;
 
 : sv:fromS ( 0 c b a N -- adr )
   sv:new { self len }
-  len self sv:len !
-  len allot self sv:data !
-  self sv:data @ { ptr }
+  len self sv:setLen
+  len allot self sv:setData
+  self sv:getData { ptr }
   [ dup 0> ]
   [
     ptr !
@@ -18,8 +18,8 @@
 ;
 
 : sv:print { self }
-  self sv:data @ { ptr }
-  self sv:len @
+  self sv:getData { ptr }
+  self sv:getLen
   [ dup 0> ]
   [
     ptr @ emit
@@ -39,8 +39,8 @@
 ;
 
 : inline sv:_toS @1@
-  #1# sv:data @ #1# sv:len @ 1- +
-  #1# sv:data @
+  #1# sv:getData #1# sv:getLen 1- +
+  #1# sv:getData
   { base ptr }
     begin
       ptr base >=
@@ -54,36 +54,36 @@
 : sv:toS { self }
   0
   self sv:_toS
-  self sv:len @
+  self sv:getLen
 ;
 
 : sv:append { self other }
   0
   other sv:_toS
   self sv:_toS
-  other sv:len @
-  self sv:len @
+  other sv:getLen
+  self sv:getLen
   +
 ;
 
 \ ------------ Iterator ----------------
 
 : class sviter
-  1 sv
-  1 len
-  1 index
+  sv
+  len
+  index
 ;
 
 : sv:iter { self }
   sviter:new { it }
-  self it sviter:sv !
-  self sv:len @ it sviter:len !
-  -1 it sviter:index !
+  self it sviter:setSv
+  self sv:getLen it sviter:setLen
+  -1 it sviter:setIndex
   it
 ;
 
 : sviter:next { self }
-  self sviter:index @ self sviter:len @ 1- < if
+  self sviter:getIndex self sviter:getLen 1- < if
     self sviter:index ++
     true
   else
@@ -96,5 +96,5 @@
 ;
 
 : sviter:get { self }
-  self sviter:sv @ sv:data @ self sviter:index @ + @
+  self sviter:getSv sv:getData self sviter:getIndex + @
 ;

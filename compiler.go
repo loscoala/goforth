@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"iter"
 	"maps"
 	"net/http"
 	"os"
@@ -658,7 +659,53 @@ func (fc *ForthCompiler) compileExtendedClass(clazz, base, filename string) erro
 	return fc.Parse(builder.String(), filename)
 }
 
-// class foo 1 a <1 b 5 c>
+type ClazzProperties struct {
+	err error
+}
+
+func (p *ClazzProperties) Err() error {
+	return p.err
+}
+
+func (p *ClazzProperties) Values(values []string) iter.Seq2[int64, string] {
+	return func(yield func(int64, string) bool) {
+		var (
+			size, state int64
+			err         error
+		)
+
+		for value := range slices.Values(values) {
+			switch state {
+			case 0:
+				if isNumeric(value) {
+					state = 1
+					size, err = strconv.ParseInt(value, 10, 64)
+					if err != nil {
+						p.err = err
+						return
+					}
+				} else {
+					size = 1
+					if !yield(size, value) {
+						return
+					}
+				}
+			case 1:
+				if !isNumeric(value) {
+					state = 0
+					if !yield(size, value) {
+						return
+					}
+				} else {
+					p.err = fmt.Errorf("\"%s\" should be a name", value)
+					return
+				}
+			}
+		}
+	}
+}
+
+// class foo a <b 5 c>
 func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values []string) error {
 	var (
 		builder strings.Builder
@@ -677,16 +724,11 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values 
 
 	names = make([]string, 0, 10)
 	sizes = make([]int64, 0, 10)
+	props := &ClazzProperties{}
 
-	for i := 0; i < len(values); i += 2 {
-		name := values[i+1]
+	for size, name := range props.Values(values) {
 		names = append(names, name)
-		size, err := strconv.ParseInt(values[i], 10, 64)
 		sizes = append(sizes, size)
-
-		if err != nil {
-			return err
-		}
 
 		if size < 1 {
 			return fmt.Errorf("struct member size must be greater than 0. Size was: %d at member: %s", size, name)
@@ -715,6 +757,10 @@ func (fc *ForthCompiler) compileBasicClass(clazz, base, filename string, values 
 			// setter
 			fmt.Fprintf(&builder, ": %s:%s { self idx value } value self %s:%s idx + ! ;\n", clazz, "set"+string(unicode.ToUpper(rune(name[0])))+name[1:], clazz, name)
 		}
+	}
+
+	if err := props.Err(); err != nil {
+		return err
 	}
 
 	// clazz:init

@@ -1,48 +1,44 @@
 : class csv
-  1 it     \ input string sviter
-  1 line
-  1 column
-  1 state
-  1 osv    \ output string
+  it     \ input string sviter
+  line
+  column
+  state
+  osv    \ output string
 ;
 
 : csv:fromSV { sv }
   csv:new { self }
-  sv sv:iter self csv:it !
+  sv sv:iter self csv:setIt
   sv:new { osv }
-  osv self csv:osv !
-  0 osv sv:len !
-  255 allot osv sv:data !
+  osv self csv:setOsv
+  0 osv sv:setLen
+  255 allot osv sv:setData
   self
 ;
 
 : csv:setOutLen ( self len )
-  csv:getOutSV sv:len !
+  csv:getOsv sv:setLen
 ;
 
 : csv:getOutLen ( self )
-  csv:getOutSV sv:len @
+  csv:getOsv sv:getLen
 ;
 
 : csv:appendCharToOut { self c }
-  self csv:getOutSV { sv }
-  c sv sv:data @ sv sv:len @ + !
+  self csv:getOsv { sv }
+  c sv sv:getData sv sv:getLen + !
   sv sv:len ++
 ;
 
-: csv:getOutSV ( self )
-  csv:osv @
-;
-
 : csv:print ( self )
-  csv:getOutSV sv:print
+  csv:getOsv sv:print
 ;
 
 : csv:consume { self c }
-  self csv:state @ case
+  self csv:getState case
     0 of
       c case
-        34 of 1 self csv:state ! endof
+        34 of 1 self csv:setState endof
         59 of self csv:column ++ endof
         10 of
           self csv:line ++
@@ -53,7 +49,7 @@
     endof
     1 of
       c case
-        34 of 0 self csv:state ! endof
+        34 of 0 self csv:setState endof
         c self csv:appendCharToOut
       endcase
       drop
@@ -63,13 +59,13 @@
 ;
 
 : csv:hasNext
-  csv:it @ { it }
+  csv:getIt { it }
   it sviter:next
   it sviter:back
 ;
 
 : csv:next { self }
-  self csv:it @ { it }
+  self csv:getIt { it }
 
   0 self csv:setOutLen
 
@@ -78,7 +74,7 @@
   while
     it sviter:get self csv:consume
 
-    self csv:state @ 0 =
+    self csv:getState 0 =
     self csv:getOutLen 0 >
     and if
       leave
@@ -102,7 +98,7 @@
 : csv:test
   [
     { self }
-    ." line: " self csv:line @ . ."  col: " self csv:column @ . ."  "
+    ." line: " self csv:getLine . ."  col: " self csv:getColumn . ."  "
     self csv:print cr
   ]
   a" \"ABC\";\"DEF\";\"GHI\";\"Udo\";\"Armin\";\"123\"\n\"ABC1\";\"DEF1\";\"GHI1\";\"Udo1\";\"Armin1\";\"1231\""

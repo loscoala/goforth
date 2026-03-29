@@ -1,12 +1,12 @@
 : class list
-  1 len
-  1 head
-  1 tail
+  len
+  head
+  tail
 ;
 
 : class node
-  1 data
-  1 next
+  data
+  next
 ;
 
 : node:print { self }
@@ -15,24 +15,24 @@
 
 : list:append { self }
   node:new { node }
-  node node:data !
-  self list:len @ 0= if
-    node self list:head !
-    node self list:tail !
+  node node:setData
+  self list:getLen 0= if
+    node self list:setHead
+    node self list:setTail
   else
-    node self list:tail @ node:next !
-    node self list:tail !
+    node self list:getTail node:setNext
+    node self list:setTail
   then
   self list:len ++
 ;
 
 : list:each { self block }
-  self list:head @ { current }
+  self list:getHead { current }
   begin
     current 0<>
   while
-    current node:data @ block exec
-    current node:next @ to current
+    current node:getData block exec
+    current node:getNext to current
   repeat
 ;
 
@@ -42,19 +42,19 @@
 ;
 
 : list:map { self block }
-  self list:head @ { current }
+  self list:getHead { current }
   begin
     current 0<>
   while
     current node:data dup @ block exec swap !
-    current node:next @ to current
+    current node:getNext to current
   repeat
 ;
 
 : list:test
-  list:new drop
-  98 0 list:append
-  97 0 list:append
-  96 0 list:append
-  0 list:print
+  list:new { l }
+  98 l list:append
+  97 l list:append
+  96 l list:append
+  l list:print
 ;
