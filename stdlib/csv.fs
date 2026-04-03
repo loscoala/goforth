@@ -59,9 +59,7 @@
 ;
 
 : csv:hasNext
-  csv:getIt { it }
-  it sviter:next
-  it sviter:back
+  csv:getIt sviter:hasNext
 ;
 
 : csv:next { self }

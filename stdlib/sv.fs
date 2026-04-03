@@ -83,12 +83,16 @@
 ;
 
 : sviter:next { self }
-  self sviter:getIndex self sviter:getLen 1- < if
+  self sviter:hasNext if
     self sviter:index ++
     true
   else
     false
   then
+;
+
+: sviter:hasNext { self }
+  self sviter:getIndex self sviter:getLen 1- <
 ;
 
 : sviter:back { self }
