@@ -46,7 +46,7 @@ type ForthCompiler struct {
 }
 
 func NewForthCompiler() *ForthCompiler {
-	fc := &ForthCompiler{
+	return &ForthCompiler{
 		data: map[string]string{
 			"!":     "STR",
 			"@":     "LV",
@@ -100,7 +100,6 @@ func NewForthCompiler() *ForthCompiler {
 		macros:  make(map[string]*Stack[*Mc]),
 		Fvm:     NewForthVM(),
 	}
-	return fc
 }
 
 // The ByteCode of the "main" word previously compiled with Compile().
