@@ -159,10 +159,10 @@ type MacroVM struct {
 }
 
 func NewMacroVM() *MacroVM {
-	r := new(MacroVM)
-	r.register = make(map[string]*Stack[string])
-	r.stack = NewStack[string]()
-	return r
+	return &MacroVM{
+		register: make(map[string]*Stack[string]),
+		stack:    NewStack[string](),
+	}
 }
 
 func (vm *MacroVM) wordInRegister(wordDef *Stack[string], register string) (*Stack[string], error) {
@@ -366,7 +366,7 @@ func (vm *MacroVM) Run(code *Stack[*Mc], result *Stack[string]) error {
 			arg := cmd.arg
 			if isString(arg) {
 				for key := range vm.register {
-					marker := fmt.Sprintf("#%s#", key)
+					marker := "#" + key + "#"
 
 					if strings.Contains(arg, marker) {
 						def := strings.Join(vm.register[key].data, " ")

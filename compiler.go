@@ -46,59 +46,60 @@ type ForthCompiler struct {
 }
 
 func NewForthCompiler() *ForthCompiler {
-	fc := new(ForthCompiler)
-	fc.data = map[string]string{
-		"!":     "STR",
-		"@":     "LV",
-		".":     "PRI",
-		"emit":  "PRA",
-		"key":   "RDI",
-		"=":     "EQI",
-		"xor":   "XOR",
-		"<":     "LSI",
-		">":     "GRI",
-		"-":     "SBI",
-		"+":     "ADI",
-		"/":     "DVI",
-		"*":     "MLI",
-		"f+":    "ADF",
-		"f-":    "SBF",
-		"f*":    "MLF",
-		"f/":    "DVF",
-		"f.":    "PRF",
-		"f<":    "LSF",
-		"f>":    "GRF",
-		"not":   "NOT",
-		"and":   "AND",
-		"or":    "OR",
-		"quit":  "STP",
-		"dup":   "DUP",
-		"2dup":  "TDP",
-		"?dup":  "QDP",
-		"over":  "OVR",
-		"2over": "TVR",
-		"drop":  "DRP",
-		"swap":  "SWP",
-		"2swap": "TWP",
-		"sys":   "SYS",
-		"rot":   "ROT",
-		"exec":  "EXC",
-		"pick":  "PCK",
-		"-rot":  "NRT",
-		">r":    "TR",
-		"r>":    "FR",
-		"r@":    "RF",
-		"2>r":   "TTR",
-		"2r>":   "TFR",
-		"2r@":   "TRF",
-		"inc":   "INC",
-		"dec":   "DEC",
+	fc := &ForthCompiler{
+		data: map[string]string{
+			"!":     "STR",
+			"@":     "LV",
+			".":     "PRI",
+			"emit":  "PRA",
+			"key":   "RDI",
+			"=":     "EQI",
+			"xor":   "XOR",
+			"<":     "LSI",
+			">":     "GRI",
+			"-":     "SBI",
+			"+":     "ADI",
+			"/":     "DVI",
+			"*":     "MLI",
+			"f+":    "ADF",
+			"f-":    "SBF",
+			"f*":    "MLF",
+			"f/":    "DVF",
+			"f.":    "PRF",
+			"f<":    "LSF",
+			"f>":    "GRF",
+			"not":   "NOT",
+			"and":   "AND",
+			"or":    "OR",
+			"quit":  "STP",
+			"dup":   "DUP",
+			"2dup":  "TDP",
+			"?dup":  "QDP",
+			"over":  "OVR",
+			"2over": "TVR",
+			"drop":  "DRP",
+			"swap":  "SWP",
+			"2swap": "TWP",
+			"sys":   "SYS",
+			"rot":   "ROT",
+			"exec":  "EXC",
+			"pick":  "PCK",
+			"-rot":  "NRT",
+			">r":    "TR",
+			"r>":    "FR",
+			"r@":    "RF",
+			"2>r":   "TTR",
+			"2r>":   "TFR",
+			"2r@":   "TRF",
+			"inc":   "INC",
+			"dec":   "DEC",
+		},
+		funcs:   make(map[string]*Stack[string]),
+		defs:    make(map[string]*Stack[string]),
+		inlines: make(map[string]*Stack[string]),
+		macros:  make(map[string]*Stack[*Mc]),
+		Fvm:     NewForthVM(),
 	}
-	fc.funcs = make(map[string]*Stack[string])
-	fc.defs = make(map[string]*Stack[string])
-	fc.inlines = make(map[string]*Stack[string])
-	fc.macros = make(map[string]*Stack[*Mc])
-	fc.Fvm = NewForthVM()
 	return fc
 }
 
@@ -193,8 +194,7 @@ func (fc *ForthCompiler) Parse(str, filename string) error {
 					if _, ok := fc.defs[word]; ok {
 						return fmt.Errorf("unable to define inline. \"%s\" is already defined as word", word)
 					}
-					tmp := new(Stack[string])
-					tmp.data = def.data[1:]
+					tmp := &Stack[string]{data: def.data[1:]}
 					fc.inlines[word] = tmp
 					fc.clean = false
 				default:

@@ -722,7 +722,7 @@ type COutFile struct {
 
 func NewCOutFile() (*COutFile, error) {
 	var err error
-	cg := new(COutFile)
+	cg := &COutFile{}
 
 	if CCurrentDir {
 		// output in the current directory

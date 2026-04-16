@@ -35,14 +35,12 @@ type ForthVM struct {
 }
 
 func NewForthVM() *ForthVM {
-	fvm := new(ForthVM)
-
-	fvm.Vars = make(map[string]int64)
-	fvm.Stack = make([]int64, 0, 100)
-	fvm.Rstack = make([]int64, 0, 100)
-	fvm.Out = os.Stdout
-
-	return fvm
+	return &ForthVM{
+		Vars:   make(map[string]int64),
+		Stack:  make([]int64, 0, 100),
+		Rstack: make([]int64, 0, 100),
+		Out:    os.Stdout,
+	}
 }
 
 func (fvm *ForthVM) Push(i int64) {
@@ -559,7 +557,7 @@ func (fvm *ForthVM) Sys() {
 	case 7:
 		// write memory into image
 		// name-addr writeimage
-		buf := new(bytes.Buffer)
+		buf := &bytes.Buffer{}
 		err := binary.Write(buf, binary.LittleEndian, fvm.Mem)
 
 		if err != nil {
@@ -819,9 +817,7 @@ type Code struct {
 
 // (SUB xx ... END)* MAIN ... STP delimited by semicolon
 func parseCode(codeStr string) *Code {
-	code := new(Code)
-	code.labels = make(map[string]int)
-
+	code := &Code{labels: make(map[string]int)}
 	cmds := strings.Split(codeStr, ";")
 	cells := make([]Cell, 0, len(cmds)+1)
 	locals := NewStack[string]()

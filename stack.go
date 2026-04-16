@@ -11,9 +11,7 @@ type Stack[T comparable] struct {
 }
 
 func NewStack[T comparable]() *Stack[T] {
-	stack := new(Stack[T])
-	stack.data = make([]T, 0, 100)
-	return stack
+	return &Stack[T]{data: make([]T, 0, 100)}
 }
 
 func (s *Stack[T]) Len() int {
