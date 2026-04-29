@@ -616,7 +616,7 @@ func (fc *ForthCompiler) handleMeta(meta string) error {
 }
 
 func (fc *ForthCompiler) compileClass(def *Stack[string], filename string) error {
-	if len(def.data) < 3 {
+	if len(def.data) < 2 {
 		return fmt.Errorf("a class must have at least one property")
 	}
 
