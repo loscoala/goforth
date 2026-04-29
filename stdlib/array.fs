@@ -1,7 +1,7 @@
 : class array
-  1 len
-  1 items
-  1 capacity
+  len
+  items
+  capacity
 ;
 
 : array:INIT_CAP 256 ;
