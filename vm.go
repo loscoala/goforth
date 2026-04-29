@@ -614,7 +614,8 @@ func (fvm *ForthVM) Sys() {
 	case 14:
 		// system
 		str := fvm.GetString()
-		cmd := exec.Command(str)
+		args := strings.Split(str, " ")
+		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
