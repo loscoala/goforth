@@ -1072,17 +1072,48 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 				bn, _ := strconv.Atoi(ba[1])
 				var cn int
 
-				if value == "ADI" {
+				switch value {
+				case "ADI":
 					cn = an + bn
-				} else if value == "MLI" {
+				case "MLI":
 					cn = an * bn
-				} else if value == "DVI" {
+				case "DVI":
 					cn = bn / an
-				} else if value == "SBI" {
+				case "SBI":
 					cn = bn - an
 				}
 
 				result.Push("L " + strconv.Itoa(cn))
+			}
+		} else if result.Len() > 1 && (value == "ADF" || value == "MLF" || value == "DVF" || value == "SBF") {
+			a := result.ExPop()
+			b := result.ExPop()
+			aa := strings.Split(a, " ")
+			ba := strings.Split(b, " ")
+
+			if aa[0] != "LF" || ba[0] != "LF" {
+				// we cant optimize
+				result.Push(b)
+				result.Push(a)
+				result.Push(value)
+			} else {
+				// optimize
+				an, _ := strconv.ParseFloat(aa[1], 64)
+				bn, _ := strconv.ParseFloat(ba[1], 64)
+				var cn float64
+
+				switch value {
+				case "ADF":
+					cn = an + bn
+				case "MLF":
+					cn = an * bn
+				case "DVF":
+					cn = bn / an
+				case "SBF":
+					cn = bn - an
+				}
+
+				result.Push("LF " + strconv.FormatFloat(cn, 'f', -1, 64))
 			}
 		} else {
 			// we cant optimize
