@@ -177,50 +177,74 @@ which prints:
 Goforth supports OOP.
 A class is defnied by placing the word "class" after the semicolon.
 Each property has a number of cells as a prefix to the name of the property.
+The default size is one.
 
 For example:
 
 ```forth
 : class A
-  1 aa
-  5 bb
-  1 cc
+  aa       \ implicit (default) size is 1
+  bb
+  cc
+;
+
+: class B
+  5 aa     \ creates 5 cells
 ;
 ```
 
 While the compiler is parsing the class definition, several methods are generated:
 
-TO BE CONTINUED...
+```forth
+A:[]  \ index operator
+A:aa  \ address of aa
+A:bb  \ address of bb
+A:cc  \ address of cc
+A:allot ( n -- ) \ allocates n times struct A on the heap
+A:getAa \ getter of value aa
+A:getBb \ getter of value bb
+A:getCc \ getter of value cc
+A:new \ allocates one struct A on the heap (zero initialized)
+A:setAa \ setter of aa
+A:setBb \ setter of bb
+A:setCc \ setter of cc
+A:sizeof \ the size of the struct in memory
+```
+
+A class can also be extended by another class.
+
+For example:
+
+```forth
+: class C extends A
+  dd
+  ee
+  ff
+;
+```
+
+This means that class C is extending class A by the attributes dd, ee and ff. You have all the methods from A with the name prefix C.
+A:getAa is available at C:getAa.
 
 ### Macros / Inlines
 
 GoForth refers to macros as "inline."
 An inline is defined by placing the word "inline" after the semicolon.
 Then the name has to be given.
-After that you can have up to four arguments. These arguments are stored in registers.
-The number of arguments can be obmitted, then no word is removed before the macro is called.
-If you provide the number of words like: @1@ for 1 or @4@ for 4 then the number of words before the inline call are removed.
 
 ```forth
-: inline test @4@
-  word #1#
-  word #2#
-  word #3#
-  word #4#
-;
-
-: myword
-  d c b a test
-;
-
-\ myword is now:
-: myword
-  word a
-  word b
-  word c
-  word d
+: inline if!
+  @numArgs 1 @push @> @if
+    @f@ @t@ if #t# else #f# then
+  @else
+    { b a } if a exec else b exec then
+  @then
 ;
 ```
+
+Words beginning with @ are macro words. These words are executed after parsing time and beforce execution time.
+Words enclosed with @ like @f@ are saving a string into a variable. These variables are only of type string.
+Words enclosed with # like #f# are placing a string from a variable.
 
 ### Generate C-Code
 
