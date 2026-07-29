@@ -341,7 +341,7 @@ As you can see on the top there is the ByteCode and below you see the program po
 
 ## Embedding goforth in Go
 
-`Now all you need is a ForthCompiler:
+Now all you need is a ForthCompiler:
 
 ```go
 fc := goforth.NewForthCompiler()
@@ -371,6 +371,7 @@ if err := fc.Run(": main .\" Hello World!\" ;"); err != nil {
 if err := fc.Run(": customcall 999 sys ; : main 10 customcall . ;"); err != nil {
   goforth.PrintError(err)
 }
+```
 
 * `fc.Parse` – parses source (adds words to the dictionary).  
 * `fc.Run` – compiles the word `main` and executes it immediately.  
