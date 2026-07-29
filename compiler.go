@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -549,11 +550,18 @@ func ListFiles(dir, ext string) ([]string, error) {
 func (fc *ForthCompiler) ReadFile(filename string) ([]byte, error) {
 	if strings.Index(filename, "http://") == 0 ||
 		strings.Index(filename, "https://") == 0 {
-		resp, err := http.Get(filename)
+		client := http.Client{
+			Timeout: 5 * time.Second,
+		}
+		resp, err := client.Get(filename)
 		if err != nil {
 			return nil, err
 		}
 		defer resp.Body.Close()
+		if resp.ContentLength > 10<<20 { // 10 MiB
+			return nil, fmt.Errorf("file from \"%s\" too large (> 10 MiB)", filename)
+		}
+
 		return io.ReadAll(resp.Body)
 	}
 
