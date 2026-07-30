@@ -66,6 +66,8 @@
   3 pick 2 pick f* 3 pick 2 pick f* f- 4 pick 2 pick f* 3 pick 5 pick f* f+
   2nip 2nip
 ;
+\ Like z* but as macro and works only at compile time.
+: inline z*! @d@ @c@ @b@ @a@ #a# #c# f* #b# #d# f* f- #a# #d# f* #c# #b# f* f+ ;
 
 : abs
   dup
