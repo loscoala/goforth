@@ -565,7 +565,7 @@ func (fvm *ForthVM) Sys() {
 		}
 
 		name := fvm.GetString()
-		err = os.WriteFile(name, buf.Bytes(), 0666)
+		err = os.WriteFile(name, buf.Bytes(), 0644)
 
 		if err != nil {
 			log.Fatal(err)
@@ -628,7 +628,7 @@ func (fvm *ForthVM) Sys() {
 		str := fvm.GetString()
 		info, err := os.Stat(str)
 
-		if os.IsNotExist(err) {
+		if err != nil {
 			fvm.Push(0)
 		} else if !info.IsDir() {
 			fvm.Push(1)

@@ -529,7 +529,7 @@ func handleForthString(s *Stack[string], str []rune) {
 
 func IsFile(filename string) bool {
 	info, err := os.Stat(filename)
-	return !os.IsNotExist(err) && !info.IsDir()
+	return err == nil && !info.IsDir()
 }
 
 func ListFiles(dir, ext string) ([]string, error) {
