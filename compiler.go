@@ -1046,7 +1046,9 @@ func (fc *ForthCompiler) compileWord(word string, result *Stack[string]) error {
 		tmp := NewStack[string]()
 		handleForthString(tmp, []rune(word))
 		for value := range tmp.Values() {
-			fc.compileWord(value, result)
+			if err := fc.compileWord(value, result); err != nil {
+				return err
+			}
 		}
 	} else if isNumeric(word) {
 		result.Push("L " + word)
