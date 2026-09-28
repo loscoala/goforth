@@ -508,14 +508,19 @@ func initNameCache() func(name string) string {
 	return func(name string) string {
 		if name == "" {
 			// return all names
-			var result strings.Builder
+			result := make([]byte, 0, len(cache)*80)
+
 			for k, v := range cache {
-				result.WriteString(fmt.Sprintf("static void %s(void); // %s\n", v, k))
+				result = append(result, "static void "...)
+				result = append(result, v...)
+				result = append(result, "(void); // "...)
+				result = append(result, k...)
+				result = append(result, '\n')
 			}
-			if result.Len() > 0 {
-				result.WriteString("\n")
+			if len(result) > 0 {
+				result = append(result, '\n')
 			}
-			return result.String()
+			return string(result)
 		}
 
 		if ret, ok := cache[name]; ok {
@@ -535,14 +540,19 @@ func (fc *ForthCompiler) initGlobalNameCache() func(name string) string {
 	return func(name string) string {
 		if name == "" {
 			// return all names
-			var result strings.Builder
+			result := make([]byte, 0, len(cache)*80)
+
 			for k, v := range cache {
-				result.WriteString(fmt.Sprintf("static cell_t %s = { .value = %d }; // %s\n", v, 0, k))
+				result = append(result, "static cell_t "...)
+				result = append(result, v...)
+				result = append(result, " = { .value = 0 }; // "...)
+				result = append(result, k...)
+				result = append(result, '\n')
 			}
-			if result.Len() > 0 {
-				result.WriteString("\n")
+			if len(result) > 0 {
+				result = append(result, '\n')
 			}
-			return result.String()
+			return string(result)
 		}
 
 		if ret, ok := cache[name]; ok {
@@ -593,6 +603,8 @@ func initSpaceCache() func(indent int) string {
 
 func (fc *ForthCompiler) CompileToC() error {
 	var result strings.Builder
+	result.Grow(2048)
+
 	funcs := initNameCache()
 	locals := initVarNameCache()
 	globals := fc.initGlobalNameCache()
@@ -656,6 +668,8 @@ func (fc *ForthCompiler) CompileToC() error {
 	result.WriteString("  return 0;\n}\n")
 	cgen := "\n\n" + funcs("") + globals("") + result.String()
 	result.Reset()
+
+	fmt.Println(cgen)
 
 	if err := fc.prepareCompileAndRun(cgen); err != nil {
 		return err
