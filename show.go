@@ -669,7 +669,9 @@ func (fc *ForthCompiler) CompileToC() error {
 	cgen := "\n\n" + funcs("") + globals("") + result.String()
 	result.Reset()
 
-	fmt.Println(cgen)
+	if ShowByteCode {
+		fmt.Println(cgen)
+	}
 
 	if err := fc.prepareCompileAndRun(cgen); err != nil {
 		return err
