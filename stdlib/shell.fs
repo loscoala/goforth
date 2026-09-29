@@ -32,13 +32,13 @@
 ;
 
 : inline bat
-  @file@ [ a" bat #file#" shell ] alloc
+  @file@ [ a" bat #file#" system ] alloc
 ;
 
 : inline vim
   @numArgs 0 @push @> @if
-    @file@ [ a" vim #file#" shell ] alloc
+    @file@ [ a" vim #file#" system ] alloc
   @else
-    [ a" vim" shell ] alloc
+    [ a" vim" system ] alloc
   @then
 ;
