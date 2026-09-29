@@ -267,7 +267,7 @@ func (fc *ForthCompiler) printByteCode() {
 				continue
 			}
 			fmt.Printf("%s;", Yellow(cmd))
-			if cmd == "END" || strings.Index(cmd, "GDEF ") == 0 {
+			if cmd == "END" || strings.HasPrefix(cmd, "GDEF ") {
 				fmt.Println("")
 			}
 		}
@@ -380,30 +380,30 @@ func (fc *ForthCompiler) handleREPL() {
 		} else if text[0] == '%' && len(text) == 1 {
 			fc.printAllDefinitions()
 			continue
-		} else if strings.Index(text, "find ") == 0 {
+		} else if strings.HasPrefix(text, "find ") {
 			defs := fc.findDefinitions(text[5:])
 			for value := range defs.Values() {
 				fc.printDefinition(value)
 			}
 			continue
-		} else if strings.Index(text, "use ") == 0 ||
-			strings.Index(text, "template ") == 0 {
+		} else if strings.HasPrefix(text, "use ") ||
+			strings.HasPrefix(text, "template ") {
 			if err := fc.handleMeta(text); err != nil {
 				PrintError(err)
 			}
 			line.Config.AutoComplete = fc.initCompleter()
 			continue
-		} else if strings.Index(text, "reset") == 0 {
+		} else if strings.TrimRight(text, "\r\n") == "reset" {
 			clear(fc.defs)
 			clear(fc.inlines)
 			fc.ParseFile("core")
 			continue
-		} else if strings.Index(text, "variable ") == 0 {
+		} else if strings.HasPrefix(text, "variable ") {
 			if err := fc.handleMeta(text); err != nil {
 				PrintError(err)
 			}
 			continue
-		} else if strings.Index(text, "debug ") == 0 {
+		} else if strings.HasPrefix(text, "debug ") {
 			if err := fc.Parse(": main\n"+text[6:]+"\n;", "main"); err != nil {
 				PrintError(err)
 				continue
@@ -423,7 +423,7 @@ func (fc *ForthCompiler) handleREPL() {
 			fmt.Println("")
 			fc.printDebug()
 			continue
-		} else if strings.Index(text, "compile ") == 0 {
+		} else if strings.HasPrefix(text, "compile ") {
 			if err := fc.Parse(": main\n"+text[8:]+"\n;", "main"); err != nil {
 				PrintError(err)
 				continue
@@ -449,7 +449,7 @@ func (fc *ForthCompiler) handleREPL() {
 			}
 
 			continue
-		} else if strings.Index(text, "pp ") == 0 {
+		} else if strings.HasPrefix(text, "pp ") {
 			if err := fc.printPreprocess(text[3:]); err != nil {
 				PrintError(err)
 				continue
